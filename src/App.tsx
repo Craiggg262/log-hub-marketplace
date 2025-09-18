@@ -19,43 +19,43 @@ import Cart from "./pages/Cart";
 
 const queryClient = new QueryClient();
 
-// Protected Route Component
-const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
-  const { user, loading } = useAuth();
-  
-  if (loading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-background">
-        <div className="text-center space-y-4">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto"></div>
-          <p className="text-muted-foreground">Loading...</p>
-        </div>
-      </div>
-    );
-  }
-  
-  return user ? <Layout>{children}</Layout> : <Navigate to="/login" replace />;
-};
-
-// Auth Route Component (redirect if already logged in)
-const AuthRoute = ({ children }: { children: React.ReactNode }) => {
-  const { user, loading } = useAuth();
-  
-  if (loading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-background">
-        <div className="text-center space-y-4">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto"></div>
-          <p className="text-muted-foreground">Loading...</p>
-        </div>
-      </div>
-    );
-  }
-  
-  return user ? <Navigate to="/dashboard" replace /> : <>{children}</>;
-};
-
 function AppContent() {
+  // Protected Route Component - now inside AuthProvider context
+  const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
+    const { user, loading } = useAuth();
+    
+    if (loading) {
+      return (
+        <div className="min-h-screen flex items-center justify-center bg-background">
+          <div className="text-center space-y-4">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto"></div>
+            <p className="text-muted-foreground">Loading...</p>
+          </div>
+        </div>
+      );
+    }
+    
+    return user ? <Layout>{children}</Layout> : <Navigate to="/login" replace />;
+  };
+
+  // Auth Route Component - now inside AuthProvider context
+  const AuthRoute = ({ children }: { children: React.ReactNode }) => {
+    const { user, loading } = useAuth();
+    
+    if (loading) {
+      return (
+        <div className="min-h-screen flex items-center justify-center bg-background">
+          <div className="text-center space-y-4">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto"></div>
+            <p className="text-muted-foreground">Loading...</p>
+          </div>
+        </div>
+      );
+    }
+    
+    return user ? <Navigate to="/dashboard" replace /> : <>{children}</>;
+  };
+
   return (
     <BrowserRouter>
       <Routes>
