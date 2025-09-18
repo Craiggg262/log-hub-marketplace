@@ -70,6 +70,41 @@ export type Database = {
         }
         Relationships: []
       }
+      log_items: {
+        Row: {
+          account_details: string
+          created_at: string
+          id: string
+          is_available: boolean
+          log_id: string
+          updated_at: string
+        }
+        Insert: {
+          account_details: string
+          created_at?: string
+          id?: string
+          is_available?: boolean
+          log_id: string
+          updated_at?: string
+        }
+        Update: {
+          account_details?: string
+          created_at?: string
+          id?: string
+          is_available?: boolean
+          log_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "log_items_log_id_fkey"
+            columns: ["log_id"]
+            isOneToOne: false
+            referencedRelation: "logs"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       logs: {
         Row: {
           category_id: string
@@ -165,6 +200,42 @@ export type Database = {
           },
         ]
       }
+      order_log_items: {
+        Row: {
+          created_at: string
+          id: string
+          log_item_id: string
+          order_item_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          log_item_id: string
+          order_item_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          log_item_id?: string
+          order_item_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "order_log_items_log_item_id_fkey"
+            columns: ["log_item_id"]
+            isOneToOne: false
+            referencedRelation: "log_items"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "order_log_items_order_item_id_fkey"
+            columns: ["order_item_id"]
+            isOneToOne: false
+            referencedRelation: "order_items"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       orders: {
         Row: {
           created_at: string
@@ -251,7 +322,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      get_available_log_items_count: {
+        Args: { log_uuid: string }
+        Returns: number
+      }
     }
     Enums: {
       [_ in never]: never
