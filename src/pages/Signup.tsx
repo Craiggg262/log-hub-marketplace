@@ -5,6 +5,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { useToast } from '@/hooks/use-toast';
+import { useAuth } from '@/hooks/useAuth';
 import { Eye, EyeOff, UserPlus } from 'lucide-react';
 
 const Signup = () => {
@@ -19,6 +20,7 @@ const Signup = () => {
   const [isLoading, setIsLoading] = useState(false);
   const navigate = useNavigate();
   const { toast } = useToast();
+  const { signUp } = useAuth();
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setFormData({
@@ -40,17 +42,7 @@ const Signup = () => {
         throw new Error('Password must be at least 6 characters');
       }
 
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      
-      // Store user data
-      localStorage.setItem('user', JSON.stringify({ 
-        email: formData.email, 
-        fullName: formData.fullName,
-        isAuthenticated: true,
-        walletBalance: 0,
-        joinedDate: new Date().toISOString()
-      }));
+      await signUp(formData.email, formData.password, formData.fullName);
       
       toast({
         title: "Account created successfully",

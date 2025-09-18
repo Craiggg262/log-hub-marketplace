@@ -5,6 +5,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { useToast } from '@/hooks/use-toast';
+import { useAuth } from '@/hooks/useAuth';
 import { Eye, EyeOff, LogIn } from 'lucide-react';
 
 const Login = () => {
@@ -14,29 +15,24 @@ const Login = () => {
   const [isLoading, setIsLoading] = useState(false);
   const navigate = useNavigate();
   const { toast } = useToast();
+  const { signIn } = useAuth();
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
 
     try {
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      await signIn(email, password);
       
-      if (email && password) {
-        localStorage.setItem('user', JSON.stringify({ email, isAuthenticated: true }));
-        toast({
-          title: "Login successful",
-          description: "Welcome back to Log Hub!",
-        });
-        navigate('/dashboard');
-      } else {
-        throw new Error('Invalid credentials');
-      }
+      toast({
+        title: "Login successful",
+        description: "Welcome back to Log Hub!",
+      });
+      navigate('/dashboard');
     } catch (error) {
       toast({
         title: "Login failed",
-        description: "Please check your credentials and try again.",
+        description: error instanceof Error ? error.message : "Please check your credentials and try again.",
         variant: "destructive",
       });
     } finally {
