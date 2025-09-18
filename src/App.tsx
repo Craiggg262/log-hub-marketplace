@@ -15,6 +15,7 @@ import Settings from "./pages/Settings";
 import Admin from "./pages/Admin";
 import Layout from "./components/Layout";
 import NotFound from "./pages/NotFound";
+import Cart from "./pages/Cart";
 
 const queryClient = new QueryClient();
 
@@ -69,8 +70,9 @@ function AppContent() {
         <Route path="/orders" element={<ProtectedRoute><Orders /></ProtectedRoute>} />
         <Route path="/history" element={<ProtectedRoute><History /></ProtectedRoute>} />
         <Route path="/settings" element={<ProtectedRoute><Settings /></ProtectedRoute>} />
+        <Route path="/cart" element={<ProtectedRoute><Cart /></ProtectedRoute>} />
         
-        {/* Admin Route - Separate from normal auth flow */}
+        {/* Admin Route - Completely separate, no layout */}
         <Route path="/admin" element={<Admin />} />
         
         {/* 404 Route */}

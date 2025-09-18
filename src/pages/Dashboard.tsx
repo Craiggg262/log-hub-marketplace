@@ -9,6 +9,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { useLogs } from '@/hooks/useLogs';
 import { useAuth } from '@/hooks/useAuth';
 import { useCart } from '@/hooks/useCart';
+import { useOrders } from '@/hooks/useOrders';
 import SocialIcon from '@/components/SocialIcon';
 
 const Dashboard = () => {
@@ -18,7 +19,8 @@ const Dashboard = () => {
   const { toast } = useToast();
   const { user, profile } = useAuth();
   const { logs, categories, loading } = useLogs();
-  const { cartItems, addToCart, getTotalItems } = useCart();
+  const { cartItems, addToCart, getTotalItems, clearCart } = useCart();
+  const { createOrderFromCart } = useOrders();
 
   const filteredLogs = logs.filter(log => {
     const matchesSearch = log.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -66,7 +68,7 @@ const Dashboard = () => {
     }
   };
 
-  const handleBuyNow = () => {
+  const handleBuyNow = async () => {
     if (getTotalItems() === 0) {
       toast({
         title: "Cart is empty",
@@ -76,13 +78,29 @@ const Dashboard = () => {
       return;
     }
 
-    // Redirect to WhatsApp
-    window.open('https://wa.link/8rqbox', '_blank');
-    
-    toast({
-      title: "Redirecting to WhatsApp",
-      description: "Complete your purchase via WhatsApp support.",
-    });
+    try {
+      // Create order in database
+      const order = await createOrderFromCart(cartItems);
+      
+      if (order) {
+        // Clear cart after successful order creation
+        await clearCart();
+        
+        // Redirect to WhatsApp
+        window.open('https://wa.link/8rqbox', '_blank');
+        
+        toast({
+          title: "Order created successfully",
+          description: `Order #${order.id.slice(0, 8)} created. Complete payment via WhatsApp.`,
+        });
+      }
+    } catch (error) {
+      toast({
+        title: "Error creating order",
+        description: "Failed to create order. Please try again.",
+        variant: "destructive",
+      });
+    }
   };
 
   const formatPrice = (price: number) => {

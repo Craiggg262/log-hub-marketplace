@@ -5,63 +5,20 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { ShoppingCart, Search, Download, Eye, Calendar } from 'lucide-react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-
-interface Order {
-  id: string;
-  logTitle: string;
-  price: number;
-  purchaseDate: string;
-  status: 'completed' | 'pending' | 'failed';
-  category: string;
-  downloadUrl?: string;
-}
+import { useOrders } from '@/hooks/useOrders';
 
 const Orders = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
-
-  // Mock orders data
-  const orders: Order[] = [
-    {
-      id: 'ORD-001',
-      logTitle: 'Premium Netflix Logs',
-      price: 15.99,
-      purchaseDate: '2024-01-15',
-      status: 'completed',
-      category: 'streaming',
-      downloadUrl: '/downloads/netflix-logs.txt'
-    },
-    {
-      id: 'ORD-002',
-      logTitle: 'Spotify Premium Logs',
-      price: 8.99,
-      purchaseDate: '2024-01-14',
-      status: 'completed',
-      category: 'streaming',
-      downloadUrl: '/downloads/spotify-logs.txt'
-    },
-    {
-      id: 'ORD-003',
-      logTitle: 'Amazon Prime Logs',
-      price: 12.99,
-      purchaseDate: '2024-01-12',
-      status: 'pending',
-      category: 'shopping'
-    },
-    {
-      id: 'ORD-004',
-      logTitle: 'Disney+ Logs',
-      price: 10.99,
-      purchaseDate: '2024-01-10',
-      status: 'completed',
-      category: 'streaming',
-      downloadUrl: '/downloads/disney-logs.txt'
-    }
-  ];
+  const { orders, loading } = useOrders();
 
   const filteredOrders = orders.filter(order => {
-    const matchesSearch = order.logTitle.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         order.id.toLowerCase().includes(searchTerm.toLowerCase());
+    if (!order.order_items || order.order_items.length === 0) return false;
+    
+    const matchesSearch = order.order_items.some(item => 
+      item.logs.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      order.id.toLowerCase().includes(searchTerm.toLowerCase())
+    );
     const matchesStatus = statusFilter === 'all' || order.status === statusFilter;
     return matchesSearch && matchesStatus;
   });
@@ -79,18 +36,31 @@ const Orders = () => {
     }
   };
 
-  const handleDownload = (order: Order) => {
-    // Simulate download
+  const handleDownload = (order: any) => {
+    // Simulate download - In real app, this would download actual log files
+    const logFiles = order.order_items.map((item: any) => item.logs.title).join(', ');
+    
+    const content = `Order #${order.id}\nLogs: ${logFiles}\nTotal: ₦${order.total_amount.toLocaleString('en-NG', { minimumFractionDigits: 2 })}\nDate: ${new Date(order.created_at).toLocaleDateString()}`;
+    
+    const blob = new Blob([content], { type: 'text/plain' });
+    const url = URL.createObjectURL(blob);
     const link = document.createElement('a');
-    link.href = order.downloadUrl || '#';
-    link.download = `${order.logTitle.replace(/\s+/g, '_')}.txt`;
+    link.href = url;
+    link.download = `order-${order.id.slice(0, 8)}.txt`;
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
+    URL.revokeObjectURL(url);
   };
 
-  const totalSpent = orders.reduce((sum, order) => order.status === 'completed' ? sum + order.price : sum, 0);
+  const formatPrice = (price: number) => {
+    return `₦${price.toLocaleString('en-NG', { minimumFractionDigits: 2 })}`;
+  };
+
   const completedOrders = orders.filter(order => order.status === 'completed').length;
+  const totalSpent = orders
+    .filter(order => order.status === 'completed')
+    .reduce((sum, order) => sum + order.total_amount, 0);
 
   return (
     <div className="space-y-6">
@@ -135,7 +105,7 @@ const Orders = () => {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm text-muted-foreground">Total Spent</p>
-                <p className="text-2xl font-bold">${totalSpent.toFixed(2)}</p>
+                <p className="text-2xl font-bold">{formatPrice(totalSpent)}</p>
               </div>
               <Calendar className="h-10 w-10 text-muted-foreground/20" />
             </div>
@@ -169,60 +139,74 @@ const Orders = () => {
       </div>
 
       {/* Orders List */}
-      <div className="space-y-4">
-        {filteredOrders.map((order) => (
-          <Card key={order.id} className="hover:shadow-md transition-shadow">
-            <CardContent className="p-6">
-              <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-                <div className="flex-1">
-                  <div className="flex items-center gap-3 mb-2">
-                    <Badge variant="outline" className="font-mono text-xs">
-                      {order.id}
-                    </Badge>
-                    <Badge className={getStatusColor(order.status)}>
-                      {order.status.charAt(0).toUpperCase() + order.status.slice(1)}
-                    </Badge>
-                    <Badge variant="secondary" className="capitalize">
-                      {order.category}
-                    </Badge>
-                  </div>
-                  
-                  <h3 className="text-lg font-semibold mb-1">{order.logTitle}</h3>
-                  <p className="text-sm text-muted-foreground">
-                    Purchased on {new Date(order.purchaseDate).toLocaleDateString()}
-                  </p>
-                </div>
-
-                <div className="flex items-center gap-4">
-                  <div className="text-right">
-                    <p className="text-2xl font-bold text-primary">${order.price}</p>
-                  </div>
-                  
-                  <div className="flex gap-2">
-                    <Button variant="outline" size="sm">
-                      <Eye className="h-4 w-4 mr-2" />
-                      View
-                    </Button>
+      {loading ? (
+        <div className="flex items-center justify-center py-12">
+          <div className="text-center space-y-4">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto"></div>
+            <p className="text-muted-foreground">Loading orders...</p>
+          </div>
+        </div>
+      ) : (
+        <div className="space-y-4">
+          {filteredOrders.map((order) => (
+            <Card key={order.id} className="hover:shadow-md transition-shadow">
+              <CardContent className="p-6">
+                <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                  <div className="flex-1">
+                    <div className="flex items-center gap-3 mb-2">
+                      <Badge variant="outline" className="font-mono text-xs">
+                        #{order.id.slice(0, 8)}
+                      </Badge>
+                      <Badge className={getStatusColor(order.status)}>
+                        {order.status.charAt(0).toUpperCase() + order.status.slice(1)}
+                      </Badge>
+                    </div>
                     
-                    {order.status === 'completed' && order.downloadUrl && (
-                      <Button 
-                        onClick={() => handleDownload(order)}
-                        size="sm"
-                        className="gap-2"
-                      >
-                        <Download className="h-4 w-4" />
-                        Download
+                    <div className="space-y-1">
+                      {order.order_items.map((item) => (
+                        <div key={item.id} className="flex justify-between items-center">
+                          <h3 className="text-lg font-semibold">{item.logs.title}</h3>
+                          <span className="text-sm text-muted-foreground">×{item.quantity}</span>
+                        </div>
+                      ))}
+                    </div>
+                    
+                    <p className="text-sm text-muted-foreground mt-2">
+                      Ordered on {new Date(order.created_at).toLocaleDateString()}
+                    </p>
+                  </div>
+
+                  <div className="flex items-center gap-4">
+                    <div className="text-right">
+                      <p className="text-2xl font-bold text-primary">{formatPrice(order.total_amount)}</p>
+                    </div>
+                    
+                    <div className="flex gap-2">
+                      <Button variant="outline" size="sm">
+                        <Eye className="h-4 w-4 mr-2" />
+                        View
                       </Button>
-                    )}
+                      
+                      {order.status === 'completed' && (
+                        <Button 
+                          onClick={() => handleDownload(order)}
+                          size="sm"
+                          className="gap-2"
+                        >
+                          <Download className="h-4 w-4" />
+                          Download
+                        </Button>
+                      )}
+                    </div>
                   </div>
                 </div>
-              </div>
-            </CardContent>
-          </Card>
-        ))}
-      </div>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+      )}
 
-      {filteredOrders.length === 0 && (
+      {!loading && filteredOrders.length === 0 && (
         <Card>
           <CardContent className="p-12 text-center">
             <ShoppingCart className="h-12 w-12 text-muted-foreground/20 mx-auto mb-4" />

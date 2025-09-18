@@ -4,15 +4,16 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
-import { Wallet as WalletIcon, Plus, MessageCircle, CreditCard, DollarSign, History } from 'lucide-react';
+import { Wallet as WalletIcon, Plus, MessageCircle, CreditCard, TrendingUp, History } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
+import { useAuth } from '@/hooks/useAuth';
+import { useTransactions } from '@/hooks/useTransactions';
 
 const Wallet = () => {
   const [fundAmount, setFundAmount] = useState('');
   const { toast } = useToast();
-  
-  const user = JSON.parse(localStorage.getItem('user') || '{}');
-  const walletBalance = user.walletBalance || 0;
+  const { profile } = useAuth();
+  const { transactions, loading } = useTransactions();
 
   const handleManualPayment = () => {
     if (!fundAmount || parseFloat(fundAmount) <= 0) {
@@ -24,7 +25,7 @@ const Wallet = () => {
       return;
     }
 
-    // Store the pending transaction
+    // Store the pending transaction for reference
     const pendingTransaction = {
       amount: parseFloat(fundAmount),
       timestamp: new Date().toISOString(),
@@ -35,7 +36,7 @@ const Wallet = () => {
     
     toast({
       title: "Redirecting to payment",
-      description: `You will be redirecting to WhatsApp to complete payment of $${fundAmount}`,
+      description: `You will be redirected to WhatsApp to complete payment of ₦${parseFloat(fundAmount).toLocaleString('en-NG')}`,
     });
 
     // Redirect to WhatsApp
@@ -44,12 +45,17 @@ const Wallet = () => {
     }, 1000);
   };
 
-  const recentTransactions = [
-    { id: '1', type: 'deposit', amount: 50.00, date: '2024-01-15', status: 'completed' },
-    { id: '2', type: 'purchase', amount: -15.99, date: '2024-01-14', status: 'completed', description: 'Netflix Logs' },
-    { id: '3', type: 'deposit', amount: 25.00, date: '2024-01-12', status: 'completed' },
-    { id: '4', type: 'purchase', amount: -8.99, date: '2024-01-10', status: 'completed', description: 'Spotify Logs' },
-  ];
+  const formatPrice = (price: number) => {
+    return `₦${price.toLocaleString('en-NG', { minimumFractionDigits: 2 })}`;
+  };
+
+  const totalDeposits = transactions
+    .filter(t => t.transaction_type === 'deposit')
+    .reduce((sum, t) => sum + t.amount, 0);
+  
+  const totalSpent = transactions
+    .filter(t => t.transaction_type === 'purchase')
+    .reduce((sum, t) => sum + Math.abs(t.amount), 0);
 
   return (
     <div className="space-y-6">
@@ -68,9 +74,9 @@ const Wallet = () => {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm text-muted-foreground">Current Balance</p>
-                <p className="text-3xl font-bold text-primary">${walletBalance.toFixed(2)}</p>
+                <p className="text-3xl font-bold text-primary">{formatPrice(profile?.wallet_balance || 0)}</p>
               </div>
-              <DollarSign className="h-12 w-12 text-primary/20" />
+              <WalletIcon className="h-12 w-12 text-primary/20" />
             </div>
           </CardContent>
         </Card>
@@ -80,7 +86,7 @@ const Wallet = () => {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm text-muted-foreground">Total Spent</p>
-                <p className="text-2xl font-bold">$24.98</p>
+                <p className="text-2xl font-bold">{formatPrice(totalSpent)}</p>
               </div>
               <History className="h-10 w-10 text-muted-foreground/20" />
             </div>
@@ -92,7 +98,7 @@ const Wallet = () => {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm text-muted-foreground">Total Deposits</p>
-                <p className="text-2xl font-bold">$75.00</p>
+                <p className="text-2xl font-bold">{formatPrice(totalDeposits)}</p>
               </div>
               <Plus className="h-10 w-10 text-muted-foreground/20" />
             </div>
@@ -114,7 +120,7 @@ const Wallet = () => {
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="amount">Amount (USD)</Label>
+              <Label htmlFor="amount">Amount (₦)</Label>
               <Input
                 id="amount"
                 type="number"
@@ -196,42 +202,47 @@ const Wallet = () => {
           <CardDescription>Your latest wallet activity</CardDescription>
         </CardHeader>
         <CardContent>
-          <div className="space-y-4">
-            {recentTransactions.map((transaction) => (
-              <div key={transaction.id} className="flex items-center justify-between p-4 border rounded-lg">
-                <div className="flex items-center gap-3">
-                  <div className={`p-2 rounded-full ${
-                    transaction.type === 'deposit' ? 'bg-success/20 text-success' : 'bg-muted text-muted-foreground'
-                  }`}>
-                    {transaction.type === 'deposit' ? (
-                      <Plus className="h-4 w-4" />
-                    ) : (
-                      <WalletIcon className="h-4 w-4" />
-                    )}
+          {loading ? (
+            <div className="flex items-center justify-center py-8">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+            </div>
+          ) : transactions.length === 0 ? (
+            <div className="text-center py-8">
+              <WalletIcon className="h-12 w-12 text-muted-foreground/20 mx-auto mb-4" />
+              <p className="text-muted-foreground">No transactions yet</p>
+            </div>
+          ) : (
+            <div className="space-y-4">
+              {transactions.slice(0, 5).map((transaction) => (
+                <div key={transaction.id} className="flex items-center justify-between p-4 border rounded-lg">
+                  <div className="flex items-center gap-3">
+                    <div className={`p-2 rounded-full ${
+                      transaction.transaction_type === 'deposit' ? 'bg-success/20 text-success' : 'bg-muted text-muted-foreground'
+                    }`}>
+                      {transaction.transaction_type === 'deposit' ? (
+                        <Plus className="h-4 w-4" />
+                      ) : (
+                        <WalletIcon className="h-4 w-4" />
+                      )}
+                    </div>
+                    <div>
+                      <p className="font-medium">{transaction.description}</p>
+                      <p className="text-xs text-muted-foreground">
+                        {new Date(transaction.created_at).toLocaleDateString()}
+                      </p>
+                    </div>
                   </div>
-                  <div>
-                    <p className="font-medium">
-                      {transaction.type === 'deposit' ? 'Wallet Deposit' : 'Purchase'}
+                  <div className="text-right">
+                    <p className={`font-medium ${
+                      transaction.amount > 0 ? 'text-success' : 'text-foreground'
+                    }`}>
+                      {transaction.amount > 0 ? '+' : ''}{formatPrice(Math.abs(transaction.amount))}
                     </p>
-                    {transaction.description && (
-                      <p className="text-sm text-muted-foreground">{transaction.description}</p>
-                    )}
-                    <p className="text-xs text-muted-foreground">{transaction.date}</p>
                   </div>
                 </div>
-                <div className="text-right">
-                  <p className={`font-medium ${
-                    transaction.amount > 0 ? 'text-success' : 'text-foreground'
-                  }`}>
-                    {transaction.amount > 0 ? '+' : ''}${Math.abs(transaction.amount).toFixed(2)}
-                  </p>
-                  <Badge variant={transaction.status === 'completed' ? 'default' : 'secondary'}>
-                    {transaction.status}
-                  </Badge>
-                </div>
-              </div>
-            ))}
-          </div>
+              ))}
+            </div>
+          )}
         </CardContent>
       </Card>
     </div>

@@ -4,102 +4,22 @@ import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { History as HistoryIcon, Search, Calendar, TrendingUp, ArrowUpRight, ArrowDownRight } from 'lucide-react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-
-interface Transaction {
-  id: string;
-  type: 'purchase' | 'deposit' | 'refund';
-  description: string;
-  amount: number;
-  date: string;
-  status: 'completed' | 'pending' | 'failed';
-  category?: string;
-  balanceAfter: number;
-}
+import { useTransactions } from '@/hooks/useTransactions';
 
 const History = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [typeFilter, setTypeFilter] = useState('all');
   const [dateFilter, setDateFilter] = useState('all');
-
-  // Mock transaction history
-  const transactions: Transaction[] = [
-    {
-      id: 'TXN-015',
-      type: 'purchase',
-      description: 'Premium Netflix Logs',
-      amount: -15.99,
-      date: '2024-01-15T10:30:00Z',
-      status: 'completed',
-      category: 'streaming',
-      balanceAfter: 34.01
-    },
-    {
-      id: 'TXN-014',
-      type: 'deposit',
-      description: 'Wallet funding via WhatsApp',
-      amount: 50.00,
-      date: '2024-01-15T09:15:00Z',
-      status: 'completed',
-      balanceAfter: 50.00
-    },
-    {
-      id: 'TXN-013',
-      type: 'purchase',
-      description: 'Spotify Premium Logs',
-      amount: -8.99,
-      date: '2024-01-14T16:45:00Z',
-      status: 'completed',
-      category: 'streaming',
-      balanceAfter: 41.01
-    },
-    {
-      id: 'TXN-012',
-      type: 'deposit',
-      description: 'Wallet funding via WhatsApp',
-      amount: 25.00,
-      date: '2024-01-12T14:20:00Z',
-      status: 'completed',
-      balanceAfter: 25.00
-    },
-    {
-      id: 'TXN-011',
-      type: 'purchase',
-      description: 'Disney+ Logs',
-      amount: -10.99,
-      date: '2024-01-10T11:30:00Z',
-      status: 'completed',
-      category: 'streaming',
-      balanceAfter: 14.01
-    },
-    {
-      id: 'TXN-010',
-      type: 'deposit',
-      description: 'Initial wallet funding',
-      amount: 25.00,
-      date: '2024-01-08T09:00:00Z',
-      status: 'completed',
-      balanceAfter: 25.00
-    },
-    {
-      id: 'TXN-009',
-      type: 'purchase',
-      description: 'Failed purchase - Hulu Logs',
-      amount: -9.99,
-      date: '2024-01-07T15:20:00Z',
-      status: 'failed',
-      category: 'streaming',
-      balanceAfter: 25.00
-    }
-  ];
+  const { transactions, loading } = useTransactions();
 
   const filteredTransactions = transactions.filter(transaction => {
     const matchesSearch = transaction.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
                          transaction.id.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesType = typeFilter === 'all' || transaction.type === typeFilter;
+    const matchesType = typeFilter === 'all' || transaction.transaction_type === typeFilter;
     
     let matchesDate = true;
     if (dateFilter !== 'all') {
-      const transactionDate = new Date(transaction.date);
+      const transactionDate = new Date(transaction.created_at);
       const now = new Date();
       
       switch (dateFilter) {
@@ -127,26 +47,21 @@ const History = () => {
     return <ArrowUpRight className="h-4 w-4 text-muted-foreground" />;
   };
 
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case 'completed':
-        return 'bg-success/20 text-success border-success/20';
-      case 'pending':
-        return 'bg-warning/20 text-warning border-warning/20';
-      case 'failed':
-        return 'bg-destructive/20 text-destructive border-destructive/20';
-      default:
-        return 'bg-muted text-muted-foreground';
-    }
+  const formatPrice = (price: number) => {
+    return `₦${price.toLocaleString('en-NG', { minimumFractionDigits: 2 })}`;
   };
 
   const totalDeposits = transactions
-    .filter(t => t.type === 'deposit' && t.status === 'completed')
+    .filter(t => t.transaction_type === 'deposit')
     .reduce((sum, t) => sum + t.amount, 0);
   
   const totalSpent = transactions
-    .filter(t => t.type === 'purchase' && t.status === 'completed')
+    .filter(t => t.transaction_type === 'purchase')
     .reduce((sum, t) => sum + Math.abs(t.amount), 0);
+  
+  const totalRefunds = transactions
+    .filter(t => t.transaction_type === 'refund')
+    .reduce((sum, t) => sum + t.amount, 0);
 
   return (
     <div className="space-y-6">
@@ -177,7 +92,7 @@ const History = () => {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm text-muted-foreground">Total Deposits</p>
-                <p className="text-2xl font-bold text-success">${totalDeposits.toFixed(2)}</p>
+                <p className="text-2xl font-bold text-success">{formatPrice(totalDeposits)}</p>
               </div>
               <ArrowDownRight className="h-10 w-10 text-success/20" />
             </div>
@@ -189,7 +104,7 @@ const History = () => {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm text-muted-foreground">Total Spent</p>
-                <p className="text-2xl font-bold">${totalSpent.toFixed(2)}</p>
+                <p className="text-2xl font-bold">{formatPrice(totalSpent)}</p>
               </div>
               <ArrowUpRight className="h-10 w-10 text-muted-foreground/20" />
             </div>
@@ -201,8 +116,8 @@ const History = () => {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm text-muted-foreground">Net Activity</p>
-                <p className={`text-2xl font-bold ${totalDeposits - totalSpent >= 0 ? 'text-success' : 'text-destructive'}`}>
-                  ${(totalDeposits - totalSpent).toFixed(2)}
+                <p className={`text-2xl font-bold ${totalDeposits + totalRefunds - totalSpent >= 0 ? 'text-success' : 'text-destructive'}`}>
+                  {formatPrice(totalDeposits + totalRefunds - totalSpent)}
                 </p>
               </div>
               <TrendingUp className="h-10 w-10 text-muted-foreground/20" />
@@ -255,47 +170,14 @@ const History = () => {
           <CardDescription>Your latest transactions and account activity</CardDescription>
         </CardHeader>
         <CardContent>
-          <div className="space-y-4">
-            {filteredTransactions.map((transaction, index) => (
-              <div key={transaction.id} className="flex items-center justify-between p-4 border rounded-lg hover:bg-muted/50 transition-colors">
-                <div className="flex items-center gap-4">
-                  <div className="p-2 rounded-full bg-muted">
-                    {getTransactionIcon(transaction.type, transaction.amount)}
-                  </div>
-                  
-                  <div className="flex-1">
-                    <div className="flex items-center gap-2 mb-1">
-                      <h4 className="font-medium">{transaction.description}</h4>
-                      <Badge className={getStatusColor(transaction.status)}>
-                        {transaction.status}
-                      </Badge>
-                      {transaction.category && (
-                        <Badge variant="outline" className="capitalize">
-                          {transaction.category}
-                        </Badge>
-                      )}
-                    </div>
-                    
-                    <div className="flex items-center gap-4 text-sm text-muted-foreground">
-                      <span>{transaction.id}</span>
-                      <span>{new Date(transaction.date).toLocaleString()}</span>
-                      <span>Balance: ${transaction.balanceAfter.toFixed(2)}</span>
-                    </div>
-                  </div>
-                </div>
-
-                <div className="text-right">
-                  <p className={`text-lg font-semibold ${
-                    transaction.amount > 0 ? 'text-success' : 'text-foreground'
-                  }`}>
-                    {transaction.amount > 0 ? '+' : ''}${Math.abs(transaction.amount).toFixed(2)}
-                  </p>
-                </div>
+          {loading ? (
+            <div className="flex items-center justify-center py-8">
+              <div className="text-center space-y-4">
+                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto"></div>
+                <p className="text-muted-foreground">Loading transactions...</p>
               </div>
-            ))}
-          </div>
-
-          {filteredTransactions.length === 0 && (
+            </div>
+          ) : filteredTransactions.length === 0 ? (
             <div className="text-center py-12">
               <HistoryIcon className="h-12 w-12 text-muted-foreground/20 mx-auto mb-4" />
               <h3 className="text-lg font-semibold mb-2">No transactions found</h3>
@@ -304,6 +186,40 @@ const History = () => {
                   ? "No transactions match your current filters."
                   : "You haven't made any transactions yet."}
               </p>
+            </div>
+          ) : (
+            <div className="space-y-4">
+              {filteredTransactions.map((transaction) => (
+                <div key={transaction.id} className="flex items-center justify-between p-4 border rounded-lg hover:bg-muted/50 transition-colors">
+                  <div className="flex items-center gap-4">
+                    <div className="p-2 rounded-full bg-muted">
+                      {getTransactionIcon(transaction.transaction_type, transaction.amount)}
+                    </div>
+                    
+                    <div className="flex-1">
+                      <div className="flex items-center gap-2 mb-1">
+                        <h4 className="font-medium">{transaction.description}</h4>
+                        <Badge variant="outline" className="capitalize">
+                          {transaction.transaction_type}
+                        </Badge>
+                      </div>
+                      
+                      <div className="flex items-center gap-4 text-sm text-muted-foreground">
+                        <span>#{transaction.id.slice(0, 8)}</span>
+                        <span>{new Date(transaction.created_at).toLocaleString()}</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="text-right">
+                    <p className={`text-lg font-semibold ${
+                      transaction.amount > 0 ? 'text-success' : 'text-foreground'
+                    }`}>
+                      {transaction.amount > 0 ? '+' : ''}{formatPrice(Math.abs(transaction.amount))}
+                    </p>
+                  </div>
+                </div>
+              ))}
             </div>
           )}
         </CardContent>
