@@ -5,12 +5,16 @@ import { Badge } from '@/components/ui/badge';
 import { useToast } from '@/hooks/use-toast';
 import { useCart } from '@/hooks/useCart';
 import { useAuth } from '@/hooks/useAuth';
-import { ShoppingCart, Plus, Minus, Trash2, MessageCircle } from 'lucide-react';
+import { useOrders } from '@/hooks/useOrders';
+import { useTransactions } from '@/hooks/useTransactions';
+import { ShoppingCart, Plus, Minus, Trash2, CreditCard } from 'lucide-react';
 import SocialIcon from '@/components/SocialIcon';
 
 const Cart = () => {
   const { cartItems, updateQuantity, removeFromCart, getTotalAmount, getTotalItems, clearCart, loading } = useCart();
   const { profile } = useAuth();
+  const { createOrderFromCart } = useOrders();
+  const { createTransaction } = useTransactions();
   const { toast } = useToast();
 
   const formatPrice = (price: number) => {
@@ -60,22 +64,44 @@ const Cart = () => {
     if (!profile || profile.wallet_balance < totalAmount) {
       toast({
         title: "Insufficient funds",
-        description: "Please add funds to your wallet to complete this purchase.",
+        description: `Please add ${formatPrice(totalAmount - (profile?.wallet_balance || 0))} to your wallet to complete this purchase.`,
         variant: "destructive",
       });
       return;
     }
 
-    // Redirect to WhatsApp for purchase completion
-    const message = `Hello! I want to purchase ${getTotalItems()} items from my cart for ${formatPrice(totalAmount)}. My email: ${profile.email}`;
-    const whatsappUrl = `https://wa.link/8rqbox?text=${encodeURIComponent(message)}`;
-    
-    window.open(whatsappUrl, '_blank');
-    
-    toast({
-      title: "Redirecting to WhatsApp",
-      description: "Complete your purchase via WhatsApp support.",
-    });
+    try {
+      // Create order from cart using existing hook
+      const { createOrderFromCart } = useOrders();
+      await createOrderFromCart(cartItems);
+      
+      // Deduct amount from wallet
+      const { createTransaction } = useTransactions();
+      await createTransaction(
+        -totalAmount, 
+        'purchase', 
+        `Purchase of ${getTotalItems()} items from cart`
+      );
+
+      // Clear cart after successful purchase
+      await clearCart();
+      
+      toast({
+        title: "Purchase successful!",
+        description: `₦${totalAmount.toLocaleString('en-NG')} has been deducted from your wallet. Check your orders to view details.`,
+      });
+
+      // Redirect to orders page
+      window.location.href = '/orders';
+      
+    } catch (error) {
+      console.error('Checkout error:', error);
+      toast({
+        title: "Purchase failed",
+        description: "There was an error processing your purchase. Please try again.",
+        variant: "destructive",
+      });
+    }
   };
 
   if (loading) {
@@ -253,12 +279,12 @@ const Cart = () => {
                 size="lg"
                 disabled={!profile || profile.wallet_balance < getTotalAmount()}
               >
-                <MessageCircle className="h-4 w-4" />
-                Checkout via WhatsApp
+                <CreditCard className="h-4 w-4" />
+                Complete Purchase
               </Button>
 
               <div className="text-xs text-muted-foreground text-center">
-                You will be redirected to WhatsApp to complete your purchase
+                Amount will be deducted from your wallet balance
               </div>
             </CardContent>
           </Card>

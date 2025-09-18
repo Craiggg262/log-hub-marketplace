@@ -5,12 +5,10 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/hooks/use-toast';
-import { Shield, Plus, Users, Edit, Trash2, TrendingUp, Database, Eye, Settings } from 'lucide-react';
+import { Shield, Plus, Users, Edit, Trash2, TrendingUp } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
-import { ScrollArea } from '@/components/ui/scroll-area';
 import { supabase } from '@/integrations/supabase/client';
 
 interface Profile {
@@ -34,20 +32,11 @@ interface LogData {
   } | null;
 }
 
-interface LogItem {
-  id: string;
-  log_id: string;
-  account_details: string;
-  is_available: boolean;
-  created_at: string;
-}
-
 const Admin = () => {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [loginData, setLoginData] = useState({ username: '', password: '' });
   const [profiles, setProfiles] = useState<Profile[]>([]);
   const [logs, setLogs] = useState<LogData[]>([]);
-  const [logItems, setLogItems] = useState<Record<string, LogItem[]>>({});
   const [stats, setStats] = useState({
     totalUsers: 0,
     totalLogs: 0,
@@ -58,13 +47,11 @@ const Admin = () => {
     title: '',
     description: '',
     price: '',
+    stock: '',
     category_id: ''
   });
-  const [editingLog, setEditingLog] = useState<LogData | null>(null);
   const [fundUser, setFundUser] = useState({ email: '', amount: '' });
-  const [newLogItem, setNewLogItem] = useState({ log_id: '', account_details: '' });
   const [categories, setCategories] = useState<any[]>([]);
-  const [selectedLogForItems, setSelectedLogForItems] = useState<string | null>(null);
   const { toast } = useToast();
 
   // Admin credentials
@@ -109,22 +96,6 @@ const Admin = () => {
 
       setCategories(categoriesData || []);
 
-      // Fetch all log items
-      const { data: logItemsData } = await supabase
-        .from('log_items')
-        .select('*')
-        .order('created_at', { ascending: false });
-
-      // Group log items by log_id
-      const groupedLogItems: Record<string, LogItem[]> = {};
-      logItemsData?.forEach(item => {
-        if (!groupedLogItems[item.log_id]) {
-          groupedLogItems[item.log_id] = [];
-        }
-        groupedLogItems[item.log_id].push(item);
-      });
-      setLogItems(groupedLogItems);
-
       // Calculate stats
       const { data: ordersData } = await supabase
         .from('orders')
@@ -135,7 +106,7 @@ const Admin = () => {
 
       setStats({
         totalUsers: profilesData?.length || 0,
-        totalLogs: logsData?.length || 0,
+        totalLogs: logsData?.filter(log => log.in_stock).length || 0,
         totalRevenue,
         totalOrders: ordersData?.length || 0
       });
@@ -170,7 +141,7 @@ const Admin = () => {
 
   const handleAddLog = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!newLog.title || !newLog.description || !newLog.price || !newLog.category_id) {
+    if (!newLog.title || !newLog.description || !newLog.price || !newLog.stock || !newLog.category_id) {
       toast({
         title: "Missing fields",
         description: "Please fill in all fields",
@@ -186,9 +157,9 @@ const Admin = () => {
           title: newLog.title,
           description: newLog.description,
           price: parseFloat(newLog.price),
-          stock: 0, // Always 0 since we use log_items now
+          stock: parseInt(newLog.stock),
           category_id: newLog.category_id,
-          in_stock: false, // Will be true when log_items are added
+          in_stock: true,
           image: `https://ui-avatars.com/api/?name=${encodeURIComponent(newLog.title)}&background=3b82f6&color=fff`
         });
 
@@ -199,152 +170,12 @@ const Admin = () => {
         description: `${newLog.title} has been added to the marketplace`,
       });
       
-      setNewLog({ title: '', description: '', price: '', category_id: '' });
+      setNewLog({ title: '', description: '', price: '', stock: '', category_id: '' });
       await fetchData();
     } catch (error) {
       toast({
         title: "Error",
         description: "Failed to add log",
-        variant: "destructive",
-      });
-    }
-  };
-
-  const handleEditLog = async (log: LogData) => {
-    if (!editingLog) return;
-
-    try {
-      const { error } = await supabase
-        .from('logs')
-        .update({
-          title: editingLog.title,
-          description: editingLog.description,
-          price: editingLog.price,
-        })
-        .eq('id', log.id);
-
-      if (error) throw error;
-
-      toast({
-        title: "Log updated successfully",
-        description: "Log details have been updated",
-      });
-      
-      setEditingLog(null);
-      await fetchData();
-    } catch (error) {
-      toast({
-        title: "Error",
-        description: "Failed to update log",
-        variant: "destructive",
-      });
-    }
-  };
-
-  const handleDeleteLog = async (logId: string) => {
-    if (!confirm('Are you sure you want to delete this log? All associated sub-accounts will also be deleted.')) {
-      return;
-    }
-
-    try {
-      const { error } = await supabase
-        .from('logs')
-        .delete()
-        .eq('id', logId);
-
-      if (error) throw error;
-
-      toast({
-        title: "Log deleted successfully",
-        description: "Log and all associated data have been removed",
-      });
-      
-      await fetchData();
-    } catch (error) {
-      toast({
-        title: "Error",
-        description: "Failed to delete log",
-        variant: "destructive",
-      });
-    }
-  };
-
-  const handleAddLogItem = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!newLogItem.log_id || !newLogItem.account_details) {
-      toast({
-        title: "Missing fields",
-        description: "Please select a log and enter account details",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    try {
-      const { error } = await supabase
-        .from('log_items')
-        .insert({
-          log_id: newLogItem.log_id,
-          account_details: newLogItem.account_details,
-          is_available: true
-        });
-
-      if (error) throw error;
-
-      // Update the log to be in stock if it wasn't already
-      await supabase
-        .from('logs')
-        .update({ in_stock: true })
-        .eq('id', newLogItem.log_id);
-
-      toast({
-        title: "Sub-account added successfully",
-        description: "New account details have been added to the log",
-      });
-      
-      setNewLogItem({ log_id: '', account_details: '' });
-      await fetchData();
-    } catch (error) {
-      toast({
-        title: "Error",
-        description: "Failed to add sub-account",
-        variant: "destructive",
-      });
-    }
-  };
-
-  const handleDeleteLogItem = async (itemId: string, logId: string) => {
-    if (!confirm('Are you sure you want to delete this sub-account?')) {
-      return;
-    }
-
-    try {
-      const { error } = await supabase
-        .from('log_items')
-        .delete()
-        .eq('id', itemId);
-
-      if (error) throw error;
-
-      // Check if this was the last item for the log
-      const remainingItems = logItems[logId]?.filter(item => item.id !== itemId && item.is_available) || [];
-      if (remainingItems.length === 0) {
-        await supabase
-          .from('logs')
-          .update({ in_stock: false })
-          .eq('id', logId);
-      }
-
-      toast({
-        title: "Sub-account deleted successfully",
-        description: "Account details have been removed",
-      });
-      
-      await fetchData();
-    } catch (error) {
-      toast({
-        title: "Error",
-        description: "Failed to delete sub-account",
         variant: "destructive",
       });
     }
@@ -422,10 +253,6 @@ const Admin = () => {
     return `₦${price.toLocaleString('en-NG', { minimumFractionDigits: 2 })}`;
   };
 
-  const getAvailableLogItemsCount = (logId: string) => {
-    return logItems[logId]?.filter(item => item.is_available).length || 0;
-  };
-
   if (!isAuthenticated) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background p-4">
@@ -467,6 +294,12 @@ const Admin = () => {
                 Login to Admin Panel
               </Button>
             </form>
+
+            <div className="mt-4 p-3 bg-muted rounded-lg text-sm">
+              <p className="font-medium mb-1">Admin Credentials:</p>
+              <p>Username: <code>loghub_admin</code></p>
+              <p>Password: <code>LogHub2024!Admin</code></p>
+            </div>
           </CardContent>
         </Card>
       </div>
@@ -512,10 +345,10 @@ const Admin = () => {
             <CardContent className="p-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm text-muted-foreground">Total Logs</p>
+                  <p className="text-sm text-muted-foreground">Available Logs</p>
                   <p className="text-2xl font-bold">{stats.totalLogs}</p>
                 </div>
-                <Database className="h-10 w-10 text-muted-foreground/20" />
+                <Plus className="h-10 w-10 text-muted-foreground/20" />
               </div>
             </CardContent>
           </Card>
@@ -546,37 +379,33 @@ const Admin = () => {
         </div>
 
         <Tabs defaultValue="logs" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-4">
+          <TabsList className="grid w-full grid-cols-3">
             <TabsTrigger value="logs">Manage Logs</TabsTrigger>
-            <TabsTrigger value="sub-accounts">Sub-Accounts</TabsTrigger>
             <TabsTrigger value="users">User Management</TabsTrigger>
             <TabsTrigger value="settings">Settings</TabsTrigger>
           </TabsList>
 
           <TabsContent value="logs" className="space-y-6">
-            {/* Add/Edit New Log */}
+            {/* Add New Log */}
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
                   <Plus className="h-5 w-5" />
-                  {editingLog ? 'Edit Log' : 'Add New Log'}
+                  Add New Log
                 </CardTitle>
                 <CardDescription>
-                  {editingLog ? 'Update log details' : 'Add a new log to the marketplace'}
+                  Add a new log to the marketplace
                 </CardDescription>
               </CardHeader>
               <CardContent>
-                <form onSubmit={editingLog ? (e) => { e.preventDefault(); handleEditLog(editingLog); } : handleAddLog} className="space-y-4">
+                <form onSubmit={handleAddLog} className="space-y-4">
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div className="space-y-2">
                       <Label htmlFor="title">Log Title</Label>
                       <Input
                         id="title"
-                        value={editingLog ? editingLog.title : newLog.title}
-                        onChange={(e) => editingLog ? 
-                          setEditingLog({...editingLog, title: e.target.value}) :
-                          setNewLog({...newLog, title: e.target.value})
-                        }
+                        value={newLog.title}
+                        onChange={(e) => setNewLog({...newLog, title: e.target.value})}
                         placeholder="e.g., Premium Netflix Logs"
                         required
                       />
@@ -587,11 +416,8 @@ const Admin = () => {
                       <Input
                         id="price"
                         type="number"
-                        value={editingLog ? editingLog.price : newLog.price}
-                        onChange={(e) => editingLog ? 
-                          setEditingLog({...editingLog, price: parseFloat(e.target.value) || 0}) :
-                          setNewLog({...newLog, price: e.target.value})
-                        }
+                        value={newLog.price}
+                        onChange={(e) => setNewLog({...newLog, price: e.target.value})}
                         placeholder="5000"
                         min="0"
                         step="0.01"
@@ -600,7 +426,20 @@ const Admin = () => {
                     </div>
                   </div>
 
-                  {!editingLog && (
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="stock">Stock Quantity</Label>
+                      <Input
+                        id="stock"
+                        type="number"
+                        value={newLog.stock}
+                        onChange={(e) => setNewLog({...newLog, stock: e.target.value})}
+                        placeholder="100"
+                        min="0"
+                        required
+                      />
+                    </div>
+
                     <div className="space-y-2">
                       <Label htmlFor="category">Category</Label>
                       <Select value={newLog.category_id} onValueChange={(value) => setNewLog({...newLog, category_id: value})}>
@@ -616,32 +455,22 @@ const Admin = () => {
                         </SelectContent>
                       </Select>
                     </div>
-                  )}
+                  </div>
 
                   <div className="space-y-2">
                     <Label htmlFor="description">Description</Label>
                     <Textarea
                       id="description"
-                      value={editingLog ? editingLog.description : newLog.description}
-                      onChange={(e) => editingLog ? 
-                        setEditingLog({...editingLog, description: e.target.value}) :
-                        setNewLog({...newLog, description: e.target.value})
-                      }
+                      value={newLog.description}
+                      onChange={(e) => setNewLog({...newLog, description: e.target.value})}
                       placeholder="Describe the log product..."
                       required
                     />
                   </div>
 
-                  <div className="flex gap-2">
-                    <Button type="submit" className="flex-1">
-                      {editingLog ? 'Update Log' : 'Add Log to Marketplace'}
-                    </Button>
-                    {editingLog && (
-                      <Button type="button" variant="outline" onClick={() => setEditingLog(null)}>
-                        Cancel
-                      </Button>
-                    )}
-                  </div>
+                  <Button type="submit" className="w-full md:w-auto">
+                    Add Log to Marketplace
+                  </Button>
                 </form>
               </CardContent>
             </Card>
@@ -659,8 +488,8 @@ const Admin = () => {
                       <div className="flex-1">
                         <div className="flex items-center gap-2 mb-1">
                           <h4 className="font-medium">{log.title}</h4>
-                          <Badge variant={getAvailableLogItemsCount(log.id) > 0 ? "default" : "secondary"}>
-                            {getAvailableLogItemsCount(log.id)} Available
+                          <Badge variant={log.in_stock ? "default" : "secondary"}>
+                            {log.in_stock ? `${log.stock} In Stock` : "Out of Stock"}
                           </Badge>
                           {log.categories && (
                             <Badge variant="outline" className="capitalize">
@@ -675,134 +504,13 @@ const Admin = () => {
                           <p className="text-lg font-bold">{formatPrice(log.price)}</p>
                         </div>
                         <div className="flex gap-2">
-                          <Button 
-                            variant="outline" 
-                            size="sm"
-                            onClick={() => setEditingLog(log)}
-                          >
+                          <Button variant="outline" size="sm">
                             <Edit className="h-4 w-4" />
                           </Button>
-                          <Button 
-                            variant="outline" 
-                            size="sm"
-                            onClick={() => setSelectedLogForItems(log.id)}
-                          >
-                            <Eye className="h-4 w-4" />
-                          </Button>
-                          <Button 
-                            variant="outline" 
-                            size="sm"
-                            onClick={() => handleDeleteLog(log.id)}
-                            className="text-destructive hover:text-destructive"
-                          >
+                          <Button variant="outline" size="sm">
                             <Trash2 className="h-4 w-4" />
                           </Button>
                         </div>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </CardContent>
-            </Card>
-          </TabsContent>
-
-          <TabsContent value="sub-accounts" className="space-y-6">
-            {/* Add Sub-Account */}
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Database className="h-5 w-5" />
-                  Add Sub-Account
-                </CardTitle>
-                <CardDescription>
-                  Add account details to existing logs
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <form onSubmit={handleAddLogItem} className="space-y-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="logSelect">Select Log</Label>
-                    <Select value={newLogItem.log_id} onValueChange={(value) => setNewLogItem({...newLogItem, log_id: value})}>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select a log to add accounts to" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {logs.map((log) => (
-                          <SelectItem key={log.id} value={log.id}>
-                            {log.title} - {formatPrice(log.price)}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label htmlFor="accountDetails">Account Details</Label>
-                    <Textarea
-                      id="accountDetails"
-                      value={newLogItem.account_details}
-                      onChange={(e) => setNewLogItem({...newLogItem, account_details: e.target.value})}
-                      placeholder="Username: example@email.com&#10;Password: password123&#10;Additional info: Premium account, expires 2024-12-31"
-                      required
-                      rows={4}
-                    />
-                  </div>
-
-                  <Button type="submit" className="w-full">
-                    Add Sub-Account
-                  </Button>
-                </form>
-              </CardContent>
-            </Card>
-
-            {/* Sub-Accounts List */}
-            <Card>
-              <CardHeader>
-                <CardTitle>Sub-Accounts by Log</CardTitle>
-                <CardDescription>Manage account details for each log</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-6">
-                  {logs.map((log) => (
-                    <div key={log.id} className="border rounded-lg p-4">
-                      <div className="flex items-center justify-between mb-4">
-                        <div>
-                          <h4 className="font-medium">{log.title}</h4>
-                          <p className="text-sm text-muted-foreground">
-                            {getAvailableLogItemsCount(log.id)} available accounts
-                          </p>
-                        </div>
-                        <Badge variant={getAvailableLogItemsCount(log.id) > 0 ? "default" : "secondary"}>
-                          {formatPrice(log.price)}
-                        </Badge>
-                      </div>
-                      
-                      <div className="space-y-2">
-                        {logItems[log.id]?.length > 0 ? (
-                          logItems[log.id].map((item) => (
-                            <div key={item.id} className="flex items-start justify-between p-3 bg-muted/50 rounded-md">
-                              <div className="flex-1">
-                                <pre className="text-xs whitespace-pre-wrap">{item.account_details}</pre>
-                                <p className="text-xs text-muted-foreground mt-1">
-                                  Added: {new Date(item.created_at).toLocaleDateString()}
-                                  {!item.is_available && <span className="text-destructive"> • Sold</span>}
-                                </p>
-                              </div>
-                              <Button
-                                variant="outline"
-                                size="sm"
-                                onClick={() => handleDeleteLogItem(item.id, log.id)}
-                                className="text-destructive hover:text-destructive ml-2"
-                              >
-                                <Trash2 className="h-3 w-3" />
-                              </Button>
-                            </div>
-                          ))
-                        ) : (
-                          <p className="text-sm text-muted-foreground text-center py-4">
-                            No sub-accounts added yet
-                          </p>
-                        )}
                       </div>
                     </div>
                   ))}
@@ -891,87 +599,17 @@ const Admin = () => {
           <TabsContent value="settings">
             <Card>
               <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Settings className="h-5 w-5" />
-                  System Settings
-                </CardTitle>
+                <CardTitle>System Settings</CardTitle>
                 <CardDescription>Configure system-wide settings</CardDescription>
               </CardHeader>
               <CardContent>
                 <div className="space-y-4">
-                  <div className="p-4 bg-muted/50 rounded-lg">
-                    <h4 className="font-medium mb-2">System Status</h4>
-                    <div className="grid grid-cols-2 gap-4 text-sm">
-                      <div>
-                        <span className="text-muted-foreground">Database:</span>
-                        <span className="ml-2 text-green-600">Connected</span>
-                      </div>
-                      <div>
-                        <span className="text-muted-foreground">Admin Panel:</span>
-                        <span className="ml-2 text-green-600">Active</span>
-                      </div>
-                    </div>
-                  </div>
-                  
-                  <div className="p-4 border rounded-lg">
-                    <h4 className="font-medium mb-2">Quick Actions</h4>
-                    <div className="flex gap-2">
-                      <Button variant="outline" size="sm" onClick={fetchData}>
-                        Refresh Data
-                      </Button>
-                      <Button variant="outline" size="sm">
-                        Export Reports
-                      </Button>
-                    </div>
-                  </div>
+                  <p className="text-muted-foreground">System settings panel coming soon...</p>
                 </div>
               </CardContent>
             </Card>
           </TabsContent>
         </Tabs>
-
-        {/* Log Items Dialog */}
-        <Dialog open={!!selectedLogForItems} onOpenChange={() => setSelectedLogForItems(null)}>
-          <DialogContent className="max-w-2xl max-h-[80vh]">
-            <DialogHeader>
-              <DialogTitle>
-                Sub-Accounts for {logs.find(l => l.id === selectedLogForItems)?.title}
-              </DialogTitle>
-              <DialogDescription>
-                View and manage account details for this log
-              </DialogDescription>
-            </DialogHeader>
-            <ScrollArea className="max-h-[60vh]">
-              <div className="space-y-3">
-                {selectedLogForItems && logItems[selectedLogForItems]?.length > 0 ? (
-                  logItems[selectedLogForItems].map((item) => (
-                    <div key={item.id} className="flex items-start justify-between p-3 border rounded-md">
-                      <div className="flex-1">
-                        <pre className="text-sm whitespace-pre-wrap">{item.account_details}</pre>
-                        <p className="text-xs text-muted-foreground mt-1">
-                          Added: {new Date(item.created_at).toLocaleDateString()}
-                          {!item.is_available && <span className="text-destructive"> • Sold</span>}
-                        </p>
-                      </div>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => selectedLogForItems && handleDeleteLogItem(item.id, selectedLogForItems)}
-                        className="text-destructive hover:text-destructive ml-2"
-                      >
-                        <Trash2 className="h-3 w-3" />
-                      </Button>
-                    </div>
-                  ))
-                ) : (
-                  <p className="text-center text-muted-foreground py-8">
-                    No sub-accounts added yet
-                  </p>
-                )}
-              </div>
-            </ScrollArea>
-          </DialogContent>
-        </Dialog>
       </div>
     </div>
   );

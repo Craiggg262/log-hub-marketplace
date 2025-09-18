@@ -6,7 +6,7 @@ import {
   ShoppingCart,
   History,
   Settings,
-  Shield
+  Plus
 } from "lucide-react";
 
 import {
@@ -21,16 +21,13 @@ import {
   useSidebar,
 } from "@/components/ui/sidebar";
 
-const menuItems = [
+  const menuItems = [
   { title: "Dashboard", url: "/dashboard", icon: Home },
   { title: "Wallet", url: "/wallet", icon: Wallet },
+  { title: "Fund Wallet", url: "/fund-wallet", icon: Plus },
   { title: "Orders", url: "/orders", icon: ShoppingCart },
   { title: "History", url: "/history", icon: History },
   { title: "Settings", url: "/settings", icon: Settings },
-];
-
-const adminItems = [
-  { title: "Admin Panel", url: "/admin", icon: Shield },
 ];
 
 export function AppSidebar() {
@@ -59,29 +56,6 @@ export function AppSidebar() {
           <SidebarGroupContent>
             <SidebarMenu>
               {menuItems.map((item) => (
-                <SidebarMenuItem key={item.title}>
-                  <SidebarMenuButton asChild>
-                    <NavLink 
-                      to={item.url} 
-                      className={getNavCls}
-                    >
-                      <item.icon className="h-5 w-5 shrink-0" />
-                      {!isCollapsed && <span>{item.title}</span>}
-                    </NavLink>
-                  </SidebarMenuButton>
-                </SidebarMenuItem>
-              ))}
-            </SidebarMenu>
-          </SidebarGroupContent>
-        </SidebarGroup>
-
-        <SidebarGroup>
-          <SidebarGroupLabel className={isCollapsed ? "hidden" : ""}>
-            Admin
-          </SidebarGroupLabel>
-          <SidebarGroupContent>
-            <SidebarMenu>
-              {adminItems.map((item) => (
                 <SidebarMenuItem key={item.title}>
                   <SidebarMenuButton asChild>
                     <NavLink 

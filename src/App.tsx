@@ -9,6 +9,7 @@ import Login from "./pages/Login";
 import Signup from "./pages/Signup";
 import Dashboard from "./pages/Dashboard";
 import Wallet from "./pages/Wallet";
+import FundWallet from "./pages/FundWallet";
 import Orders from "./pages/Orders";
 import History from "./pages/History";
 import Settings from "./pages/Settings";
@@ -16,6 +17,7 @@ import Admin from "./pages/Admin";
 import Layout from "./components/Layout";
 import NotFound from "./pages/NotFound";
 import Cart from "./pages/Cart";
+import AISupport from "./components/AISupport";
 
 const queryClient = new QueryClient();
 
@@ -67,6 +69,7 @@ function AppContent() {
         {/* Protected Routes */}
         <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
         <Route path="/wallet" element={<ProtectedRoute><Wallet /></ProtectedRoute>} />
+        <Route path="/fund-wallet" element={<ProtectedRoute><FundWallet /></ProtectedRoute>} />
         <Route path="/orders" element={<ProtectedRoute><Orders /></ProtectedRoute>} />
         <Route path="/history" element={<ProtectedRoute><History /></ProtectedRoute>} />
         <Route path="/settings" element={<ProtectedRoute><Settings /></ProtectedRoute>} />
@@ -78,6 +81,7 @@ function AppContent() {
         {/* 404 Route */}
         <Route path="*" element={<NotFound />} />
       </Routes>
+      <AISupport />
     </BrowserRouter>
   );
 }
