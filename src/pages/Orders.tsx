@@ -3,14 +3,20 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { ShoppingCart, Search, Download, Eye, Calendar } from 'lucide-react';
+import { ShoppingCart, Search, Download, Eye, Calendar, Copy, Lock } from 'lucide-react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { useOrders } from '@/hooks/useOrders';
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { ScrollArea } from '@/components/ui/scroll-area';
+import { useToast } from '@/hooks/use-toast';
+import { useOrders, type Order } from '@/hooks/useOrders';
+import SocialIcon from '@/components/SocialIcon';
 
 const Orders = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
+  const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
   const { orders, loading } = useOrders();
+  const { toast } = useToast();
 
   const filteredOrders = orders.filter(order => {
     if (!order.order_items || order.order_items.length === 0) return false;
@@ -36,12 +42,45 @@ const Orders = () => {
     }
   };
 
-  const handleDownload = (order: any) => {
-    // Simulate download - In real app, this would download actual log files
-    const logFiles = order.order_items.map((item: any) => item.logs.title).join(', ');
-    
-    const content = `Order #${order.id}\nLogs: ${logFiles}\nTotal: ₦${order.total_amount.toLocaleString('en-NG', { minimumFractionDigits: 2 })}\nDate: ${new Date(order.created_at).toLocaleDateString()}`;
-    
+  const handleCopyText = (text: string, description: string) => {
+    navigator.clipboard.writeText(text);
+    toast({
+      title: "Copied!",
+      description: `${description} copied to clipboard`,
+    });
+  };
+
+  const handleDownloadOrder = (order: Order) => {
+    if (order.status !== 'completed') {
+      toast({
+        title: "Order not completed",
+        description: "You can only download completed orders",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    let content = `ORDER DETAILS\n`;
+    content += `Order ID: ${order.id}\n`;
+    content += `Date: ${new Date(order.created_at).toLocaleDateString()}\n`;
+    content += `Status: ${order.status}\n`;
+    content += `Total: ₦${order.total_amount.toLocaleString('en-NG', { minimumFractionDigits: 2 })}\n\n`;
+
+    order.order_items.forEach((item, index) => {
+      content += `--- LOG ${index + 1}: ${item.logs.title} ---\n`;
+      content += `Quantity: ${item.quantity}\n`;
+      content += `Price per item: ₦${item.price_per_item.toLocaleString('en-NG', { minimumFractionDigits: 2 })}\n\n`;
+      
+      if (item.order_log_items && item.order_log_items.length > 0) {
+        content += `ACCOUNT DETAILS:\n`;
+        item.order_log_items.forEach((orderLogItem, accountIndex) => {
+          content += `Account ${accountIndex + 1}:\n`;
+          content += `${orderLogItem.log_items.account_details}\n\n`;
+        });
+      }
+      content += `\n`;
+    });
+
     const blob = new Blob([content], { type: 'text/plain' });
     const url = URL.createObjectURL(blob);
     const link = document.createElement('a');
@@ -51,6 +90,11 @@ const Orders = () => {
     link.click();
     document.body.removeChild(link);
     URL.revokeObjectURL(url);
+
+    toast({
+      title: "Download started",
+      description: "Your order details have been downloaded",
+    });
   };
 
   const formatPrice = (price: number) => {
@@ -165,8 +209,18 @@ const Orders = () => {
                     <div className="space-y-1">
                       {order.order_items.map((item) => (
                         <div key={item.id} className="flex justify-between items-center">
-                          <h3 className="text-lg font-semibold">{item.logs.title}</h3>
-                          <span className="text-sm text-muted-foreground">×{item.quantity}</span>
+                          <div className="flex items-center gap-2">
+                            <SocialIcon platform={item.logs.categories?.name || ''} size={20} />
+                            <h3 className="text-lg font-semibold">{item.logs.title}</h3>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <span className="text-sm text-muted-foreground">×{item.quantity}</span>
+                            {order.status === 'completed' && item.order_log_items && item.order_log_items.length > 0 && (
+                              <Badge variant="outline" className="text-xs">
+                                {item.order_log_items.length} Account{item.order_log_items.length > 1 ? 's' : ''}
+                              </Badge>
+                            )}
+                          </div>
                         </div>
                       ))}
                     </div>
@@ -182,14 +236,84 @@ const Orders = () => {
                     </div>
                     
                     <div className="flex gap-2">
-                      <Button variant="outline" size="sm">
-                        <Eye className="h-4 w-4 mr-2" />
-                        View
-                      </Button>
+                      <Dialog>
+                        <DialogTrigger asChild>
+                          <Button 
+                            variant="outline" 
+                            size="sm"
+                            onClick={() => setSelectedOrder(order)}
+                          >
+                            <Eye className="h-4 w-4 mr-2" />
+                            View Details
+                          </Button>
+                        </DialogTrigger>
+                        <DialogContent className="max-w-4xl max-h-[80vh]">
+                          <DialogHeader>
+                            <DialogTitle>Order Details - #{order.id.slice(0, 8)}</DialogTitle>
+                            <DialogDescription>
+                              Order placed on {new Date(order.created_at).toLocaleDateString()} • Status: {order.status}
+                            </DialogDescription>
+                          </DialogHeader>
+                          <ScrollArea className="max-h-[60vh]">
+                            <div className="space-y-6">
+                              {order.order_items.map((item, itemIndex) => (
+                                <div key={item.id} className="border rounded-lg p-4">
+                                  <div className="flex items-center gap-3 mb-4">
+                                    <SocialIcon platform={item.logs.categories?.name || ''} size={24} />
+                                    <div>
+                                      <h3 className="text-lg font-semibold">{item.logs.title}</h3>
+                                      <p className="text-sm text-muted-foreground">
+                                        Quantity: {item.quantity} • Price: {formatPrice(item.price_per_item)} each
+                                      </p>
+                                    </div>
+                                  </div>
+
+                                  {order.status === 'completed' && item.order_log_items && item.order_log_items.length > 0 ? (
+                                    <div className="space-y-3">
+                                      <h4 className="font-medium text-success">Account Details:</h4>
+                                      {item.order_log_items.map((orderLogItem, accountIndex) => (
+                                        <div key={orderLogItem.id} className="bg-muted/50 rounded-lg p-4">
+                                          <div className="flex items-center justify-between mb-2">
+                                            <h5 className="font-medium">Account {accountIndex + 1}</h5>
+                                            <Button
+                                              variant="ghost"
+                                              size="sm"
+                                              onClick={() => handleCopyText(orderLogItem.log_items.account_details, 'Account details')}
+                                            >
+                                              <Copy className="h-3 w-3" />
+                                            </Button>
+                                          </div>
+                                          <pre className="text-sm whitespace-pre-wrap bg-background p-3 rounded border">
+                                            {orderLogItem.log_items.account_details}
+                                          </pre>
+                                          <p className="text-xs text-muted-foreground mt-2">
+                                            Added: {new Date(orderLogItem.log_items.created_at).toLocaleDateString()}
+                                          </p>
+                                        </div>
+                                      ))}
+                                    </div>
+                                  ) : order.status === 'pending' ? (
+                                    <div className="bg-warning/10 border border-warning/20 rounded-lg p-4">
+                                      <div className="flex items-center gap-2 text-warning">
+                                        <Lock className="h-4 w-4" />
+                                        <span className="font-medium">Account details will be revealed once payment is processed</span>
+                                      </div>
+                                    </div>
+                                  ) : (
+                                    <div className="bg-muted/50 rounded-lg p-4">
+                                      <p className="text-muted-foreground text-sm">Account details not available for this order status</p>
+                                    </div>
+                                  )}
+                                </div>
+                              ))}
+                            </div>
+                          </ScrollArea>
+                        </DialogContent>
+                      </Dialog>
                       
                       {order.status === 'completed' && (
                         <Button 
-                          onClick={() => handleDownload(order)}
+                          onClick={() => handleDownloadOrder(order)}
                           size="sm"
                           className="gap-2"
                         >
@@ -214,8 +338,16 @@ const Orders = () => {
             <p className="text-muted-foreground">
               {searchTerm || statusFilter !== 'all' 
                 ? "No orders match your current filters."
-                : "You haven't made any purchases yet."}
+                : "You haven't made any purchases yet. Visit the Dashboard to browse available logs."}
             </p>
+            {!searchTerm && statusFilter === 'all' && (
+              <Button 
+                className="mt-4"
+                onClick={() => window.location.href = '/dashboard'}
+              >
+                Browse Logs
+              </Button>
+            )}
           </CardContent>
         </Card>
       )}

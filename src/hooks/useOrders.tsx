@@ -21,6 +21,14 @@ export interface Order {
         name: string;
       } | null;
     };
+    order_log_items: {
+      id: string;
+      log_items: {
+        id: string;
+        account_details: string;
+        created_at: string;
+      };
+    }[];
   }[];
 }
 
@@ -49,6 +57,14 @@ export function useOrders() {
               description,
               categories (
                 name
+              )
+            ),
+            order_log_items (
+              id,
+              log_items (
+                id,
+                account_details,
+                created_at
               )
             )
           )
@@ -79,26 +95,81 @@ export function useOrders() {
         .insert({
           user_id: user.id,
           total_amount: totalAmount,
-          status: 'pending'
+          status: 'completed' // Mark as completed since payment is from wallet
         })
         .select()
         .single();
 
       if (orderError) throw orderError;
 
-      // Create order items
-      const orderItems = cartItems.map(item => ({
-        order_id: order.id,
-        log_id: item.log_id,
-        quantity: item.quantity,
-        price_per_item: item.logs.price
-      }));
+      // Create order items and assign log items
+      for (const cartItem of cartItems) {
+        // Create order item
+        const { data: orderItem, error: orderItemError } = await supabase
+          .from('order_items')
+          .insert({
+            order_id: order.id,
+            log_id: cartItem.log_id,
+            quantity: cartItem.quantity,
+            price_per_item: cartItem.logs.price
+          })
+          .select()
+          .single();
 
-      const { error: itemsError } = await supabase
-        .from('order_items')
-        .insert(orderItems);
+        if (orderItemError) throw orderItemError;
 
-      if (itemsError) throw itemsError;
+        // Get available log items for this log
+        const { data: availableLogItems, error: logItemsError } = await supabase
+          .from('log_items')
+          .select('*')
+          .eq('log_id', cartItem.log_id)
+          .eq('is_available', true)
+          .limit(cartItem.quantity);
+
+        if (logItemsError) throw logItemsError;
+
+        if (!availableLogItems || availableLogItems.length < cartItem.quantity) {
+          throw new Error(`Insufficient stock for ${cartItem.logs.title}`);
+        }
+
+        // Assign log items to order and mark as unavailable
+        for (const logItem of availableLogItems) {
+          // Create order_log_items relationship
+          const { error: orderLogItemError } = await supabase
+            .from('order_log_items')
+            .insert({
+              order_item_id: orderItem.id,
+              log_item_id: logItem.id
+            });
+
+          if (orderLogItemError) throw orderLogItemError;
+
+          // Mark log item as unavailable
+          const { error: updateError } = await supabase
+            .from('log_items')
+            .update({ is_available: false })
+            .eq('id', logItem.id);
+
+          if (updateError) throw updateError;
+        }
+
+        // Update log stock count
+        const { data: remainingItems } = await supabase
+          .from('log_items')
+          .select('id')
+          .eq('log_id', cartItem.log_id)
+          .eq('is_available', true);
+
+        const remainingCount = remainingItems?.length || 0;
+        
+        await supabase
+          .from('logs')
+          .update({ 
+            stock: remainingCount,
+            in_stock: remainingCount > 0
+          })
+          .eq('id', cartItem.log_id);
+      }
 
       await fetchOrders();
       return order;
