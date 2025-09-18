@@ -51,17 +51,38 @@ export function useCart() {
     if (!user) throw new Error('Must be logged in to add to cart');
 
     try {
-      const { error } = await supabase
+      // First check if item exists
+      const { data: existingItem } = await supabase
         .from('cart_items')
-        .upsert({
-          user_id: user.id,
-          log_id: logId,
-          quantity,
-        });
+        .select('id, quantity')
+        .eq('user_id', user.id)
+        .eq('log_id', logId)
+        .maybeSingle();
 
-      if (error) throw error;
+      if (existingItem) {
+        // Update existing item quantity
+        const { error } = await supabase
+          .from('cart_items')
+          .update({ quantity: existingItem.quantity + quantity })
+          .eq('id', existingItem.id);
+        
+        if (error) throw error;
+      } else {
+        // Insert new item
+        const { error } = await supabase
+          .from('cart_items')
+          .insert({
+            user_id: user.id,
+            log_id: logId,
+            quantity,
+          });
+        
+        if (error) throw error;
+      }
+      
       await fetchCart();
     } catch (err) {
+      console.error('Add to cart error:', err);
       throw err;
     }
   };

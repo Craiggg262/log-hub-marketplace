@@ -43,13 +43,22 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const fetchProfile = async (userId: string) => {
-    const { data } = await supabase
-      .from('profiles')
-      .select('*')
-      .eq('user_id', userId)
-      .single();
-    
-    setProfile(data);
+    try {
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('user_id', userId)
+        .maybeSingle();
+      
+      if (error && error.code !== 'PGRST116') {
+        console.error('Error fetching profile:', error);
+      }
+      
+      setProfile(data);
+    } catch (error) {
+      console.error('Profile fetch error:', error);
+      setProfile(null);
+    }
   };
 
   const signIn = async (email: string, password: string) => {
@@ -69,14 +78,19 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     if (error) throw error;
     
     if (data.user) {
-      await supabase.from('profiles').insert([
-        {
-          user_id: data.user.id,
-          email,
-          full_name: fullName,
-          wallet_balance: 0.00,
-        },
-      ]);
+      try {
+        await supabase.from('profiles').insert([
+          {
+            user_id: data.user.id,
+            email,
+            full_name: fullName,
+            wallet_balance: 0.00,
+          },
+        ]);
+      } catch (profileError) {
+        console.error('Error creating profile:', profileError);
+        // Don't throw here as the user was created successfully
+      }
     }
   };
 
