@@ -61,46 +61,49 @@ const Cart = () => {
 
     const totalAmount = getTotalAmount();
     
-    if (!profile || profile.wallet_balance < totalAmount) {
+    // Check if user has sufficient wallet balance
+    if (profile && profile.wallet_balance >= totalAmount) {
+      // Process with wallet balance
+      try {
+        // Create order from cart
+        await createOrderFromCart(cartItems);
+        
+        // Deduct amount from wallet
+        await createTransaction(
+          -totalAmount, 
+          'purchase', 
+          `Purchase of ${getTotalItems()} items from cart`
+        );
+
+        // Clear cart after successful purchase
+        await clearCart();
+        
+        toast({
+          title: "Purchase successful!",
+          description: `₦${totalAmount.toLocaleString('en-NG')} has been deducted from your wallet. Check your orders to view details.`,
+        });
+
+        // Redirect to orders page
+        window.location.href = '/orders';
+        
+      } catch (error) {
+        console.error('Checkout error:', error);
+        toast({
+          title: "Purchase failed",
+          description: "There was an error processing your purchase. Please try again.",
+          variant: "destructive",
+        });
+      }
+    } else {
+      // Insufficient wallet balance - redirect to fund wallet
       toast({
         title: "Insufficient funds",
-        description: `Please add ${formatPrice(totalAmount - (profile?.wallet_balance || 0))} to your wallet to complete this purchase.`,
+        description: `Please add ₦${formatPrice(totalAmount - (profile?.wallet_balance || 0))} to your wallet to complete this purchase.`,
         variant: "destructive",
       });
-      return;
-    }
-
-    try {
-      // Create order from cart using existing hook
-      const { createOrderFromCart } = useOrders();
-      await createOrderFromCart(cartItems);
       
-      // Deduct amount from wallet
-      const { createTransaction } = useTransactions();
-      await createTransaction(
-        -totalAmount, 
-        'purchase', 
-        `Purchase of ${getTotalItems()} items from cart`
-      );
-
-      // Clear cart after successful purchase
-      await clearCart();
-      
-      toast({
-        title: "Purchase successful!",
-        description: `₦${totalAmount.toLocaleString('en-NG')} has been deducted from your wallet. Check your orders to view details.`,
-      });
-
-      // Redirect to orders page
-      window.location.href = '/orders';
-      
-    } catch (error) {
-      console.error('Checkout error:', error);
-      toast({
-        title: "Purchase failed",
-        description: "There was an error processing your purchase. Please try again.",
-        variant: "destructive",
-      });
+      // Redirect to fund wallet page
+      window.location.href = '/fund-wallet';
     }
   };
 
@@ -277,10 +280,12 @@ const Cart = () => {
                 onClick={handleCheckout} 
                 className="w-full gap-2" 
                 size="lg"
-                disabled={!profile || profile.wallet_balance < getTotalAmount()}
+                disabled={!profile}
               >
                 <CreditCard className="h-4 w-4" />
-                Complete Purchase
+                {profile && profile.wallet_balance >= getTotalAmount() 
+                  ? 'Complete Purchase' 
+                  : 'Add Funds & Purchase'}
               </Button>
 
               <div className="text-xs text-muted-foreground text-center">
