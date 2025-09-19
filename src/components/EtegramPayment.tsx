@@ -7,19 +7,49 @@ import { Clock } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/hooks/useAuth';
 import { useTransactions } from '@/hooks/useTransactions';
-import { payWithEtegram } from 'etegram-pay';
-
-
 interface EtegramPaymentProps {
   fundAmount: string;
   setFundAmount: (amount: string) => void;
 }
 
+declare global {
+  interface Window {
+    EtegramPay: {
+      setup: (config: any) => void;
+    };
+  }
+}
+
 const EtegramPayment: React.FC<EtegramPaymentProps> = ({ fundAmount, setFundAmount }) => {
   const [loading, setLoading] = useState(false);
+  const [scriptLoaded, setScriptLoaded] = useState(false);
   const { toast } = useToast();
   const { profile } = useAuth();
   const { createTransaction } = useTransactions();
+
+  // Load Etegram script
+  React.useEffect(() => {
+    if (!document.querySelector('script[src*="etegram"]')) {
+      const script = document.createElement('script');
+      script.src = 'https://js.etegram.com/etegram-inline.js';
+      script.async = true;
+      script.onload = () => {
+        setScriptLoaded(true);
+        console.log('Etegram script loaded successfully');
+      };
+      script.onerror = () => {
+        console.error('Failed to load Etegram script');
+        toast({
+          title: "Payment system error",
+          description: "Unable to load payment system. Please check your internet connection.",
+          variant: "destructive",
+        });
+      };
+      document.head.appendChild(script);
+    } else {
+      setScriptLoaded(true);
+    }
+  }, [toast]);
 
   const handleEtegramPayment = async () => {
     if (!fundAmount || parseFloat(fundAmount) <= 0) {
@@ -31,29 +61,62 @@ const EtegramPayment: React.FC<EtegramPaymentProps> = ({ fundAmount, setFundAmou
       return;
     }
 
-    // Remove authentication requirement for Etegram payment
+    if (!scriptLoaded || !window.EtegramPay) {
+      toast({
+        title: "Payment system not ready",
+        description: "Please wait a moment and try again.",
+        variant: "destructive",
+      });
+      return;
+    }
 
     const amount = parseFloat(fundAmount);
     setLoading(true);
 
     try {
-      const dataToSubmit = {
-        projectID: 'ewaarsfeolhcfzenahqj', // Your Supabase project ID
-        publicKey: 'pk_live-fc160084a6f541fb96ed52d02d45d883',
-        amount: amount.toString(),
+      const paymentConfig = {
+        key: 'pk_live-fc160084a6f541fb96ed52d02d45d883',
         email: profile?.email || 'guest@example.com',
-        phone: profile?.phone || '',
+        amount: amount * 100, // Convert to kobo
         firstname: profile?.full_name?.split(' ')[0] || profile?.email?.split('@')[0] || 'Guest',
         lastname: profile?.full_name?.split(' ')[1] || 'User',
+        phone: profile?.phone || '',
+        ref: `etegram_${Date.now()}_${Math.random().toString(36).substring(7)}`,
+        callback: function(response: any) {
+          console.log('Payment callback:', response);
+          if (response.status === 'success' || response.resp?.status === 'success') {
+            toast({
+              title: "Payment successful!",
+              description: `Your wallet has been funded with ₦${amount.toLocaleString()}.`,
+            });
+            
+            // Create transaction record
+            if (profile?.id) {
+              createTransaction(
+                amount,
+                'deposit',
+                `Wallet funding via Etegram - Ref: ${response.reference || response.resp?.reference}`
+              ).catch(console.error);
+            }
+            
+            // Reset form
+            setFundAmount('');
+          } else {
+            toast({
+              title: "Payment failed",
+              description: "Your payment could not be processed. Please try again.",
+              variant: "destructive",
+            });
+          }
+        },
+        onClose: function() {
+          console.log('Payment modal closed');
+          setLoading(false);
+        }
       };
 
-      await payWithEtegram(dataToSubmit);
-
-      // The success will be handled by the webhook
-      toast({
-        title: "Payment processing",
-        description: "Your payment is being processed. Please wait...",
-      });
+      // Initialize Etegram payment
+      window.EtegramPay.setup(paymentConfig);
 
     } catch (error) {
       console.error('Error initializing Etegram:', error);
@@ -62,7 +125,6 @@ const EtegramPayment: React.FC<EtegramPaymentProps> = ({ fundAmount, setFundAmou
         description: "Unable to initialize payment system. Please try again later.",
         variant: "destructive",
       });
-    } finally {
       setLoading(false);
     }
   };
