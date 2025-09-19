@@ -7,6 +7,7 @@ import { useToast } from '@/hooks/use-toast';
 import { Wallet as WalletIcon, MessageCircle, Clock, Copy } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import EtegramPayment from '@/components/EtegramPayment';
 
 const FundWallet = () => {
   const [fundAmount, setFundAmount] = useState('');
@@ -64,26 +65,7 @@ const FundWallet = () => {
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Payment Methods */}
         <div className="space-y-4">
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Clock className="h-5 w-5" />
-                Automatic Payment
-              </CardTitle>
-              <CardDescription>
-                Fast and automated payment processing
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="text-center py-8">
-                <Badge variant="secondary" className="mb-4">Coming Soon</Badge>
-                <h3 className="text-lg font-semibold mb-2">Etegram</h3>
-                <p className="text-sm text-muted-foreground">
-                  Automated payment system will be available soon
-                </p>
-              </div>
-            </CardContent>
-          </Card>
+          <EtegramPayment fundAmount={fundAmount} setFundAmount={setFundAmount} />
 
           <Card>
             <CardHeader>
