@@ -56,9 +56,9 @@ const EtegramPayment: React.FC<EtegramPaymentProps> = ({ fundAmount, setFundAmou
         script.async = true;
         document.head.appendChild(script);
         
-        await new Promise((resolve, reject) => {
-          script.onload = resolve;
-          script.onerror = reject;
+        await new Promise<void>((resolve, reject) => {
+          script.onload = () => resolve();
+          script.onerror = () => reject(new Error('Failed to load Etegram script'));
         });
       }
 
@@ -76,7 +76,7 @@ const EtegramPayment: React.FC<EtegramPaymentProps> = ({ fundAmount, setFundAmou
             await createTransaction(
               amount,
               'deposit',
-              `Etegram payment - Transaction ID: ${response.transaction_id || response.transactionId}`
+              `Etegram payment - Transaction ID: ${response.transaction_id || response.transactionId || 'unknown'}`
             );
 
             toast({
