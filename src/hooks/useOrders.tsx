@@ -81,13 +81,18 @@ export function useOrders() {
     }
   };
 
-  const createOrderFromCart = async (cartItems: any[]) => {
+  const createOrderFromCart = async (cartItems: any[], userProfile: any) => {
     if (!user || cartItems.length === 0) return null;
 
     try {
       const totalAmount = cartItems.reduce((total, item) => {
         return total + (item.logs.price * item.quantity);
       }, 0);
+
+      // Check if user has sufficient wallet balance
+      if (!userProfile || userProfile.wallet_balance < totalAmount) {
+        throw new Error(`Insufficient wallet balance. Required: ₦${totalAmount.toLocaleString('en-NG')}, Available: ₦${(userProfile?.wallet_balance || 0).toLocaleString('en-NG')}`);
+      }
 
       // Create order
       const { data: order, error: orderError } = await supabase

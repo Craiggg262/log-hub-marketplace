@@ -80,7 +80,7 @@ const Dashboard = () => {
 
     try {
       // Create order in database
-      const order = await createOrderFromCart(cartItems);
+      const order = await createOrderFromCart(cartItems, profile);
       
       if (order) {
         // Clear cart after successful order creation

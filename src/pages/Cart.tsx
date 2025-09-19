@@ -66,7 +66,7 @@ const Cart = () => {
       // Process with wallet balance
       try {
         // Create order from cart
-        await createOrderFromCart(cartItems);
+        await createOrderFromCart(cartItems, profile);
         
         // Deduct amount from wallet
         await createTransaction(

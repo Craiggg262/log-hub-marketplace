@@ -7,13 +7,8 @@ import { Clock } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/hooks/useAuth';
 import { useTransactions } from '@/hooks/useTransactions';
+import { payWithEtegram } from 'etegram-pay';
 
-// Declare the Etegram global interface
-declare global {
-  interface Window {
-    Etegram: any;
-  }
-}
 
 interface EtegramPaymentProps {
   fundAmount: string;
@@ -49,69 +44,23 @@ const EtegramPayment: React.FC<EtegramPaymentProps> = ({ fundAmount, setFundAmou
     setLoading(true);
 
     try {
-      // Load Etegram script if not already loaded
-      if (!window.Etegram) {
-        const script = document.createElement('script');
-        script.src = 'https://js.etegram.com/inline.js';
-        script.async = true;
-        document.head.appendChild(script);
-        
-        await new Promise<void>((resolve, reject) => {
-          script.onload = () => resolve();
-          script.onerror = () => reject(new Error('Failed to load Etegram script'));
-        });
-      }
+      const dataToSubmit = {
+        projectID: 'ewaarsfeolhcfzenahqj', // Your Supabase project ID
+        publicKey: 'pk_live-fc160084a6f541fb96ed52d02d45d883',
+        amount: amount.toString(),
+        email: profile.email,
+        phone: profile.phone || '',
+        firstname: profile.full_name?.split(' ')[0] || profile.email.split('@')[0],
+        lastname: profile.full_name?.split(' ')[1] || '',
+      };
 
-      // Initialize Etegram payment
-      const etegram = new window.Etegram({
-        public_key: 'pk_live-fc160084a6f541fb96ed52d02d45d883',
-        amount: amount * 100, // Convert to kobo
-        currency: 'NGN',
-        customer_email: profile.email,
-        customer_name: profile.full_name || profile.email,
-        callback_url: 'https://0b928970e697.pagentry.africa/',
-        onSuccess: async (response: any) => {
-          try {
-            // Create transaction record for successful payment
-            await createTransaction(
-              amount,
-              'deposit',
-              `Etegram payment - Transaction ID: ${response.transaction_id || response.transactionId || 'unknown'}`
-            );
+      await payWithEtegram(dataToSubmit);
 
-            toast({
-              title: "Payment successful!",
-              description: `₦${amount.toLocaleString('en-NG')} has been added to your wallet.`,
-            });
-
-            setFundAmount('');
-            
-            // Refresh the page to update wallet balance
-            window.location.reload();
-          } catch (error) {
-            console.error('Error processing successful payment:', error);
-            toast({
-              title: "Payment completed but error occurred",
-              description: "Your payment was successful but there was an error updating your wallet. Please contact support.",
-              variant: "destructive",
-            });
-          }
-        },
-        onError: (error: any) => {
-          console.error('Etegram payment error:', error);
-          toast({
-            title: "Payment failed",
-            description: "There was an error processing your payment. Please try again.",
-            variant: "destructive",
-          });
-        },
-        onClose: () => {
-          console.log('Payment dialog closed');
-        }
+      // The success will be handled by the webhook
+      toast({
+        title: "Payment processing",
+        description: "Your payment is being processed. Please wait...",
       });
-
-      etegram.setup();
-      etegram.open();
 
     } catch (error) {
       console.error('Error initializing Etegram:', error);

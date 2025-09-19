@@ -47,7 +47,7 @@ export function AppSidebar() {
   return (
     <Sidebar
       className="w-64"
-      collapsible="none"
+      collapsible="icon"
     >
       <SidebarContent>
         <SidebarGroup>
@@ -58,18 +58,18 @@ export function AppSidebar() {
             <SidebarMenu>
               {menuItems.map((item) => (
                 <SidebarMenuItem key={item.title}>
-                  <SidebarMenuButton asChild className="flex items-center justify-center md:justify-start">
-                    <NavLink 
-                      to={item.url} 
-                      className={getNavCls}
-                      title={item.title}
-                    >
-                      <item.icon className="h-5 w-5 shrink-0" />
-                      <span className="transition-opacity duration-200">
-                        {item.title}
-                      </span>
-                    </NavLink>
-                  </SidebarMenuButton>
+                    <SidebarMenuButton asChild className="flex items-center justify-center md:justify-start group">
+                      <NavLink 
+                        to={item.url} 
+                        className={getNavCls}
+                        title={item.title}
+                      >
+                        <item.icon className="h-5 w-5 shrink-0" />
+                        <span className="transition-opacity duration-200 group-hover:block hidden md:block">
+                          {item.title}
+                        </span>
+                      </NavLink>
+                    </SidebarMenuButton>
                 </SidebarMenuItem>
               ))}
             </SidebarMenu>
