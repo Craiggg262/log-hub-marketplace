@@ -23,9 +23,10 @@ import {
 
   const menuItems = [
   { title: "Dashboard", url: "/dashboard", icon: Home },
+  { title: "Cart", url: "/cart", icon: ShoppingCart },
   { title: "Wallet", url: "/wallet", icon: Wallet },
   { title: "Fund Wallet", url: "/fund-wallet", icon: Plus },
-  { title: "Orders", url: "/orders", icon: ShoppingCart },
+  { title: "Orders", url: "/orders", icon: History },
   { title: "History", url: "/history", icon: History },
   { title: "Settings", url: "/settings", icon: Settings },
 ];
@@ -45,12 +46,12 @@ export function AppSidebar() {
 
   return (
     <Sidebar
-      className={isCollapsed ? "w-14" : "w-64"}
-      collapsible="icon"
+      className="w-64"
+      collapsible="none"
     >
       <SidebarContent>
         <SidebarGroup>
-          <SidebarGroupLabel className={isCollapsed ? "sr-only" : ""}>
+          <SidebarGroupLabel>
             Navigation
           </SidebarGroupLabel>
           <SidebarGroupContent>
@@ -64,7 +65,7 @@ export function AppSidebar() {
                       title={item.title}
                     >
                       <item.icon className="h-5 w-5 shrink-0" />
-                      <span className={`${isCollapsed ? 'sr-only md:not-sr-only' : ''} transition-opacity duration-200`}>
+                      <span className="transition-opacity duration-200">
                         {item.title}
                       </span>
                     </NavLink>

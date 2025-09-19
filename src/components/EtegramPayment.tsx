@@ -36,7 +36,7 @@ const EtegramPayment: React.FC<EtegramPaymentProps> = ({ fundAmount, setFundAmou
       return;
     }
 
-    if (!profile) {
+    if (!profile || !profile.email) {
       toast({
         title: "Authentication required",
         description: "Please log in to fund your wallet.",
