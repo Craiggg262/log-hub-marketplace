@@ -8,7 +8,7 @@ import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/hooks/useAuth';
 import { useTransactions } from '@/hooks/useTransactions';
 
-// Import the Etegram payment library
+// Declare the Etegram global interface
 declare global {
   interface Window {
     Etegram: any;
@@ -76,7 +76,7 @@ const EtegramPayment: React.FC<EtegramPaymentProps> = ({ fundAmount, setFundAmou
             await createTransaction(
               amount,
               'deposit',
-              `Etegram payment - Transaction ID: ${response.transaction_id}`
+              `Etegram payment - Transaction ID: ${response.transaction_id || response.transactionId}`
             );
 
             toast({

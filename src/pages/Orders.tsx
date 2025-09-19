@@ -3,12 +3,14 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { ShoppingCart, Search, Download, Eye, Calendar, Copy, Lock } from 'lucide-react';
+import { ShoppingCart, Search, Download, Eye, Calendar, Copy, Lock, Wallet } from 'lucide-react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { useToast } from '@/hooks/use-toast';
 import { useOrders, type Order } from '@/hooks/useOrders';
+import { useAuth } from '@/hooks/useAuth';
+import { useTransactions } from '@/hooks/useTransactions';
 import SocialIcon from '@/components/SocialIcon';
 
 const Orders = () => {
@@ -16,6 +18,8 @@ const Orders = () => {
   const [statusFilter, setStatusFilter] = useState('all');
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
   const { orders, loading } = useOrders();
+  const { profile } = useAuth();
+  const { createTransaction } = useTransactions();
   const { toast } = useToast();
 
   const filteredOrders = orders.filter(order => {
@@ -48,6 +52,52 @@ const Orders = () => {
       title: "Copied!",
       description: `${description} copied to clipboard`,
     });
+  };
+
+  const handleCashout = async (order: Order) => {
+    if (!profile) {
+      toast({
+        title: "Authentication required",
+        description: "Please log in to cashout your order.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    // Calculate cashout amount (80% of order value)
+    const cashoutAmount = order.total_amount * 0.8;
+    
+    try {
+      // Create withdrawal transaction  
+      await createTransaction(
+        cashoutAmount,
+        'refund',
+        `Cashout from order #${order.id.slice(0, 8)} - ${order.order_items.length} items`
+      );
+
+      toast({
+        title: "Cashout successful!",
+        description: `₦${cashoutAmount.toLocaleString('en-NG', { minimumFractionDigits: 2 })} has been added to your wallet balance.`,
+      });
+
+    } catch (error) {
+      console.error('Cashout error:', error);
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
+      
+      if (errorMessage.includes('insufficient')) {
+        toast({
+          title: "Insufficient balance",
+          description: "You don't have sufficient balance for this cashout.",
+          variant: "destructive",
+        });
+      } else {
+        toast({
+          title: "Cashout failed",
+          description: "There was an error processing your cashout. Please try again.",
+          variant: "destructive",
+        });
+      }
+    }
   };
 
   const handleDownloadOrder = (order: Order) => {
@@ -311,16 +361,28 @@ const Orders = () => {
                         </DialogContent>
                       </Dialog>
                       
-                      {order.status === 'completed' && (
-                        <Button 
-                          onClick={() => handleDownloadOrder(order)}
-                          size="sm"
-                          className="gap-2"
-                        >
-                          <Download className="h-4 w-4" />
-                          Download
-                        </Button>
-                      )}
+          {order.status === 'completed' && (
+            <div className="flex gap-2">
+              <Button 
+                onClick={() => handleDownloadOrder(order)}
+                size="sm"
+                className="gap-2"
+              >
+                <Download className="h-4 w-4" />
+                Download
+              </Button>
+              
+              <Button 
+                onClick={() => handleCashout(order)}
+                size="sm"
+                variant="outline"
+                className="gap-2"
+              >
+                <Wallet className="h-4 w-4" />
+                Cashout
+              </Button>
+            </div>
+          )}
                     </div>
                   </div>
                 </div>
