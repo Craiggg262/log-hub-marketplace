@@ -31,14 +31,7 @@ const EtegramPayment: React.FC<EtegramPaymentProps> = ({ fundAmount, setFundAmou
       return;
     }
 
-    if (!profile || !profile.email) {
-      toast({
-        title: "Authentication required",
-        description: "Please log in to fund your wallet.",
-        variant: "destructive",
-      });
-      return;
-    }
+    // Remove authentication requirement for Etegram payment
 
     const amount = parseFloat(fundAmount);
     setLoading(true);
@@ -48,10 +41,10 @@ const EtegramPayment: React.FC<EtegramPaymentProps> = ({ fundAmount, setFundAmou
         projectID: 'ewaarsfeolhcfzenahqj', // Your Supabase project ID
         publicKey: 'pk_live-fc160084a6f541fb96ed52d02d45d883',
         amount: amount.toString(),
-        email: profile.email,
-        phone: profile.phone || '',
-        firstname: profile.full_name?.split(' ')[0] || profile.email.split('@')[0],
-        lastname: profile.full_name?.split(' ')[1] || '',
+        email: profile?.email || 'guest@example.com',
+        phone: profile?.phone || '',
+        firstname: profile?.full_name?.split(' ')[0] || profile?.email?.split('@')[0] || 'Guest',
+        lastname: profile?.full_name?.split(' ')[1] || 'User',
       };
 
       await payWithEtegram(dataToSubmit);
