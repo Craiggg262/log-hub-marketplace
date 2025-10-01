@@ -43,42 +43,46 @@ const AISupport: React.FC = () => {
     
     // Knowledge base responses
     if (lowerMessage.includes('wallet') || lowerMessage.includes('fund') || lowerMessage.includes('balance')) {
-      return 'You can fund your wallet through our manual payment system. Go to the Fund Wallet page, enter your desired amount, and follow the bank transfer instructions. After payment, send your receipt via WhatsApp and your wallet will be credited within 5-10 minutes.';
+      return 'You can fund your wallet through two methods:\n\n1. Automatic Payment (Etegram): Fast and instant crediting\n2. Manual Payment: Contact support via WhatsApp\n\nGo to the Fund Wallet page and select your preferred method. For manual payments, your wallet will be credited within 5-10 minutes after verification.';
     }
     
     if (lowerMessage.includes('order') || lowerMessage.includes('purchase') || lowerMessage.includes('buy')) {
-      return 'To make a purchase: 1) Browse logs on the Dashboard, 2) Add items to your cart, 3) Ensure you have sufficient wallet balance, 4) Complete checkout. After purchase, you\'ll receive detailed account information in your Orders section.';
+      return 'To make a purchase:\n1. Browse logs on the Dashboard\n2. Add items to your cart\n3. Ensure sufficient wallet balance\n4. Complete checkout\n\nAfter purchase, you\'ll receive detailed account information in your Orders section immediately.';
     }
     
     if (lowerMessage.includes('account') || lowerMessage.includes('log') || lowerMessage.includes('detail')) {
-      return 'After purchasing logs, you\'ll find the complete account details (usernames, passwords, etc.) in your Orders section under Order Details. Each log contains verified accounts ready for immediate use.';
+      return 'After purchasing logs, you\'ll find complete account details (usernames, passwords, security info) in your Orders section. Each log contains verified accounts ready for immediate use. All accounts are tested before delivery.';
     }
     
-    if (lowerMessage.includes('payment') || lowerMessage.includes('bank') || lowerMessage.includes('transfer')) {
-      return 'We currently accept manual bank transfers. Use these details: Account: 5567602066, Name: EJEMEGWA CHUKWUJEKWU PETER, Bank: MONIEPOINT MFB. After payment, contact us via WhatsApp with your receipt and email for quick processing.';
+    if (lowerMessage.includes('payment') || lowerMessage.includes('bank') || lowerMessage.includes('transfer') || lowerMessage.includes('etegram')) {
+      return 'Payment Options:\n\n1. Etegram (Automatic): Instant crediting with virtual account\n2. Manual Transfer:\n   - Account: 5567602066\n   - Name: EJEMEGWA CHUKWUJEKWU PETER\n   - Bank: MONIEPOINT MFB\n\nFor manual payments, contact us via WhatsApp with your receipt and email: https://wa.link/8rqbox';
     }
     
-    if (lowerMessage.includes('support') || lowerMessage.includes('help') || lowerMessage.includes('contact')) {
-      return 'For additional support, you can contact us via WhatsApp at https://wa.link/8rqbox. Our team is available to help with payments, technical issues, and any other questions you may have.';
+    if (lowerMessage.includes('support') || lowerMessage.includes('help') || lowerMessage.includes('contact') || lowerMessage.includes('email')) {
+      return 'Need assistance? Contact us:\n\n📧 Email: info.loghubmarketplace@gmail.com\n💬 WhatsApp: https://wa.link/8rqbox\n\nOur support team is available to help with payments, technical issues, account problems, and any other questions you may have.';
     }
     
-    if (lowerMessage.includes('category') || lowerMessage.includes('type') || lowerMessage.includes('social')) {
-      return 'We offer logs for various platforms including social media accounts, streaming services, and more. Browse by category on the Dashboard to find exactly what you need. All accounts are verified and ready to use.';
+    if (lowerMessage.includes('category') || lowerMessage.includes('type') || lowerMessage.includes('social') || lowerMessage.includes('platform')) {
+      return 'We offer logs for various platforms:\n- Facebook (Standard & Below 50 Friends)\n- Instagram\n- Twitter\n- TikTok\n- Texting Apps\n- Rare Social Media\n\nBrowse by category on the Dashboard. All accounts are verified and ready to use immediately after purchase.';
     }
 
-    if (lowerMessage.includes('price') || lowerMessage.includes('cost') || lowerMessage.includes('cheap')) {
-      return 'Our log prices vary by platform and account type. You can see the current pricing on each log in the Dashboard. We offer competitive rates and frequently update our inventory with fresh accounts.';
+    if (lowerMessage.includes('price') || lowerMessage.includes('cost') || lowerMessage.includes('cheap') || lowerMessage.includes('expensive')) {
+      return 'Our log prices vary by platform and account type. You can see current pricing on each log in the Dashboard. We offer competitive rates and frequently update our inventory with fresh, verified accounts at various price points.';
     }
 
-    if (lowerMessage.includes('safe') || lowerMessage.includes('secure') || lowerMessage.includes('trust')) {
-      return 'Your security is our priority. All accounts are tested before listing, your personal data is encrypted, and our payment system is secure. We also provide customer support for any issues you may encounter.';
+    if (lowerMessage.includes('safe') || lowerMessage.includes('secure') || lowerMessage.includes('trust') || lowerMessage.includes('legit')) {
+      return 'Your security is our priority:\n✓ All accounts tested before listing\n✓ Personal data encrypted\n✓ Secure payment systems\n✓ Customer support available\n✓ Verified account credentials\n\nWe guarantee account quality and provide support for any issues.';
     }
 
-    // Default responses
+    if (lowerMessage.includes('problem') || lowerMessage.includes('issue') || lowerMessage.includes('error') || lowerMessage.includes('not working')) {
+      return 'I\'m sorry you\'re experiencing issues. For technical problems or account issues, please contact our support team directly:\n\n📧 Email: info.loghubmarketplace@gmail.com\n💬 WhatsApp: https://wa.link/8rqbox\n\nProvide details about your issue and we\'ll resolve it quickly.';
+    }
+
+    // Default responses with contact info
     const defaultResponses = [
-      'I understand you need help with that. Could you please provide more specific details about what you\'re looking for? I can assist with wallet funding, purchasing logs, order details, or platform navigation.',
-      'I\'m here to help! Can you tell me more about what you\'d like to know? Whether it\'s about our services, payment process, or account management, I\'ll provide you with the information you need.',
-      'Thanks for reaching out! For the best assistance, could you specify whether you need help with: funding your wallet, making purchases, accessing order details, or something else?'
+      'I\'m here to help! I can assist with wallet funding, purchases, orders, payments, or platform navigation. If you need more specific help, please contact our support team at info.loghubmarketplace@gmail.com or via WhatsApp: https://wa.link/8rqbox',
+      'Thanks for reaching out! I can help with questions about our services, payment process, or account management. For complex issues or personalized assistance, reach us at info.loghubmarketplace@gmail.com',
+      'I\'d be happy to help! Could you provide more details about what you need? For direct support, contact info.loghubmarketplace@gmail.com or WhatsApp us at https://wa.link/8rqbox'
     ];
     
     return defaultResponses[Math.floor(Math.random() * defaultResponses.length)];

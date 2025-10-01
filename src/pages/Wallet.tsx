@@ -8,6 +8,8 @@ import { Wallet as WalletIcon, Plus, MessageCircle, CreditCard, TrendingUp, Hist
 import { Badge } from '@/components/ui/badge';
 import { useAuth } from '@/hooks/useAuth';
 import { useTransactions } from '@/hooks/useTransactions';
+import EtegramPayment from '@/components/EtegramPayment';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
 const Wallet = () => {
   const [fundAmount, setFundAmount] = useState('');
@@ -106,94 +108,86 @@ const Wallet = () => {
         </Card>
       </div>
 
-      {/* Fund Wallet */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Plus className="h-5 w-5" />
-              Add Funds
-            </CardTitle>
-            <CardDescription>
-              Fund your wallet using manual payment method
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="amount">Amount (₦)</Label>
-              <Input
-                id="amount"
-                type="number"
-                placeholder="Enter amount"
-                value={fundAmount}
-                onChange={(e) => setFundAmount(e.target.value)}
-                min="1"
-                step="0.01"
-              />
-            </div>
+      {/* Fund Wallet with Tabs */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Plus className="h-5 w-5" />
+            Add Funds
+          </CardTitle>
+          <CardDescription>
+            Choose your preferred payment method
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <Tabs defaultValue="etegram" className="w-full">
+            <TabsList className="grid w-full grid-cols-2">
+              <TabsTrigger value="etegram">Automatic (Etegram)</TabsTrigger>
+              <TabsTrigger value="manual">Manual Payment</TabsTrigger>
+            </TabsList>
+            
+            <TabsContent value="etegram" className="mt-6">
+              <EtegramPayment fundAmount={fundAmount} setFundAmount={setFundAmount} />
+            </TabsContent>
+            
+            <TabsContent value="manual" className="mt-6 space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="manualAmount">Amount (₦)</Label>
+                <Input
+                  id="manualAmount"
+                  type="number"
+                  placeholder="Enter amount"
+                  value={fundAmount}
+                  onChange={(e) => setFundAmount(e.target.value)}
+                  min="1"
+                  step="0.01"
+                />
+              </div>
 
-            <div className="bg-muted/50 p-4 rounded-lg">
-              <div className="flex items-center gap-2 mb-2">
-                <MessageCircle className="h-4 w-4 text-primary" />
-                <span className="font-medium">Manual Payment</span>
-              </div>
-              <p className="text-sm text-muted-foreground">
-                Click below to contact our support team via WhatsApp for manual payment processing.
-              </p>
-            </div>
+              <div className="bg-muted/50 p-4 rounded-lg space-y-3">
+                <div className="flex items-center gap-2">
+                  <MessageCircle className="h-4 w-4 text-primary" />
+                  <span className="font-medium">Manual Payment Instructions</span>
+                </div>
+                
+                <div className="space-y-2 text-sm">
+                  <div className="flex items-start gap-2">
+                    <span className="font-medium">1.</span>
+                    <span>Enter the amount you want to add</span>
+                  </div>
+                  <div className="flex items-start gap-2">
+                    <span className="font-medium">2.</span>
+                    <span>Click "Pay via WhatsApp" below</span>
+                  </div>
+                  <div className="flex items-start gap-2">
+                    <span className="font-medium">3.</span>
+                    <span>Send payment proof to our support</span>
+                  </div>
+                  <div className="flex items-start gap-2">
+                    <span className="font-medium">4.</span>
+                    <span>Wallet credited within 5-10 minutes</span>
+                  </div>
+                </div>
 
-            <Button 
-              onClick={handleManualPayment}
-              className="w-full gap-2"
-              size="lg"
-            >
-              <MessageCircle className="h-4 w-4" />
-              Pay via WhatsApp
-            </Button>
-          </CardContent>
-        </Card>
+                <div className="pt-2 border-t">
+                  <p className="text-xs text-muted-foreground">
+                    Support: info.loghubmarketplace@gmail.com
+                  </p>
+                </div>
+              </div>
 
-        {/* Payment Instructions */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <CreditCard className="h-5 w-5" />
-              Payment Instructions
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="space-y-3">
-              <div className="flex items-start gap-3">
-                <div className="bg-primary text-primary-foreground rounded-full w-6 h-6 flex items-center justify-center text-sm font-medium">
-                  1
-                </div>
-                <p className="text-sm">Enter the amount you want to add to your wallet</p>
-              </div>
-              
-              <div className="flex items-start gap-3">
-                <div className="bg-primary text-primary-foreground rounded-full w-6 h-6 flex items-center justify-center text-sm font-medium">
-                  2
-                </div>
-                <p className="text-sm">Click "Pay via WhatsApp" to contact our support</p>
-              </div>
-              
-              <div className="flex items-start gap-3">
-                <div className="bg-primary text-primary-foreground rounded-full w-6 h-6 flex items-center justify-center text-sm font-medium">
-                  3
-                </div>
-                <p className="text-sm">Follow payment instructions provided by support</p>
-              </div>
-              
-              <div className="flex items-start gap-3">
-                <div className="bg-primary text-primary-foreground rounded-full w-6 h-6 flex items-center justify-center text-sm font-medium">
-                  4
-                </div>
-                <p className="text-sm">Your wallet will be funded within 5-10 minutes</p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
+              <Button 
+                onClick={handleManualPayment}
+                className="w-full gap-2"
+                size="lg"
+              >
+                <MessageCircle className="h-4 w-4" />
+                Pay via WhatsApp
+              </Button>
+            </TabsContent>
+          </Tabs>
+        </CardContent>
+      </Card>
 
       {/* Recent Transactions */}
       <Card>

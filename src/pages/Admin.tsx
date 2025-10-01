@@ -362,17 +362,27 @@ const Admin = () => {
     }
 
     try {
-      // Find user by email
+      // Find user by email - use maybeSingle to avoid errors when no user found
       const { data: profile, error: findError } = await supabase
         .from('profiles')
         .select('*')
-        .eq('email', fundUser.email)
-        .single();
+        .eq('email', fundUser.email.trim().toLowerCase())
+        .maybeSingle();
 
-      if (findError || !profile) {
+      if (findError) {
+        console.error('Error finding user:', findError);
+        toast({
+          title: "Database error",
+          description: "Error searching for user. Please try again.",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      if (!profile) {
         toast({
           title: "User not found",
-          description: "No user found with that email",
+          description: `No user registered with email: ${fundUser.email}`,
           variant: "destructive",
         });
         return;
@@ -388,7 +398,10 @@ const Admin = () => {
         })
         .eq('id', profile.id);
 
-      if (updateError) throw updateError;
+      if (updateError) {
+        console.error('Error updating balance:', updateError);
+        throw updateError;
+      }
 
       // Create transaction record
       const { error: transactionError } = await supabase

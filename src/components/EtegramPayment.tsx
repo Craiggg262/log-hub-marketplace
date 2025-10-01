@@ -29,26 +29,64 @@ const EtegramPayment: React.FC<EtegramPaymentProps> = ({ fundAmount, setFundAmou
 
   // Load Etegram script
   React.useEffect(() => {
-    if (!document.querySelector('script[src*="etegram"]')) {
+    const loadScript = () => {
+      // Check if script already exists
+      const existingScript = document.querySelector('script[src*="etegram"]');
+      if (existingScript) {
+        // Script exists, check if EtegramPay is available
+        if (window.EtegramPay) {
+          setScriptLoaded(true);
+          console.log('Etegram already loaded');
+        } else {
+          // Wait for it to load
+          const checkInterval = setInterval(() => {
+            if (window.EtegramPay) {
+              setScriptLoaded(true);
+              console.log('Etegram loaded after waiting');
+              clearInterval(checkInterval);
+            }
+          }, 100);
+          // Clear interval after 10 seconds if still not loaded
+          setTimeout(() => clearInterval(checkInterval), 10000);
+        }
+        return;
+      }
+
+      // Create and load new script
       const script = document.createElement('script');
       script.src = 'https://js.etegram.com/etegram-inline.js';
       script.async = true;
+      
       script.onload = () => {
-        setScriptLoaded(true);
-        console.log('Etegram script loaded successfully');
+        // Give it a moment to initialize
+        setTimeout(() => {
+          if (window.EtegramPay) {
+            setScriptLoaded(true);
+            console.log('Etegram script loaded successfully');
+          } else {
+            console.error('Etegram script loaded but EtegramPay not available');
+            toast({
+              title: "Payment system initialization error",
+              description: "Please refresh the page and try again.",
+              variant: "destructive",
+            });
+          }
+        }, 500);
       };
-      script.onerror = () => {
-        console.error('Failed to load Etegram script');
+      
+      script.onerror = (error) => {
+        console.error('Failed to load Etegram script:', error);
         toast({
           title: "Payment system error",
-          description: "Unable to load payment system. Please check your internet connection.",
+          description: "Unable to load payment system. Please check your internet connection and refresh the page.",
           variant: "destructive",
         });
       };
+      
       document.head.appendChild(script);
-    } else {
-      setScriptLoaded(true);
-    }
+    };
+
+    loadScript();
   }, [toast]);
 
   const handleEtegramPayment = async () => {
