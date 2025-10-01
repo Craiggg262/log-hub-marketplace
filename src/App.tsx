@@ -62,7 +62,7 @@ function AppContent() {
     <BrowserRouter>
       <Routes>
         {/* Public Routes */}
-        <Route path="/" element={<Navigate to="/login" replace />} />
+        <Route path="/" element={<Index />} />
         <Route path="/login" element={<AuthRoute><Login /></AuthRoute>} />
         <Route path="/signup" element={<AuthRoute><Signup /></AuthRoute>} />
         
