@@ -362,11 +362,13 @@ const Admin = () => {
     }
 
     try {
-      // Find user by email - use maybeSingle to avoid errors when no user found
+      const searchEmail = fundUser.email.trim();
+      
+      // Find user by email - use ilike for case-insensitive matching
       const { data: profile, error: findError } = await supabase
         .from('profiles')
         .select('*')
-        .eq('email', fundUser.email.trim().toLowerCase())
+        .ilike('email', searchEmail)
         .maybeSingle();
 
       if (findError) {
@@ -380,9 +382,17 @@ const Admin = () => {
       }
 
       if (!profile) {
+        // Check if there are any profiles at all
+        const { data: allProfiles } = await supabase
+          .from('profiles')
+          .select('email')
+          .limit(5);
+        
+        console.log('Available emails:', allProfiles?.map(p => p.email));
+        
         toast({
           title: "User not found",
-          description: `No user registered with email: ${fundUser.email}`,
+          description: `No user registered with email: ${searchEmail}. Check if the user has signed up.`,
           variant: "destructive",
         });
         return;
