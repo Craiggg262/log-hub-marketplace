@@ -13,7 +13,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { useTransactions } from '@/hooks/useTransactions';
 import SocialIcon from '@/components/SocialIcon';
 import Layout from '@/components/Layout';
-import logoImage from '@/assets/logo.jpg';
+import logoImage from '@/assets/logo.png';
 
 const Orders = () => {
   const [searchTerm, setSearchTerm] = useState('');

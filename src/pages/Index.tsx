@@ -3,7 +3,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { ShoppingCart, Shield, Zap, CheckCircle } from 'lucide-react';
 import SocialIcon from '@/components/SocialIcon';
-import logoImage from '@/assets/logo.jpg';
+import logoImage from '@/assets/logo.png';
 import heroImage from '@/assets/hero-shopping.jpg';
 
 const Index = () => {
