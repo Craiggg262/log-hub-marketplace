@@ -61,7 +61,7 @@ const Admin = () => {
     category_id: ''
   });
   const [editingLog, setEditingLog] = useState<LogData | null>(null);
-  const [fundUser, setFundUser] = useState({ email: '', amount: '' });
+  const [fundUser, setFundUser] = useState({ userId: '', amount: '' });
   const [newLogItem, setNewLogItem] = useState({ log_id: '', account_details: '' });
   const [categories, setCategories] = useState<any[]>([]);
   const [selectedLogForItems, setSelectedLogForItems] = useState<string | null>(null);
@@ -352,23 +352,23 @@ const Admin = () => {
 
   const handleFundUser = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!fundUser.email || !fundUser.amount) {
+    if (!fundUser.userId || !fundUser.amount) {
       toast({
         title: "Missing fields",
-        description: "Please provide email and amount",
+        description: "Please provide User ID and amount",
         variant: "destructive",
       });
       return;
     }
 
     try {
-      const searchEmail = fundUser.email.trim();
+      const userId = fundUser.userId.trim();
       
-      // Find user by email - use ilike for case-insensitive matching
+      // Find user by user_id
       const { data: profile, error: findError } = await supabase
         .from('profiles')
         .select('*')
-        .ilike('email', searchEmail)
+        .eq('user_id', userId)
         .maybeSingle();
 
       if (findError) {
@@ -392,7 +392,7 @@ const Admin = () => {
         
         toast({
           title: "User not found",
-          description: `No user registered with email: ${searchEmail}. Check if the user has signed up.`,
+          description: `No user found with User ID: ${userId}`,
           variant: "destructive",
         });
         return;
@@ -427,10 +427,10 @@ const Admin = () => {
 
       toast({
         title: "User funded successfully",
-        description: `₦${amount.toLocaleString('en-NG')} has been added to ${fundUser.email}'s wallet`,
+        description: `₦${amount.toLocaleString('en-NG')} has been added to ${profile.email}'s wallet`,
       });
       
-      setFundUser({ email: '', amount: '' });
+      setFundUser({ userId: '', amount: '' });
       await fetchData();
     } catch (error) {
       toast({
@@ -843,20 +843,20 @@ const Admin = () => {
                   Fund User Wallet
                 </CardTitle>
                 <CardDescription>
-                  Add funds to a user's wallet using their email
+                  Add funds to a user's wallet using their User ID (from the Users list below)
                 </CardDescription>
               </CardHeader>
               <CardContent>
                 <form onSubmit={handleFundUser} className="space-y-4">
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div className="space-y-2">
-                      <Label htmlFor="userEmail">User Email</Label>
+                      <Label htmlFor="userId">User ID</Label>
                       <Input
-                        id="userEmail"
-                        type="email"
-                        value={fundUser.email}
-                        onChange={(e) => setFundUser({...fundUser, email: e.target.value})}
-                        placeholder="user@example.com"
+                        id="userId"
+                        type="text"
+                        value={fundUser.userId}
+                        onChange={(e) => setFundUser({...fundUser, userId: e.target.value})}
+                        placeholder="User ID from profiles list"
                         required
                       />
                     </div>
