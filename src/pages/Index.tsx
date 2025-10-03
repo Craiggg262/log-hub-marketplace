@@ -1,7 +1,7 @@
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { ShoppingCart, Shield, Zap, CheckCircle } from 'lucide-react';
+import { ShoppingCart, Shield, Zap, CheckCircle, MessageCircle } from 'lucide-react';
 import SocialIcon from '@/components/SocialIcon';
 import logoImage from '@/assets/logo.png';
 import heroImage from '@/assets/hero-shopping.jpg';
@@ -87,6 +87,15 @@ const Index = () => {
               onClick={() => navigate('/login')}
             >
               Login
+            </Button>
+            <Button 
+              size="lg" 
+              variant="default"
+              className="gap-2 px-8 bg-green-600 hover:bg-green-700"
+              onClick={() => window.open('https://chat.whatsapp.com/LltaVAyG0BvJp5t9gmlqz7?mode=ems_copy_h_t', '_blank')}
+            >
+              <MessageCircle className="h-5 w-5" />
+              Join WhatsApp Group
             </Button>
           </div>
         </div>

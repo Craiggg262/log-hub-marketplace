@@ -843,20 +843,20 @@ const Admin = () => {
                   Fund User Wallet
                 </CardTitle>
                 <CardDescription>
-                  Add funds to a user's wallet using their User ID (from the Users list below)
+                  Add funds to a user's wallet using their Supabase UID (shown in the Users list below)
                 </CardDescription>
               </CardHeader>
               <CardContent>
                 <form onSubmit={handleFundUser} className="space-y-4">
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div className="space-y-2">
-                      <Label htmlFor="userId">User ID</Label>
+                      <Label htmlFor="userId">User UID (Supabase User ID)</Label>
                       <Input
                         id="userId"
                         type="text"
                         value={fundUser.userId}
                         onChange={(e) => setFundUser({...fundUser, userId: e.target.value})}
-                        placeholder="User ID from profiles list"
+                        placeholder="Copy UID from users list below"
                         required
                       />
                     </div>
@@ -896,6 +896,9 @@ const Admin = () => {
                       <div className="flex-1">
                         <h4 className="font-medium">{profile.full_name || 'Unnamed User'}</h4>
                         <p className="text-sm text-muted-foreground">{profile.email}</p>
+                        <p className="text-xs text-muted-foreground font-mono bg-muted/50 px-2 py-1 rounded inline-block my-1">
+                          UID: {profile.user_id}
+                        </p>
                         <p className="text-xs text-muted-foreground">
                           Joined: {new Date(profile.created_at).toLocaleDateString()}
                         </p>
