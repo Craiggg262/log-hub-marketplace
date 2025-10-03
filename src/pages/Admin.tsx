@@ -81,11 +81,19 @@ const Admin = () => {
 
   const fetchData = async () => {
     try {
+      // Check current auth session
+      const { data: { session } } = await supabase.auth.getSession();
+      console.log('Admin session:', session);
+      console.log('Current user:', session?.user?.id);
+
       // Fetch profiles
-      const { data: profilesData } = await supabase
+      const { data: profilesData, error: profilesError } = await supabase
         .from('profiles')
         .select('*')
         .order('created_at', { ascending: false });
+
+      console.log('Profiles data:', profilesData);
+      console.log('Profiles error:', profilesError);
 
       setProfiles(profilesData || []);
 
