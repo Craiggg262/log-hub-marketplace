@@ -44,7 +44,9 @@ interface LogItem {
 
 const Admin = () => {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const [loginData, setLoginData] = useState({ username: '', password: '' });
+  const [loginData, setLoginData] = useState({ email: '', password: '' });
+  const [isAdmin, setIsAdmin] = useState(false);
+  const [loading, setLoading] = useState(true);
   const [profiles, setProfiles] = useState<Profile[]>([]);
   const [logs, setLogs] = useState<LogData[]>([]);
   const [logItems, setLogItems] = useState<Record<string, LogItem[]>>({});
@@ -67,17 +69,45 @@ const Admin = () => {
   const [selectedLogForItems, setSelectedLogForItems] = useState<string | null>(null);
   const { toast } = useToast();
 
-  // Admin credentials
-  const ADMIN_CREDENTIALS = {
-    username: 'loghub_admin',
-    password: 'LogHub2024!Admin'
-  };
+  // Check authentication and admin status on mount
+  useEffect(() => {
+    checkAuth();
+  }, []);
 
   useEffect(() => {
-    if (isAuthenticated) {
+    if (isAuthenticated && isAdmin) {
       fetchData();
     }
-  }, [isAuthenticated]);
+  }, [isAuthenticated, isAdmin]);
+
+  const checkAuth = async () => {
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      
+      if (!session) {
+        setLoading(false);
+        return;
+      }
+
+      // Check if user has admin role
+      const { data: roleData } = await supabase
+        .from('user_roles')
+        .select('role')
+        .eq('user_id', session.user.id)
+        .eq('role', 'admin')
+        .maybeSingle();
+
+      if (roleData) {
+        setIsAuthenticated(true);
+        setIsAdmin(true);
+      }
+      
+      setLoading(false);
+    } catch (error) {
+      console.error('Auth check error:', error);
+      setLoading(false);
+    }
+  };
 
   const fetchData = async () => {
     try {
@@ -158,22 +188,58 @@ const Admin = () => {
     }
   };
 
-  const handleAdminLogin = (e: React.FormEvent) => {
+  const handleAdminLogin = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (loginData.username === ADMIN_CREDENTIALS.username && 
-        loginData.password === ADMIN_CREDENTIALS.password) {
+    
+    try {
+      const { data, error } = await supabase.auth.signInWithPassword({
+        email: loginData.email,
+        password: loginData.password,
+      });
+
+      if (error) throw error;
+
+      // Check if user has admin role
+      const { data: roleData } = await supabase
+        .from('user_roles')
+        .select('role')
+        .eq('user_id', data.user.id)
+        .eq('role', 'admin')
+        .maybeSingle();
+
+      if (!roleData) {
+        await supabase.auth.signOut();
+        toast({
+          title: "Access denied",
+          description: "You do not have admin privileges",
+          variant: "destructive",
+        });
+        return;
+      }
+
       setIsAuthenticated(true);
+      setIsAdmin(true);
       toast({
         title: "Admin login successful",
         description: "Welcome to the admin panel",
       });
-    } else {
+    } catch (error) {
       toast({
         title: "Login failed",
-        description: "Invalid admin credentials",
+        description: error instanceof Error ? error.message : "Invalid credentials",
         variant: "destructive",
       });
     }
+  };
+
+  const handleLogout = async () => {
+    await supabase.auth.signOut();
+    setIsAuthenticated(false);
+    setIsAdmin(false);
+    toast({
+      title: "Logged out",
+      description: "You have been logged out of the admin panel",
+    });
   };
 
   const handleAddLog = async (e: React.FormEvent) => {
@@ -457,7 +523,17 @@ const Admin = () => {
     return logItems[logId]?.filter(item => item.is_available).length || 0;
   };
 
-  if (!isAuthenticated) {
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-background">
+        <div className="text-center">
+          <p className="text-muted-foreground">Loading...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (!isAuthenticated || !isAdmin) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background p-4">
         <Card className="w-full max-w-md">
@@ -473,12 +549,13 @@ const Admin = () => {
           <CardContent>
             <form onSubmit={handleAdminLogin} className="space-y-4">
               <div className="space-y-2">
-                <Label htmlFor="username">Username</Label>
+                <Label htmlFor="email">Admin Email</Label>
                 <Input
-                  id="username"
-                  type="text"
-                  value={loginData.username}
-                  onChange={(e) => setLoginData({...loginData, username: e.target.value})}
+                  id="email"
+                  type="email"
+                  value={loginData.email}
+                  onChange={(e) => setLoginData({...loginData, email: e.target.value})}
+                  placeholder="admin@loghub.com"
                   required
                 />
               </div>
@@ -517,7 +594,7 @@ const Admin = () => {
           </div>
           <Button 
             variant="outline" 
-            onClick={() => setIsAuthenticated(false)}
+            onClick={handleLogout}
             className="gap-2"
           >
             <Shield className="h-4 w-4" />
