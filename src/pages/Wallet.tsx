@@ -120,14 +120,24 @@ const Wallet = () => {
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <Tabs defaultValue="etegram" className="w-full">
+          <Tabs defaultValue="manual" className="w-full">
             <TabsList className="grid w-full grid-cols-2">
-              <TabsTrigger value="etegram">Automatic (Etegram)</TabsTrigger>
+              <TabsTrigger value="etegram">Coming Soon!!!</TabsTrigger>
               <TabsTrigger value="manual">Manual Payment</TabsTrigger>
             </TabsList>
             
             <TabsContent value="etegram" className="mt-6">
-              <EtegramPayment fundAmount={fundAmount} setFundAmount={setFundAmount} />
+              <Card>
+                <CardHeader>
+                  <CardTitle>Automatic Payment</CardTitle>
+                  <CardDescription>This feature is coming soon!</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <p className="text-muted-foreground">
+                    We're working on integrating automatic payment processing. In the meantime, please use the manual payment option.
+                  </p>
+                </CardContent>
+              </Card>
             </TabsContent>
             
             <TabsContent value="manual" className="mt-6 space-y-4">

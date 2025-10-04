@@ -343,6 +343,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      create_order_from_cart: {
+        Args: { p_cart_items: Json; p_total_amount: number; p_user_id: string }
+        Returns: string
+      }
       get_available_log_items_count: {
         Args: { log_uuid: string }
         Returns: number
