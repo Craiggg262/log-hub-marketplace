@@ -429,20 +429,20 @@ const Admin = () => {
     if (!fundUser.userId || !fundUser.amount) {
       toast({
         title: "Missing fields",
-        description: "Please provide User ID and amount",
+        description: "Please provide user email and amount",
         variant: "destructive",
       });
       return;
     }
 
     try {
-      const userId = fundUser.userId.trim();
+      const userEmail = fundUser.userId.trim().toLowerCase();
       
-      // Find user by user_id
+      // Find user by email
       const { data: profile, error: findError } = await supabase
         .from('profiles')
         .select('*')
-        .eq('user_id', userId)
+        .eq('email', userEmail)
         .maybeSingle();
 
       if (findError) {
@@ -456,17 +456,9 @@ const Admin = () => {
       }
 
       if (!profile) {
-        // Check if there are any profiles at all
-        const { data: allProfiles } = await supabase
-          .from('profiles')
-          .select('email')
-          .limit(5);
-        
-        console.log('Available emails:', allProfiles?.map(p => p.email));
-        
         toast({
           title: "User not found",
-          description: `No user found with User ID: ${userId}`,
+          description: `No user found with email: ${userEmail}`,
           variant: "destructive",
         });
         return;
@@ -928,20 +920,20 @@ const Admin = () => {
                   Fund User Wallet
                 </CardTitle>
                 <CardDescription>
-                  Add funds to a user's wallet using their Supabase UID (shown in the Users list below)
+                  Add funds to a user's wallet using their email address (shown in the Users list below)
                 </CardDescription>
               </CardHeader>
               <CardContent>
                 <form onSubmit={handleFundUser} className="space-y-4">
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div className="space-y-2">
-                      <Label htmlFor="userId">User UID (Supabase User ID)</Label>
+                      <Label htmlFor="userId">User Email</Label>
                       <Input
                         id="userId"
-                        type="text"
+                        type="email"
                         value={fundUser.userId}
                         onChange={(e) => setFundUser({...fundUser, userId: e.target.value})}
-                        placeholder="Copy UID from users list below"
+                        placeholder="user@example.com"
                         required
                       />
                     </div>
