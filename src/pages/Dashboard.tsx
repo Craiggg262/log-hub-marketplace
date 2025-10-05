@@ -258,7 +258,7 @@ const Dashboard = () => {
               </CardDescription>
             </CardHeader>
             
-            <CardContent className="space-y-3">
+            <CardContent className="space-y-3 p-4 md:p-6">
               <div className="flex items-center gap-2">
                 <div className="flex items-center gap-1">
                   <Star className="h-4 w-4 fill-yellow-400 text-yellow-400" />
@@ -270,8 +270,8 @@ const Dashboard = () => {
               </div>
               
               <div className="space-y-2">
-                <div className="flex items-center justify-between">
-                  <span className="text-xl md:text-2xl font-bold text-primary">
+                <div className="flex items-center justify-between gap-2">
+                  <span className="text-xl md:text-2xl font-bold text-primary flex-shrink-0">
                     {formatPrice(log.price)}
                   </span>
                   <Button variant="outline" size="sm" className="shrink-0">
@@ -285,7 +285,7 @@ const Dashboard = () => {
                   size="sm"
                 >
                   <Plus className="h-4 w-4" />
-                  Add to Cart
+                  <span className="truncate">Add to Cart</span>
                 </Button>
               </div>
             </CardContent>
