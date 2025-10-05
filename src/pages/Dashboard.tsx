@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { useToast } from '@/hooks/use-toast';
-import { Wallet, ShoppingCart, Search, Star, Eye, Filter, Plus, Minus } from 'lucide-react';
+import { Wallet, ShoppingCart, Search, Star, Eye, Filter, Plus, Minus, MessageCircle } from 'lucide-react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useLogs } from '@/hooks/useLogs';
 import { useAuth } from '@/hooks/useAuth';
@@ -124,44 +124,53 @@ const Dashboard = () => {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 relative">
+      {/* Floating WhatsApp Button */}
+      <Button
+        onClick={() => window.open('https://chat.whatsapp.com/LltaVAyG0BvJp5t9gmlqz7?mode=ems_copy_h_t', '_blank')}
+        className="fixed bottom-20 right-4 md:right-6 z-50 h-14 w-14 rounded-full shadow-lg bg-green-600 hover:bg-green-700 p-0"
+        size="icon"
+      >
+        <MessageCircle className="h-6 w-6" />
+      </Button>
+
       {/* Welcome Section */}
-      <div className="bg-gradient-to-r from-primary/10 to-accent/10 rounded-lg p-6">
-        <h1 className="text-3xl font-bold mb-2">Welcome back, {profile?.full_name || user?.email || 'User'}!</h1>
-        <p className="text-muted-foreground mb-4">Discover premium logs from our marketplace</p>
+      <div className="bg-gradient-to-r from-primary/10 to-accent/10 rounded-lg p-4 md:p-6">
+        <h1 className="text-2xl md:text-3xl font-bold mb-2">Welcome back, {profile?.full_name || user?.email || 'User'}!</h1>
+        <p className="text-sm md:text-base text-muted-foreground mb-4">Discover premium logs from our marketplace</p>
         
-        <div className="flex flex-col sm:flex-row gap-4">
-          <Card className="flex-1 bg-card/50 backdrop-blur-sm">
-            <CardContent className="p-4">
-              <div className="flex items-center gap-3">
-                <Wallet className="h-8 w-8 text-primary" />
-                <div>
-                  <p className="text-sm text-muted-foreground">Wallet Balance</p>
-                  <p className="text-2xl font-bold">{formatPrice(profile?.wallet_balance || 0)}</p>
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 md:gap-4">
+          <Card className="bg-card/50 backdrop-blur-sm">
+            <CardContent className="p-3 md:p-4">
+              <div className="flex items-center gap-2 md:gap-3">
+                <Wallet className="h-6 w-6 md:h-8 md:w-8 text-primary flex-shrink-0" />
+                <div className="min-w-0">
+                  <p className="text-xs md:text-sm text-muted-foreground">Wallet Balance</p>
+                  <p className="text-lg md:text-2xl font-bold truncate">{formatPrice(profile?.wallet_balance || 0)}</p>
                 </div>
               </div>
             </CardContent>
           </Card>
           
-          <Card className="flex-1 bg-card/50 backdrop-blur-sm">
-            <CardContent className="p-4">
-              <div className="flex items-center gap-3">
-                <ShoppingCart className="h-8 w-8 text-primary" />
+          <Card className="bg-card/50 backdrop-blur-sm">
+            <CardContent className="p-3 md:p-4">
+              <div className="flex items-center gap-2 md:gap-3">
+                <ShoppingCart className="h-6 w-6 md:h-8 md:w-8 text-primary flex-shrink-0" />
                 <div>
-                  <p className="text-sm text-muted-foreground">Cart Items</p>
-                  <p className="text-2xl font-bold">{getTotalItems()}</p>
+                  <p className="text-xs md:text-sm text-muted-foreground">Cart Items</p>
+                  <p className="text-lg md:text-2xl font-bold">{getTotalItems()}</p>
                 </div>
               </div>
             </CardContent>
           </Card>
 
-          <Card className="flex-1 bg-card/50 backdrop-blur-sm">
-            <CardContent className="p-4">
-              <div className="flex items-center gap-3">
-                <Eye className="h-8 w-8 text-primary" />
+          <Card className="bg-card/50 backdrop-blur-sm">
+            <CardContent className="p-3 md:p-4">
+              <div className="flex items-center gap-2 md:gap-3">
+                <Eye className="h-6 w-6 md:h-8 md:w-8 text-primary flex-shrink-0" />
                 <div>
-                  <p className="text-sm text-muted-foreground">Available Logs</p>
-                  <p className="text-2xl font-bold">{logs.filter(log => log.in_stock).length}</p>
+                  <p className="text-xs md:text-sm text-muted-foreground">Available Logs</p>
+                  <p className="text-lg md:text-2xl font-bold">{logs.filter(log => log.in_stock).length}</p>
                 </div>
               </div>
             </CardContent>
@@ -170,16 +179,16 @@ const Dashboard = () => {
 
         {getTotalItems() > 0 && (
           <div className="mt-4">
-            <Button onClick={handleBuyNow} size="lg" className="gap-2">
+            <Button onClick={handleBuyNow} size="lg" className="gap-2 w-full sm:w-auto">
               <ShoppingCart className="h-4 w-4" />
-              Checkout Cart (₦{getTotalItems() > 0 ? cartItems.reduce((total, item) => total + (item.logs.price * item.quantity), 0).toLocaleString('en-NG') : '0'})
+              <span className="truncate">Checkout Cart (₦{getTotalItems() > 0 ? cartItems.reduce((total, item) => total + (item.logs.price * item.quantity), 0).toLocaleString('en-NG') : '0'})</span>
             </Button>
           </div>
         )}
       </div>
 
       {/* Search and Filters */}
-      <div className="flex flex-col md:flex-row gap-4">
+      <div className="flex flex-col sm:flex-row gap-3 md:gap-4 px-4 sm:px-0">
         <div className="flex-1 relative">
           <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
           <Input
@@ -191,7 +200,7 @@ const Dashboard = () => {
         </div>
         
         <Select value={selectedCategory} onValueChange={setSelectedCategory}>
-          <SelectTrigger className="w-full md:w-48">
+          <SelectTrigger className="w-full sm:w-48">
             <Filter className="h-4 w-4 mr-2" />
             <SelectValue />
           </SelectTrigger>
@@ -205,7 +214,7 @@ const Dashboard = () => {
         </Select>
 
         <Select value={sortBy} onValueChange={setSortBy}>
-          <SelectTrigger className="w-full md:w-48">
+          <SelectTrigger className="w-full sm:w-48">
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
@@ -218,7 +227,7 @@ const Dashboard = () => {
       </div>
 
       {/* Logs Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6 px-4 sm:px-0">
         {sortedLogs.map((log) => (
           <Card key={log.id} className="overflow-hidden hover:shadow-lg transition-shadow">
             <CardHeader className="pb-3">
