@@ -269,24 +269,24 @@ const Dashboard = () => {
                 </span>
               </div>
               
-              <div className="flex items-center justify-between">
-                <span className="text-2xl font-bold text-primary">
-                  {formatPrice(log.price)}
-                </span>
-                <div className="flex gap-2">
-                  <Button variant="outline" size="sm">
+              <div className="space-y-2">
+                <div className="flex items-center justify-between">
+                  <span className="text-xl md:text-2xl font-bold text-primary">
+                    {formatPrice(log.price)}
+                  </span>
+                  <Button variant="outline" size="sm" className="shrink-0">
                     <Eye className="h-4 w-4" />
                   </Button>
-                  <Button
-                    onClick={() => handleAddToCart(log)}
-                    disabled={!log.in_stock}
-                    className="gap-2"
-                    size="sm"
-                  >
-                    <Plus className="h-4 w-4" />
-                    Add to Cart
-                  </Button>
                 </div>
+                <Button
+                  onClick={() => handleAddToCart(log)}
+                  disabled={!log.in_stock}
+                  className="w-full gap-2"
+                  size="sm"
+                >
+                  <Plus className="h-4 w-4" />
+                  Add to Cart
+                </Button>
               </div>
             </CardContent>
           </Card>
