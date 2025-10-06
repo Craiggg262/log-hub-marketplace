@@ -168,13 +168,6 @@ const Orders = () => {
             <p className="text-muted-foreground">View and manage your purchase history</p>
           </div>
         </div>
-      <div className="flex items-center gap-3">
-        <ShoppingCart className="h-8 w-8 text-primary" />
-        <div>
-          <h1 className="text-3xl font-bold">Orders</h1>
-          <p className="text-muted-foreground">View and manage your purchases</p>
-        </div>
-      </div>
 
       {/* Stats Cards */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
