@@ -12,7 +12,6 @@ import { useOrders, type Order } from '@/hooks/useOrders';
 import { useAuth } from '@/hooks/useAuth';
 import { useTransactions } from '@/hooks/useTransactions';
 import SocialIcon from '@/components/SocialIcon';
-import Layout from '@/components/Layout';
 import logoImage from '@/assets/logo.png';
 
 const Orders = () => {
@@ -159,8 +158,7 @@ const Orders = () => {
     .reduce((sum, order) => sum + order.total_amount, 0);
 
   return (
-    <Layout>
-      <div className="container mx-auto px-4 py-8 space-y-8">
+    <div className="container mx-auto px-4 py-8 space-y-8">
         <div className="flex items-center gap-4 mb-6">
           <img src={logoImage} alt="Log Hub Logo" className="h-12 w-12 object-contain rounded-lg" />
           <div>
@@ -416,8 +414,7 @@ const Orders = () => {
           </CardContent>
         </Card>
       )}
-      </div>
-    </Layout>
+    </div>
   );
 };
 
