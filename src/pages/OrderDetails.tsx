@@ -288,13 +288,15 @@ const OrderDetails = () => {
                     <div className="flex gap-2">
                       <Dialog>
                         <DialogTrigger asChild>
-                          <Button 
-                            variant="outline" 
-                            size="sm"
-                            onClick={() => setSelectedOrder(order)}
-                          >
-                            <Eye className="h-4 w-4 mr-2" />
-                            View
+                          <Button
+                            onClick={() => {
+                              navigator.clipboard.writeText(accountDetails)
+                                toast.success("Copied to clipboard!")
+                            }}
+                            className="flex items-center gap-2"
+                            >
+                            <Copy className="h-3 w-3" />
+                            Copy
                           </Button>
                         </DialogTrigger>
                         <DialogContent className="max-w-4xl max-h-[80vh]">
