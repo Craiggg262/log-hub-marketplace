@@ -1,15 +1,23 @@
-iimport React, { useState } from 'react';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import React, { useState } from 'react';
+import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { ShoppingCart, Search, Download, Eye, Calendar } from 'lucide-react';
+import { ShoppingCart, Search, Download, Eye, Calendar, Copy, Lock, Wallet } from 'lucide-react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { useOrders } from '@/hooks/useOrders';
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { ScrollArea } from '@/components/ui/scroll-area';
+import { useToast } from '@/hooks/use-toast';
+import { useOrders, type Order } from '@/hooks/useOrders';
+import { useAuth } from '@/hooks/useAuth';
+import { useTransactions } from '@/hooks/useTransactions';
+import SocialIcon from '@/components/SocialIcon';
+import logoImage from '@/assets/logo.png';
 
-const Orders = () => {
+const OrderDetails = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
+  const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
   const { orders, loading } = useOrders();
   const { profile } = useAuth();
   const { createTransaction } = useTransactions();
@@ -39,7 +47,59 @@ const Orders = () => {
     }
   };
 
-    const handleDownloadOrder = (order: Order) => {
+  const handleCopyText = (text: string, description: string) => {
+    navigator.clipboard.writeText(text);
+    toast({
+      title: "Copied!",
+      description: `${description} copied to clipboard`,
+    });
+  };
+
+  const handleCashout = async (order: Order) => {
+    if (!profile) {
+      toast({
+        title: "Authentication required",
+        description: "Please log in to cashout your order.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    const cashoutAmount = order.total_amount * 0.8;
+    
+    try {
+      await createTransaction(
+        cashoutAmount,
+        'refund',
+        `Cashout from order #${order.id.slice(0, 8)} - ${order.order_items.length} items`
+      );
+
+      toast({
+        title: "Cashout successful!",
+        description: `₦${cashoutAmount.toLocaleString('en-NG', { minimumFractionDigits: 2 })} has been added to your wallet balance.`,
+      });
+
+    } catch (error) {
+      console.error('Cashout error:', error);
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
+      
+      if (errorMessage.includes('insufficient')) {
+        toast({
+          title: "Insufficient balance",
+          description: "You don't have sufficient balance for this cashout.",
+          variant: "destructive",
+        });
+      } else {
+        toast({
+          title: "Cashout failed",
+          description: "There was an error processing your cashout. Please try again.",
+          variant: "destructive",
+        });
+      }
+    }
+  };
+
+  const handleDownloadOrder = (order: Order) => {
     if (order.status !== 'completed') {
       toast({
         title: "Order not completed",
@@ -68,7 +128,9 @@ const Orders = () => {
         });
       }
       content += `\n`;
-    });    const blob = new Blob([content], { type: 'text/plain' });
+    });
+
+    const blob = new Blob([content], { type: 'text/plain' });
     const url = URL.createObjectURL(blob);
     const link = document.createElement('a');
     link.href = url;
@@ -77,6 +139,11 @@ const Orders = () => {
     link.click();
     document.body.removeChild(link);
     URL.revokeObjectURL(url);
+
+    toast({
+      title: "Download started",
+      description: "Your order details have been downloaded",
+    });
   };
 
   const formatPrice = (price: number) => {
@@ -89,12 +156,12 @@ const Orders = () => {
     .reduce((sum, order) => sum + order.total_amount, 0);
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center gap-3">
-        <ShoppingCart className="h-8 w-8 text-primary" />
+    <div className="container mx-auto px-4 py-8 space-y-8">
+      <div className="flex items-center gap-4 mb-6">
+        <img src={logoImage} alt="Log Hub Logo" className="h-12 w-12 object-contain rounded-lg" />
         <div>
-          <h1 className="text-3xl font-bold">Orders</h1>
-          <p className="text-muted-foreground">View and manage your purchases</p>
+          <h1 className="text-3xl font-bold">Order Details</h1>
+          <p className="text-muted-foreground">View your purchased logs and account details</p>
         </div>
       </div>
 
@@ -191,8 +258,18 @@ const Orders = () => {
                     <div className="space-y-1">
                       {order.order_items.map((item) => (
                         <div key={item.id} className="flex justify-between items-center">
-                          <h3 className="text-lg font-semibold">{item.logs.title}</h3>
-                          <span className="text-sm text-muted-foreground">×{item.quantity}</span>
+                          <div className="flex items-center gap-2">
+                            <SocialIcon platform={item.logs.categories?.name || ''} size={20} />
+                            <h3 className="text-lg font-semibold">{item.logs.title}</h3>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <span className="text-sm text-muted-foreground">×{item.quantity}</span>
+                            {order.status === 'completed' && item.order_log_items && item.order_log_items.length > 0 && (
+                              <Badge variant="outline" className="text-xs">
+                                {item.order_log_items.length} Account{item.order_log_items.length > 1 ? 's' : ''}
+                              </Badge>
+                            )}
+                          </div>
                         </div>
                       ))}
                     </div>
@@ -208,20 +285,102 @@ const Orders = () => {
                     </div>
                     
                     <div className="flex gap-2">
-                      <Button variant="outline" size="sm">
-                        <Eye className="h-4 w-4 mr-2" />
-                        View
-                      </Button>
+                      <Dialog>
+                        <DialogTrigger asChild>
+                          <Button 
+                            variant="outline" 
+                            size="sm"
+                            onClick={() => setSelectedOrder(order)}
+                          >
+                            <Eye className="h-4 w-4 mr-2" />
+                            View
+                          </Button>
+                        </DialogTrigger>
+                        <DialogContent className="max-w-4xl max-h-[80vh]">
+                          <DialogHeader>
+                            <DialogTitle>Order #{order.id.slice(0, 8)}</DialogTitle>
+                            <DialogDescription>
+                              Placed on {new Date(order.created_at).toLocaleDateString()} • {order.status}
+                            </DialogDescription>
+                          </DialogHeader>
+                          <ScrollArea className="max-h-[60vh]">
+                            <div className="space-y-6">
+                              {order.order_items.map((item) => (
+                                <div key={item.id} className="border rounded-lg p-4">
+                                  <div className="flex items-center gap-3 mb-4">
+                                    <SocialIcon platform={item.logs.categories?.name || ''} size={24} />
+                                    <div>
+                                      <h3 className="text-lg font-semibold">{item.logs.title}</h3>
+                                      <p className="text-sm text-muted-foreground">
+                                        Qty: {item.quantity} • {formatPrice(item.price_per_item)} each
+                                      </p>
+                                    </div>
+                                  </div>
+
+                                  {order.status === 'completed' && item.order_log_items && item.order_log_items.length > 0 ? (
+                                    <div className="space-y-3">
+                                      <h4 className="font-medium text-success">Account Details:</h4>
+                                      {item.order_log_items.map((orderLogItem, accountIndex) => (
+                                        <div key={orderLogItem.id} className="bg-muted/50 rounded-lg p-4">
+                                          <div className="flex items-center justify-between mb-2">
+                                            <h5 className="font-medium">Account {accountIndex + 1}</h5>
+                                            <Button
+                                              variant="ghost"
+                                              size="sm"
+                                              onClick={() => handleCopyText(orderLogItem.log_items.account_details, 'Account details')}
+                                            >
+                                              <Copy className="h-3 w-3" />
+                                            </Button>
+                                          </div>
+                                          <pre className="text-sm whitespace-pre-wrap bg-background p-3 rounded border">
+                                            {orderLogItem.log_items.account_details}
+                                          </pre>
+                                          <p className="text-xs text-muted-foreground mt-2">
+                                            Added: {new Date(orderLogItem.log_items.created_at).toLocaleDateString()}
+                                          </p>
+                                        </div>
+                                      ))}
+                                    </div>
+                                  ) : order.status === 'pending' ? (
+                                    <div className="bg-warning/10 border border-warning/20 rounded-lg p-4">
+                                      <div className="flex items-center gap-2 text-warning">
+                                        <Lock className="h-4 w-4" />
+                                        <span className="font-medium">Details will be revealed once payment is processed</span>
+                                      </div>
+                                    </div>
+                                  ) : (
+                                    <div className="bg-muted/50 rounded-lg p-4">
+                                      <p className="text-muted-foreground text-sm">Details not available</p>
+                                    </div>
+                                  )}
+                                </div>
+                              ))}
+                            </div>
+                          </ScrollArea>
+                        </DialogContent>
+                      </Dialog>
                       
                       {order.status === 'completed' && (
-                        <Button 
-                          onClick={() => handleDownload(order)}
-                          size="sm"
-                          className="gap-2"
-                        >
-                          <Download className="h-4 w-4" />
-                          Download
-                        </Button>
+                        <div className="flex gap-2">
+                          <Button 
+                            onClick={() => handleDownloadOrder(order)}
+                            size="sm"
+                            className="gap-2"
+                          >
+                            <Download className="h-4 w-4" />
+                            Download
+                          </Button>
+                          
+                          <Button 
+                            onClick={() => handleCashout(order)}
+                            size="sm"
+                            variant="outline"
+                            className="gap-2"
+                          >
+                            <Wallet className="h-4 w-4" />
+                            Cashout
+                          </Button>
+                        </div>
                       )}
                     </div>
                   </div>
@@ -239,9 +398,17 @@ const Orders = () => {
             <h3 className="text-lg font-semibold mb-2">No orders found</h3>
             <p className="text-muted-foreground">
               {searchTerm || statusFilter !== 'all' 
-                ? "No orders match your current filters."
-                : "You haven't made any purchases yet."}
+                ? "No orders match your filters."
+                : "You haven't purchased any logs yet. Visit Dashboard to browse."}
             </p>
+            {!searchTerm && statusFilter === 'all' && (
+              <Button 
+                className="mt-4"
+                onClick={() => window.location.href = '/dashboard'}
+              >
+                Browse Logs
+              </Button>
+            )}
           </CardContent>
         </Card>
       )}
@@ -249,4 +416,4 @@ const Orders = () => {
   );
 };
 
-export default Orders;
+export default OrderDetails;
