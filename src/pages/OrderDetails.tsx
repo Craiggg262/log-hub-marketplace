@@ -123,7 +123,7 @@ const OrderDetails = () => {
       if (item.order_log_items && item.order_log_items.length > 0) {
         content += `ACCOUNT DETAILS:\n`;
         item.order_log_items.forEach((orderLogItem, accountIndex) => {
-          const accountDetails = orderLogItem?.account_details || 'Account Details';
+          const accountDetails = orderLogItem.log_item.account_details || 'Account Details';
           content += `Account ${accountIndex + 1}:\n`;
           content += `${accountDetails}\n\n`;
         });
@@ -305,32 +305,6 @@ const OrderDetails = () => {
                           </DialogHeader>
                           <ScrollArea className="max-h-[60vh]">
                             <div className="space-y-6">
-                              {order.order_items.map((item) => (
-                                <div key={item.id} className="border rounded-lg p-4">
-                                  <div className="flex items-center gap-3 mb-4">
-                                    <SocialIcon platform={item.logs.categories?.name || ''} size={24} />
-                                    <div>
-                                      <h3 className="text-lg font-semibold">{item.logs.title}</h3>
-                                      <p className="text-sm text-muted-foreground">
-                                        Qty: {item.quantity} • {formatPrice(item.price_per_item)} each
-                                      </p>
-                                    </div>
-                                  </div>
-
-                                  {order.status === 'completed' && item.order_log_items && item.order_log_items.length > 0 ? (
-                                    <div className="space-y-3">
-                                      <h4 className="font-medium text-success">Account Details:</h4>
-                                      {item.order_log_items.map((orderLogItem, accountIndex) => {
-                                        const accountDetails = orderLogItem?.account_details || 'Account Details';
-                                        return (
-                                          <div key={orderLogItem.id} className="bg-muted/50 rounded-lg p-4">
-                                            <div className="flex items-center justify-between mb-2">
-                                              <h5 className="font-medium">Account {accountIndex + 1}</h5>
-                                              <Button
-                                                variant="ghost"
-                                                size="sm"
-                                                onClick={() => handleCopyText(accountDetails, 'Account details')}
-                                              >
                                                 <Copy className="h-3 w-3" />
                                               </Button>
                                             </div>
