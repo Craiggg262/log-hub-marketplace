@@ -108,7 +108,8 @@ const OrderDetails = () => {
       });
       return;
     }
- let content = `ORDER DETAILS\n`;
+
+    let content = `ORDER DETAILS\n`;
     content += `Order ID: ${order.id}\n`;
     content += `Date: ${new Date(order.created_at).toLocaleDateString()}\n`;
     content += `Status: ${order.status}\n`;
@@ -120,17 +121,16 @@ const OrderDetails = () => {
       content += `Price per item: ₦${item.price_per_item.toLocaleString('en-NG', { minimumFractionDigits: 2 })}\n\n`;
       
       if (item.order_log_items && item.order_log_items.length > 0) {
-        content += `ACCOUNT DETAIL:\n`;
+        content += `ACCOUNT DETAILS:\n`;
         item.order_log_items.forEach((orderLogItem, accountIndex) => {
-          const accountDetails = orderLogItem.log_item.account_details|| 
-         content += `Account ${accountIndex + 1}:\n`;
-          content += `${accountDetails}\n\n`;
+          if (orderLogItem && orderLogItem.log_items && orderLogItem.log_items.account_details) {
+            content += `Account ${accountIndex + 1}:\n`;
+            content += `${orderLogItem.log_items.account_details}\n\n`;
+          }
         });
       }
-    });                        
-    
+    });
 
-    
     const blob = new Blob([content], { type: 'text/plain' });
     const url = URL.createObjectURL(blob);
     const link = document.createElement('a');
@@ -288,15 +288,13 @@ const OrderDetails = () => {
                     <div className="flex gap-2">
                       <Dialog>
                         <DialogTrigger asChild>
-                          <Button
-                            onClick={() => {
-                              navigator.clipboard.writeText(accountDetails)
-                                toast.success("Copied to clipboard!")
-                            }}
-                            className="flex items-center gap-2"
-                            >
-                            <Copy className="h-3 w-3" />
-                            Copy
+                          <Button 
+                            variant="outline" 
+                            size="sm"
+                            onClick={() => setSelectedOrder(order)}
+                          >
+                            <Eye className="h-4 w-4 mr-2" />
+                            View
                           </Button>
                         </DialogTrigger>
                         <DialogContent className="max-w-4xl max-h-[80vh]">
@@ -308,17 +306,52 @@ const OrderDetails = () => {
                           </DialogHeader>
                           <ScrollArea className="max-h-[60vh]">
                             <div className="space-y-6">
+                              {order.order_items.map((item) => (
+                                <div key={item.id} className="border rounded-lg p-4">
+                                  <div className="flex items-center gap-3 mb-4">
+                                    <SocialIcon platform={item.logs.categories?.name || ''} size={24} />
+                                    <div>
+                                      <h3 className="text-lg font-semibold">{item.logs.title}</h3>
+                                      <p className="text-sm text-muted-foreground">
+                                        Qty: {item.quantity} • {formatPrice(item.price_per_item)} each
+                                      </p>
+                                    </div>
+                                  </div>
+
+                                  {order.status === 'completed' && item.order_log_items && item.order_log_items.length > 0 ? (
+                                    <div className="space-y-3">
+                                      <h4 className="font-medium text-success">Account Details:</h4>
+                                      {item.order_log_items.map((orderLogItem, accountIndex) => {
+                                        const accountDetails = orderLogItem?.log_items?.account_details;
+                                        
+                                        if (!accountDetails) {
+                                          return (
+                                            <div key={orderLogItem.id} className="bg-destructive/10 border border-destructive/20 rounded-lg p-4">
+                                              <p className="text-destructive text-sm">
+                                                Account {accountIndex + 1}: Details not loaded. Please contact support.
+                                              </p>
+                                            </div>
+                                          );
+                                        }
+
+                                        return (
+                                          <div key={orderLogItem.id} className="bg-muted/50 rounded-lg p-4">
+                                            <div className="flex items-center justify-between mb-2">
+                                              <h5 className="font-medium">Account {accountIndex + 1}</h5>
+                                              <Button
+                                                variant="ghost"
+                                                size="sm"
+                                                onClick={() => handleCopyText(accountDetails, 'Account details')}
+                                              >
                                                 <Copy className="h-3 w-3" />
                                               </Button>
                                             </div>
                                             <pre className="text-sm whitespace-pre-wrap bg-background p-3 rounded border">
                                               {accountDetails}
                                             </pre>
-                                            {orderLogItem.log_items && (
-                                              <p className="text-xs text-muted-foreground mt-2">
-                                                Added: {new Date(orderLogItem.log_items.created_at).toLocaleDateString()}
-                                              </p>
-                                            )}
+                                            <p className="text-xs text-muted-foreground mt-2">
+                                              Added: {new Date(orderLogItem.log_items.created_at).toLocaleDateString()}
+                                            </p>
                                           </div>
                                         );
                                       })}
