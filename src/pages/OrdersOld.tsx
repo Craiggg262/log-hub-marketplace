@@ -122,7 +122,7 @@ const OrderDetails = () => {
       
       if (item.order_log_items && item.order_log_items.length > 0) {
   content += `ACCOUNT DETAILS:\n`;
-  item.order_log_items?.forEach((orderLogItem, accountIndex) => {
+  item?.order_log_items?.forEach((orderLogItem, accountIndex) => {
     const accountDetails = orderLogItem?.log_items?.account_details || 'Account Details';
     content += `Account ${accountIndex + 1}:\n`;
     content += `${accountDetails}\n\n`;
@@ -325,13 +325,13 @@ const OrderDetails = () => {
                                             <Button
                                               variant="ghost"
                                               size="sm"
-                                              onClick={() => handleCopyText(orderLogItem.log_items?.account_details, 'Account details')}
+                                              onClick={() => handleCopyText(orderLogItem?.log_items?.account_details, 'Account details')}
                                             >
                                               <Copy className="h-3 w-3" />
                                             </Button>
                                           </div>
                                           <pre className="text-sm whitespace-pre-wrap bg-background p-3 rounded border">
-                                            {orderLogItem.log_items.account_details}
+                                            {orderLogItem?.log_items?.account_details}
                                           </pre>
                                           <p className="text-xs text-muted-foreground mt-2">
                                             Added: {new Date(orderLogItem.log_items.created_at).toLocaleDateString()}
