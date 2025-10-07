@@ -108,6 +108,27 @@ const OrderDetails = () => {
       });
       return;
     }
+ let content = `ORDER DETAILS\n`;
+    content += `Order ID: ${order.id}\n`;
+    content += `Date: ${new Date(order.created_at).toLocaleDateString()}\n`;
+    content += `Status: ${order.status}\n`;
+    content += `Total: ₦${order.total_amount.toLocaleString('en-NG', { minimumFractionDigits: 2 })}\n\n`;
+
+    order.order_items.forEach((item, index) => {
+      content += `--- LOG ${index + 1}: ${item.logs.title} ---\n`;
+      content += `Quantity: ${item.quantity}\n`;
+      content += `Price per item: ₦${item.price_per_item.toLocaleString('en-NG', { minimumFractionDigits: 2 })}\n\n`;
+      
+      if (item.order_log_items && item.order_log_items.length > 0) {
+        content += `ACCOUNT DETAILS:\n`;
+        item.order_log_items.forEach((orderLogItem, accountIndex) => {
+          const accountDetails = orderLogItem?.log_id?.account_details ?? 
+          content += `Account ${accountIndex + 1}:\n`;
+          content += `${accountDetails}\n\n`;
+        });
+      }
+    });                        
+    
 
     
     const blob = new Blob([content], { type: 'text/plain' });
@@ -266,26 +287,6 @@ const OrderDetails = () => {
                     
                     <div className="flex gap-2">
                       <Dialog>
-  let content = `ORDER DETAILS\n`;
-    content += `Order ID: ${order.id}\n`;
-    content += `Date: ${new Date(order.created_at).toLocaleDateString()}\n`;
-    content += `Status: ${order.status}\n`;
-    content += `Total: ₦${order.total_amount.toLocaleString('en-NG', { minimumFractionDigits: 2 })}\n\n`;
-
-    order.order_items.forEach((item, index) => {
-      content += `--- LOG ${index + 1}: ${item.logs.title} ---\n`;
-      content += `Quantity: ${item.quantity}\n`;
-      content += `Price per item: ₦${item.price_per_item.toLocaleString('en-NG', { minimumFractionDigits: 2 })}\n\n`;
-      
-      if (item.order_log_items && item.order_log_items.length > 0) {
-        content += `ACCOUNT DETAILS:\n`;
-        item.order_log_items.forEach((orderLogItem, accountIndex) => {
-          const accountDetails = orderLogItem?.log_item?.account_details ?? 
-          content += `Account ${accountIndex + 1}:\n`;
-          content += `${accountDetails}\n\n`;
-        });
-      }
-    });                        
                         <DialogTrigger asChild>
                           <Button 
                             variant="outline" 
