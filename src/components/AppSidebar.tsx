@@ -42,7 +42,7 @@ export function AppSidebar() {
   const getNavCls = ({ isActive }: { isActive: boolean }) =>
     isActive 
       ? "bg-primary text-primary-foreground font-medium hover:bg-primary/90" 
-      : "hover:bg-accent hover:text-accent-foreground";
+      : "text-foreground hover:bg-accent hover:text-accent-foreground";
 
   return (
     <Sidebar
@@ -58,14 +58,14 @@ export function AppSidebar() {
             <SidebarMenu>
               {menuItems.map((item) => (
                 <SidebarMenuItem key={item.title}>
-                    <SidebarMenuButton asChild className="flex items-center justify-center md:justify-start group">
+                    <SidebarMenuButton asChild>
                       <NavLink 
                         to={item.url} 
                         className={getNavCls}
                         title={item.title}
                       >
                         <item.icon className="h-5 w-5 shrink-0" />
-                        <span className="transition-opacity duration-200 group-hover:block hidden md:block">
+                        <span className={isCollapsed ? "sr-only" : ""}>
                           {item.title}
                         </span>
                       </NavLink>

@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -14,7 +14,7 @@ import { useTransactions } from '@/hooks/useTransactions';
 import SocialIcon from '@/components/SocialIcon';
 import logoImage from '@/assets/logo.png';
 
-const Orders = () => {
+const OrderDetails = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
@@ -65,11 +65,9 @@ const Orders = () => {
       return;
     }
 
-    // Calculate cashout amount (80% of order value)
     const cashoutAmount = order.total_amount * 0.8;
     
     try {
-      // Create withdrawal transaction  
       await createTransaction(
         cashoutAmount,
         'refund',
@@ -159,13 +157,13 @@ const Orders = () => {
 
   return (
     <div className="container mx-auto px-4 py-8 space-y-8">
-        <div className="flex items-center gap-4 mb-6">
-          <img src={logoImage} alt="Log Hub Logo" className="h-12 w-12 object-contain rounded-lg" />
-          <div>
-            <h1 className="text-3xl font-bold">My Orders</h1>
-            <p className="text-muted-foreground">View and manage your purchase history</p>
-          </div>
+      <div className="flex items-center gap-4 mb-6">
+        <img src={logoImage} alt="Log Hub Logo" className="h-12 w-12 object-contain rounded-lg" />
+        <div>
+          <h1 className="text-3xl font-bold">Order Details</h1>
+          <p className="text-muted-foreground">View your purchased logs and account details</p>
         </div>
+      </div>
 
       {/* Stats Cards */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
@@ -295,26 +293,26 @@ const Orders = () => {
                             onClick={() => setSelectedOrder(order)}
                           >
                             <Eye className="h-4 w-4 mr-2" />
-                            View Details
+                            View
                           </Button>
                         </DialogTrigger>
                         <DialogContent className="max-w-4xl max-h-[80vh]">
                           <DialogHeader>
-                            <DialogTitle>Order Details - #{order.id.slice(0, 8)}</DialogTitle>
+                            <DialogTitle>Order #{order.id.slice(0, 8)}</DialogTitle>
                             <DialogDescription>
-                              Order placed on {new Date(order.created_at).toLocaleDateString()} • Status: {order.status}
+                              Placed on {new Date(order.created_at).toLocaleDateString()} • {order.status}
                             </DialogDescription>
                           </DialogHeader>
                           <ScrollArea className="max-h-[60vh]">
                             <div className="space-y-6">
-                              {order.order_items.map((item, itemIndex) => (
+                              {order.order_items.map((item) => (
                                 <div key={item.id} className="border rounded-lg p-4">
                                   <div className="flex items-center gap-3 mb-4">
                                     <SocialIcon platform={item.logs.categories?.name || ''} size={24} />
                                     <div>
                                       <h3 className="text-lg font-semibold">{item.logs.title}</h3>
                                       <p className="text-sm text-muted-foreground">
-                                        Quantity: {item.quantity} • Price: {formatPrice(item.price_per_item)} each
+                                        Qty: {item.quantity} • {formatPrice(item.price_per_item)} each
                                       </p>
                                     </div>
                                   </div>
@@ -347,12 +345,12 @@ const Orders = () => {
                                     <div className="bg-warning/10 border border-warning/20 rounded-lg p-4">
                                       <div className="flex items-center gap-2 text-warning">
                                         <Lock className="h-4 w-4" />
-                                        <span className="font-medium">Account details will be revealed once payment is processed</span>
+                                        <span className="font-medium">Details will be revealed once payment is processed</span>
                                       </div>
                                     </div>
                                   ) : (
                                     <div className="bg-muted/50 rounded-lg p-4">
-                                      <p className="text-muted-foreground text-sm">Account details not available for this order status</p>
+                                      <p className="text-muted-foreground text-sm">Details not available</p>
                                     </div>
                                   )}
                                 </div>
@@ -362,28 +360,28 @@ const Orders = () => {
                         </DialogContent>
                       </Dialog>
                       
-          {order.status === 'completed' && (
-            <div className="flex gap-2">
-              <Button 
-                onClick={() => handleDownloadOrder(order)}
-                size="sm"
-                className="gap-2"
-              >
-                <Download className="h-4 w-4" />
-                Download
-              </Button>
-              
-              <Button 
-                onClick={() => handleCashout(order)}
-                size="sm"
-                variant="outline"
-                className="gap-2"
-              >
-                <Wallet className="h-4 w-4" />
-                Cashout
-              </Button>
-            </div>
-          )}
+                      {order.status === 'completed' && (
+                        <div className="flex gap-2">
+                          <Button 
+                            onClick={() => handleDownloadOrder(order)}
+                            size="sm"
+                            className="gap-2"
+                          >
+                            <Download className="h-4 w-4" />
+                            Download
+                          </Button>
+                          
+                          <Button 
+                            onClick={() => handleCashout(order)}
+                            size="sm"
+                            variant="outline"
+                            className="gap-2"
+                          >
+                            <Wallet className="h-4 w-4" />
+                            Cashout
+                          </Button>
+                        </div>
+                      )}
                     </div>
                   </div>
                 </div>
@@ -400,8 +398,8 @@ const Orders = () => {
             <h3 className="text-lg font-semibold mb-2">No orders found</h3>
             <p className="text-muted-foreground">
               {searchTerm || statusFilter !== 'all' 
-                ? "No orders match your current filters."
-                : "You haven't made any purchases yet. Visit the Dashboard to browse available logs."}
+                ? "No orders match your filters."
+                : "You haven't purchased any logs yet. Visit Dashboard to browse."}
             </p>
             {!searchTerm && statusFilter === 'all' && (
               <Button 
@@ -418,4 +416,4 @@ const Orders = () => {
   );
 };
 
-export default Orders;
+export default OrderDetails;

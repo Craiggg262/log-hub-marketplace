@@ -136,7 +136,7 @@ const Dashboard = () => {
 
       {/* Welcome Section */}
       <div className="bg-gradient-to-r from-primary/10 to-accent/10 rounded-lg p-4 md:p-6">
-        <h1 className="text-2xl md:text-3xl font-bold mb-2">Welcome back, {profile?.full_name || user?.email || 'User'}!</h1>
+        <h1 className="text-2xl md:text-3xl font-bold mb-2">Welcome back{profile?.full_name ? `, ${profile.full_name.split(' ')[0]}` : ''}!</h1>
         <p className="text-sm md:text-base text-muted-foreground mb-4">Discover premium logs from our marketplace</p>
         
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 md:gap-4">

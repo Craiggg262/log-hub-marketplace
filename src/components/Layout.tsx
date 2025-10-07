@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { LogOut, User } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
+import { useAuth } from "@/hooks/useAuth";
 
 interface LayoutProps {
   children: React.ReactNode;
@@ -13,17 +14,24 @@ interface LayoutProps {
 const Layout: React.FC<LayoutProps> = ({ children }) => {
   const navigate = useNavigate();
   const { toast } = useToast();
+  const { user, profile, signOut } = useAuth();
 
-  const handleLogout = () => {
-    localStorage.removeItem('user');
-    toast({
-      title: "Logged out successfully",
-      description: "See you next time!",
-    });
-    navigate('/login');
+  const handleLogout = async () => {
+    try {
+      await signOut();
+      toast({
+        title: "Logged out successfully",
+        description: "See you next time!",
+      });
+      navigate('/login');
+    } catch (error) {
+      toast({
+        title: "Logout failed",
+        description: "There was an error logging out. Please try again.",
+        variant: "destructive",
+      });
+    }
   };
-
-  const user = JSON.parse(localStorage.getItem('user') || '{}');
 
   return (
     <SidebarProvider defaultOpen={true}>
@@ -42,7 +50,7 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
               <div className="flex items-center gap-4">
                 <div className="flex items-center gap-2 text-sm">
                   <User className="h-4 w-4" />
-                  <span className="hidden sm:inline">{user.fullName || user.email}</span>
+                  <span className="hidden sm:inline">{profile?.full_name || user?.email || 'User'}</span>
                 </div>
                 <Button
                   variant="ghost"

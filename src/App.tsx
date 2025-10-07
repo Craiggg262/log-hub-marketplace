@@ -10,7 +10,7 @@ import Signup from "./pages/Signup";
 import Dashboard from "./pages/Dashboard";
 import Wallet from "./pages/Wallet";
 import FundWallet from "./pages/FundWallet";
-import Orders from "./pages/Orders";
+import OrderDetails from "./pages/OrderDetails";
 import History from "./pages/History";
 import Settings from "./pages/Settings";
 import Admin from "./pages/Admin";
@@ -70,7 +70,7 @@ function AppContent() {
         <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
         <Route path="/wallet" element={<ProtectedRoute><Wallet /></ProtectedRoute>} />
         <Route path="/fund-wallet" element={<ProtectedRoute><FundWallet /></ProtectedRoute>} />
-        <Route path="/orders" element={<ProtectedRoute><Orders /></ProtectedRoute>} />
+        <Route path="/orders" element={<ProtectedRoute><OrderDetails /></ProtectedRoute>} />
         <Route path="/history" element={<ProtectedRoute><History /></ProtectedRoute>} />
         <Route path="/settings" element={<ProtectedRoute><Settings /></ProtectedRoute>} />
         <Route path="/cart" element={<ProtectedRoute><Cart /></ProtectedRoute>} />

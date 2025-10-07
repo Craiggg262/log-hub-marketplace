@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -7,18 +7,28 @@ import { useToast } from '@/hooks/use-toast';
 import { Settings as SettingsIcon, User, Bell, Shield, Eye, EyeOff } from 'lucide-react';
 import { Switch } from '@/components/ui/switch';
 import { Separator } from '@/components/ui/separator';
+import { useAuth } from '@/hooks/useAuth';
+import { supabase } from '@/integrations/supabase/client';
 
 const Settings = () => {
-  const [profileData, setProfileData] = useState(() => {
-    const user = JSON.parse(localStorage.getItem('user') || '{}');
-    return {
-      fullName: user.fullName || '',
-      email: user.email || '',
-      currentPassword: '',
-      newPassword: '',
-      confirmPassword: ''
-    };
+  const { user, profile } = useAuth();
+  const [profileData, setProfileData] = useState({
+    fullName: '',
+    email: '',
+    currentPassword: '',
+    newPassword: '',
+    confirmPassword: ''
   });
+
+  useEffect(() => {
+    if (profile) {
+      setProfileData(prev => ({
+        ...prev,
+        fullName: profile.full_name || '',
+        email: profile.email || user?.email || '',
+      }));
+    }
+  }, [profile, user]);
 
   const [notifications, setNotifications] = useState({
     emailNotifications: true,
@@ -33,25 +43,36 @@ const Settings = () => {
 
   const { toast } = useToast();
 
-  const handleProfileUpdate = (e: React.FormEvent) => {
+  const handleProfileUpdate = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    // Update user data in localStorage
-    const currentUser = JSON.parse(localStorage.getItem('user') || '{}');
-    const updatedUser = {
-      ...currentUser,
-      fullName: profileData.fullName,
-      email: profileData.email
-    };
-    localStorage.setItem('user', JSON.stringify(updatedUser));
+    if (!user) return;
 
-    toast({
-      title: "Profile updated",
-      description: "Your profile information has been updated successfully.",
-    });
+    try {
+      const { error } = await supabase
+        .from('profiles')
+        .update({
+          full_name: profileData.fullName,
+          email: profileData.email,
+        })
+        .eq('user_id', user.id);
+
+      if (error) throw error;
+
+      toast({
+        title: "Profile updated",
+        description: "Your profile information has been updated successfully.",
+      });
+    } catch (error) {
+      toast({
+        title: "Update failed",
+        description: error instanceof Error ? error.message : "Failed to update profile",
+        variant: "destructive",
+      });
+    }
   };
 
-  const handlePasswordChange = (e: React.FormEvent) => {
+  const handlePasswordChange = async (e: React.FormEvent) => {
     e.preventDefault();
     
     if (profileData.newPassword !== profileData.confirmPassword) {
@@ -72,18 +93,31 @@ const Settings = () => {
       return;
     }
 
-    // In a real app, this would verify current password and update it
-    toast({
-      title: "Password updated",
-      description: "Your password has been changed successfully.",
-    });
+    try {
+      const { error } = await supabase.auth.updateUser({
+        password: profileData.newPassword
+      });
 
-    setProfileData({
-      ...profileData,
-      currentPassword: '',
-      newPassword: '',
-      confirmPassword: ''
-    });
+      if (error) throw error;
+
+      toast({
+        title: "Password updated",
+        description: "Your password has been changed successfully.",
+      });
+
+      setProfileData({
+        ...profileData,
+        currentPassword: '',
+        newPassword: '',
+        confirmPassword: ''
+      });
+    } catch (error) {
+      toast({
+        title: "Password update failed",
+        description: error instanceof Error ? error.message : "Failed to update password",
+        variant: "destructive",
+      });
+    }
   };
 
   const handleNotificationChange = (key: string, value: boolean) => {
@@ -98,15 +132,23 @@ const Settings = () => {
     });
   };
 
-  const handleDeleteAccount = () => {
+  const handleDeleteAccount = async () => {
     if (window.confirm('Are you sure you want to delete your account? This action cannot be undone.')) {
-      localStorage.removeItem('user');
-      toast({
-        title: "Account deleted",
-        description: "Your account has been permanently deleted.",
-        variant: "destructive",
-      });
-      // In a real app, redirect to login or home page
+      try {
+        // Note: Actual account deletion would require an edge function
+        // For now, we'll just sign out
+        await supabase.auth.signOut();
+        toast({
+          title: "Signed out",
+          description: "Please contact support to permanently delete your account.",
+        });
+      } catch (error) {
+        toast({
+          title: "Error",
+          description: "Failed to sign out. Please try again.",
+          variant: "destructive",
+        });
+      }
     }
   };
 

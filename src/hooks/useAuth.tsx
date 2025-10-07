@@ -102,25 +102,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const { data, error } = await supabase.auth.signUp({
       email,
       password,
+      options: {
+        data: {
+          full_name: fullName,
+        },
+        emailRedirectTo: `${window.location.origin}/dashboard`,
+      }
     });
     
     if (error) throw error;
-    
-    if (data.user) {
-      try {
-        await supabase.from('profiles').insert([
-          {
-            user_id: data.user.id,
-            email,
-            full_name: fullName,
-            wallet_balance: 0.00,
-          },
-        ]);
-      } catch (profileError) {
-        console.error('Error creating profile:', profileError);
-        // Don't throw here as the user was created successfully
-      }
-    }
   };
 
   const signOut = async () => {
