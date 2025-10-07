@@ -1,49 +1,32 @@
 import React, { useState } from 'react';
-import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-  CardDescription
-} from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import {
-  ShoppingCart,
-  Search,
-  Download,
-  Eye,
-  Calendar,
-  Copy
-} from 'lucide-react';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue
-} from '@/components/ui/select';
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogDescription
-} from '@/components/ui/dialog';
-import { useOrders } from '@/hooks/useOrders';
-import { toast } from '@/components/ui/use-toast'; // optional if your UI lib supports toast
+import { ShoppingCart, Search, Download, Eye, Calendar, Copy, Lock, Wallet } from 'lucide-react';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { ScrollArea } from '@/components/ui/scroll-area';
+import { useToast } from '@/hooks/use-toast';
+import { useOrders, type Order } from '@/hooks/useOrders';
+import { useAuth } from '@/hooks/useAuth';
+import { useTransactions } from '@/hooks/useTransactions';
+import SocialIcon from '@/components/SocialIcon';
+import logoImage from '@/assets/logo.png';
 
-const Orders = () => {
+const OrderDetails = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
-  const [selectedOrder, setSelectedOrder] = useState<any | null>(null);
+  const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
   const { orders, loading } = useOrders();
+  const { profile } = useAuth();
+  const { createTransaction } = useTransactions();
+  const { toast } = useToast();
 
   const filteredOrders = orders.filter(order => {
     if (!order.order_items || order.order_items.length === 0) return false;
-
-    const matchesSearch = order.order_items.some(item =>
+    
+    const matchesSearch = order.order_items.some(item => 
       item.logs.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
       order.id.toLowerCase().includes(searchTerm.toLowerCase())
     );
@@ -64,40 +47,103 @@ const Orders = () => {
     }
   };
 
-  const handleDownload = (order: any) => {
+  const handleCopyText = (text: string, description: string) => {
+    navigator.clipboard.writeText(text);
+    toast({
+      title: "Copied!",
+      description: `${description} copied to clipboard`,
+    });
+  };
+
+  const handleCashout = async (order: Order) => {
+    if (!profile) {
+      toast({
+        title: "Authentication required",
+        description: "Please log in to cashout your order.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    const cashoutAmount = order.total_amount * 0.8;
+    
     try {
-      const content = order.order_items.map((item: any) => {
-        const details = Object.entries(item.logs)
-          .map(([key, val]) => `${key}: ${val}`)
-          .join('\n');
-        return `Log: ${item.logs.title}\n${details}`;
-      }).join('\n\n');
+      await createTransaction(
+        cashoutAmount,
+        'refund',
+        `Cashout from order #${order.id.slice(0, 8)} - ${order.order_items.length} items`
+      );
 
-      const fullContent = `Order #${order.id}\nStatus: ${order.status}\nDate: ${new Date(order.created_at).toLocaleDateString()}\nTotal: ₦${order.total_amount.toLocaleString('en-NG', { minimumFractionDigits: 2 })}\n\n${content}`;
+      toast({
+        title: "Cashout successful!",
+        description: `₦${cashoutAmount.toLocaleString('en-NG', { minimumFractionDigits: 2 })} has been added to your wallet balance.`,
+      });
 
-      const blob = new Blob([fullContent], { type: 'text/plain' });
-      const url = URL.createObjectURL(blob);
-      const link = document.createElement('a');
-      link.href = url;
-      link.download = `order-${order.id.slice(0, 8)}.txt`;
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-      URL.revokeObjectURL(url);
-    } catch (err) {
-      console.error(err);
-      alert('Download failed.');
+    } catch (error) {
+      console.error('Cashout error:', error);
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
+      
+      if (errorMessage.includes('insufficient')) {
+        toast({
+          title: "Insufficient balance",
+          description: "You don't have sufficient balance for this cashout.",
+          variant: "destructive",
+        });
+      } else {
+        toast({
+          title: "Cashout failed",
+          description: "There was an error processing your cashout. Please try again.",
+          variant: "destructive",
+        });
+      }
     }
   };
 
-  const handleCopy = async (text: string) => {
-    try {
-      await navigator.clipboard.writeText(text);
-      if (toast) toast({ title: 'Copied!', description: text });
-      else alert('Copied to clipboard');
-    } catch (err) {
-      console.error('Failed to copy:', err);
+  const handleDownloadOrder = (order: Order) => {
+    if (order.status !== 'completed') {
+      toast({
+        title: "Order not completed",
+        description: "You can only download completed orders",
+        variant: "destructive",
+      });
+      return;
     }
+
+    let content = `ORDER DETAILS\n`;
+    content += `Order ID: ${order.id}\n`;
+    content += `Date: ${new Date(order.created_at).toLocaleDateString()}\n`;
+    content += `Status: ${order.status}\n`;
+    content += `Total: ₦${order.total_amount.toLocaleString('en-NG', { minimumFractionDigits: 2 })}\n\n`;
+
+    order.order_items.forEach((item, index) => {
+      content += `--- LOG ${index + 1}: ${item.logs.title} ---\n`;
+      content += `Quantity: ${item.quantity}\n`;
+      content += `Price per item: ₦${item.price_per_item.toLocaleString('en-NG', { minimumFractionDigits: 2 })}\n\n`;
+      
+      if (item.order_log_items && item.order_log_items.length > 0) {
+        content += `ACCOUNT DETAILS:\n`;
+        item.order_log_items.forEach((orderLogItem, accountIndex) => {
+          content += `Account ${accountIndex + 1}:\n`;
+          content += `${orderLogItem.log_items.account_details}\n\n`;
+        });
+      }
+      content += `\n`;
+    });
+
+    const blob = new Blob([content], { type: 'text/plain' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `order-${order.id.slice(0, 8)}.txt`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+
+    toast({
+      title: "Download started",
+      description: "Your order details have been downloaded",
+    });
   };
 
   const formatPrice = (price: number) => {
@@ -110,44 +156,52 @@ const Orders = () => {
     .reduce((sum, order) => sum + order.total_amount, 0);
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center gap-3">
-        <ShoppingCart className="h-8 w-8 text-primary" />
+    <div className="container mx-auto px-4 py-8 space-y-8">
+      <div className="flex items-center gap-4 mb-6">
+        <img src={logoImage} alt="Log Hub Logo" className="h-12 w-12 object-contain rounded-lg" />
         <div>
-          <h1 className="text-3xl font-bold">Orders</h1>
-          <p className="text-muted-foreground">View and manage your purchases</p>
+          <h1 className="text-3xl font-bold">Order Details</h1>
+          <p className="text-muted-foreground">View your purchased logs and account details</p>
         </div>
       </div>
 
-      {/* Stats */}
+      {/* Stats Cards */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         <Card>
-          <CardContent className="p-6 flex justify-between items-center">
-            <div>
-              <p className="text-sm text-muted-foreground">Total Orders</p>
-              <p className="text-2xl font-bold">{orders.length}</p>
+          <CardContent className="p-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm text-muted-foreground">Total Orders</p>
+                <p className="text-2xl font-bold">{orders.length}</p>
+              </div>
+              <ShoppingCart className="h-10 w-10 text-muted-foreground/20" />
             </div>
-            <ShoppingCart className="h-10 w-10 text-muted-foreground/20" />
           </CardContent>
         </Card>
 
         <Card>
-          <CardContent className="p-6 flex justify-between items-center">
-            <div>
-              <p className="text-sm text-muted-foreground">Completed</p>
-              <p className="text-2xl font-bold">{completedOrders}</p>
+          <CardContent className="p-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm text-muted-foreground">Completed</p>
+                <p className="text-2xl font-bold">{completedOrders}</p>
+              </div>
+              <Badge className="bg-success/20 text-success">
+                Success
+              </Badge>
             </div>
-            <Badge className="bg-success/20 text-success">Success</Badge>
           </CardContent>
         </Card>
 
         <Card>
-          <CardContent className="p-6 flex justify-between items-center">
-            <div>
-              <p className="text-sm text-muted-foreground">Total Spent</p>
-              <p className="text-2xl font-bold">{formatPrice(totalSpent)}</p>
+          <CardContent className="p-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm text-muted-foreground">Total Spent</p>
+                <p className="text-2xl font-bold">{formatPrice(totalSpent)}</p>
+              </div>
+              <Calendar className="h-10 w-10 text-muted-foreground/20" />
             </div>
-            <Calendar className="h-10 w-10 text-muted-foreground/20" />
           </CardContent>
         </Card>
       </div>
@@ -163,7 +217,7 @@ const Orders = () => {
             className="pl-10"
           />
         </div>
-
+        
         <Select value={statusFilter} onValueChange={setStatusFilter}>
           <SelectTrigger className="w-full md:w-48">
             <SelectValue placeholder="Filter by status" />
@@ -179,7 +233,7 @@ const Orders = () => {
 
       {/* Orders List */}
       {loading ? (
-        <div className="flex justify-center py-12">
+        <div className="flex items-center justify-center py-12">
           <div className="text-center space-y-4">
             <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto"></div>
             <p className="text-muted-foreground">Loading orders...</p>
@@ -200,16 +254,26 @@ const Orders = () => {
                         {order.status.charAt(0).toUpperCase() + order.status.slice(1)}
                       </Badge>
                     </div>
-
+                    
                     <div className="space-y-1">
                       {order.order_items.map((item) => (
                         <div key={item.id} className="flex justify-between items-center">
-                          <h3 className="text-lg font-semibold">{item.logs.title}</h3>
-                          <span className="text-sm text-muted-foreground">×{item.quantity}</span>
+                          <div className="flex items-center gap-2">
+                            <SocialIcon platform={item.logs.categories?.name || ''} size={20} />
+                            <h3 className="text-lg font-semibold">{item.logs.title}</h3>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <span className="text-sm text-muted-foreground">×{item.quantity}</span>
+                            {order.status === 'completed' && item.order_log_items && item.order_log_items.length > 0 && (
+                              <Badge variant="outline" className="text-xs">
+                                {item.order_log_items.length} Account{item.order_log_items.length > 1 ? 's' : ''}
+                              </Badge>
+                            )}
+                          </div>
                         </div>
                       ))}
                     </div>
-
+                    
                     <p className="text-sm text-muted-foreground mt-2">
                       Ordered on {new Date(order.created_at).toLocaleDateString()}
                     </p>
@@ -219,18 +283,104 @@ const Orders = () => {
                     <div className="text-right">
                       <p className="text-2xl font-bold text-primary">{formatPrice(order.total_amount)}</p>
                     </div>
-
+                    
                     <div className="flex gap-2">
-                      <Button variant="outline" size="sm" onClick={() => setSelectedOrder(order)}>
-                        <Eye className="h-4 w-4 mr-2" />
-                        View
-                      </Button>
+                      <Dialog>
+                        <DialogTrigger asChild>
+                          <Button 
+                            variant="outline" 
+                            size="sm"
+                            onClick={() => setSelectedOrder(order)}
+                          >
+                            <Eye className="h-4 w-4 mr-2" />
+                            View
+                          </Button>
+                        </DialogTrigger>
+                        <DialogContent className="max-w-4xl max-h-[80vh]">
+                          <DialogHeader>
+                            <DialogTitle>Order #{order.id.slice(0, 8)}</DialogTitle>
+                            <DialogDescription>
+                              Placed on {new Date(order.created_at).toLocaleDateString()} • {order.status}
+                            </DialogDescription>
+                          </DialogHeader>
+                          <ScrollArea className="max-h-[60vh]">
+                            <div className="space-y-6">
+                              {order.order_items.map((item) => (
+                                <div key={item.id} className="border rounded-lg p-4">
+                                  <div className="flex items-center gap-3 mb-4">
+                                    <SocialIcon platform={item.logs.categories?.name || ''} size={24} />
+                                    <div>
+                                      <h3 className="text-lg font-semibold">{item.logs.title}</h3>
+                                      <p className="text-sm text-muted-foreground">
+                                        Qty: {item.quantity} • {formatPrice(item.price_per_item)} each
+                                      </p>
+                                    </div>
+                                  </div>
 
+                                  {order.status === 'completed' && item.order_log_items && item.order_log_items.length > 0 ? (
+                                    <div className="space-y-3">
+                                      <h4 className="font-medium text-success">Account Details:</h4>
+                                      {item.order_log_items.map((orderLogItem, accountIndex) => (
+                                        <div key={orderLogItem.id} className="bg-muted/50 rounded-lg p-4">
+                                          <div className="flex items-center justify-between mb-2">
+                                            <h5 className="font-medium">Account {accountIndex + 1}</h5>
+                                            <Button
+                                              variant="ghost"
+                                              size="sm"
+                                              onClick={() => handleCopyText(orderLogItem.log_items.account_details, 'Account details')}
+                                            >
+                                              <Copy className="h-3 w-3" />
+                                            </Button>
+                                          </div>
+                                          <pre className="text-sm whitespace-pre-wrap bg-background p-3 rounded border">
+                                            {orderLogItem.log_items.account_details}
+                                          </pre>
+                                          <p className="text-xs text-muted-foreground mt-2">
+                                            Added: {new Date(orderLogItem.log_items.created_at).toLocaleDateString()}
+                                          </p>
+                                        </div>
+                                      ))}
+                                    </div>
+                                  ) : order.status === 'pending' ? (
+                                    <div className="bg-warning/10 border border-warning/20 rounded-lg p-4">
+                                      <div className="flex items-center gap-2 text-warning">
+                                        <Lock className="h-4 w-4" />
+                                        <span className="font-medium">Details will be revealed once payment is processed</span>
+                                      </div>
+                                    </div>
+                                  ) : (
+                                    <div className="bg-muted/50 rounded-lg p-4">
+                                      <p className="text-muted-foreground text-sm">Details not available</p>
+                                    </div>
+                                  )}
+                                </div>
+                              ))}
+                            </div>
+                          </ScrollArea>
+                        </DialogContent>
+                      </Dialog>
+                      
                       {order.status === 'completed' && (
-                        <Button onClick={() => handleDownload(order)} size="sm" className="gap-2">
-                          <Download className="h-4 w-4" />
-                          Download
-                        </Button>
+                        <div className="flex gap-2">
+                          <Button 
+                            onClick={() => handleDownloadOrder(order)}
+                            size="sm"
+                            className="gap-2"
+                          >
+                            <Download className="h-4 w-4" />
+                            Download
+                          </Button>
+                          
+                          <Button 
+                            onClick={() => handleCashout(order)}
+                            size="sm"
+                            variant="outline"
+                            className="gap-2"
+                          >
+                            <Wallet className="h-4 w-4" />
+                            Cashout
+                          </Button>
+                        </div>
                       )}
                     </div>
                   </div>
@@ -247,65 +397,23 @@ const Orders = () => {
             <ShoppingCart className="h-12 w-12 text-muted-foreground/20 mx-auto mb-4" />
             <h3 className="text-lg font-semibold mb-2">No orders found</h3>
             <p className="text-muted-foreground">
-              {searchTerm || statusFilter !== 'all'
-                ? 'No orders match your current filters.'
-                : "You haven't made any purchases yet."}
+              {searchTerm || statusFilter !== 'all' 
+                ? "No orders match your filters."
+                : "You haven't purchased any logs yet. Visit Dashboard to browse."}
             </p>
+            {!searchTerm && statusFilter === 'all' && (
+              <Button 
+                className="mt-4"
+                onClick={() => window.location.href = '/dashboard'}
+              >
+                Browse Logs
+              </Button>
+            )}
           </CardContent>
         </Card>
       )}
-
-      {/* View Log Modal */}
-      <Dialog open={!!selectedOrder} onOpenChange={() => setSelectedOrder(null)}>
-        {selectedOrder && (
-          <DialogContent className="max-w-lg">
-            <DialogHeader>
-              <DialogTitle>Order #{selectedOrder.id.slice(0, 8)}</DialogTitle>
-              <DialogDescription>
-                Purchased on {new Date(selectedOrder.created_at).toLocaleDateString()}
-              </DialogDescription>
-            </DialogHeader>
-
-            <div className="space-y-6">
-              {selectedOrder.order_items.map((item) => (
-                <Card key={item.id}>
-                  <CardHeader>
-                    <CardTitle>{item.logs.title}</CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    {item.logs ? (
-                      <div className="space-y-2 text-sm">
-                        {Object.entries(item.logs).map(([key, value]) => {
-                          if (key === 'title' || key === 'id') return null;
-                          return (
-                            <div key={key} className="flex justify-between items-center border-b pb-1">
-                              <span className="capitalize text-muted-foreground">{key}</span>
-                              <div className="flex items-center gap-2">
-                                <span className="font-medium break-all">{String(value)}</span>
-                                <Button
-                                  variant="ghost"
-                                  size="icon"
-                                  onClick={() => handleCopy(String(value))}
-                                >
-                                  <Copy className="h-4 w-4" />
-                                </Button>
-                              </div>
-                            </div>
-                          );
-                        })}
-                      </div>
-                    ) : (
-                      <p className="text-muted-foreground">No details available for this log.</p>
-                    )}
-                  </CardContent>
-                </Card>
-              ))}
-            </div>
-          </DialogContent>
-        )}
-      </Dialog>
     </div>
   );
 };
 
-export default Orders;
+export default OrderDetails;
