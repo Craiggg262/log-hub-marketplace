@@ -122,7 +122,7 @@ const OrderDetails = () => {
       
       if (item.order_log_items && item.order_log_items.length > 0) {
   content += `ACCOUNT DETAILS:\n`;
-  item.order_log_items.forEach((orderLogItem, accountIndex) => {
+  item.order_log_items?.forEach((orderLogItem, accountIndex) => {
     const accountDetails = orderLogItem?.log_items?.account_details || 'Account Details';
     content += `Account ${accountIndex + 1}:\n`;
     content += `${accountDetails}\n\n`;
