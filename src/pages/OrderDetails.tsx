@@ -123,13 +123,13 @@ const OrderDetails = () => {
       if (item.order_log_items && item.order_log_items.length > 0) {
         content += `ACCOUNT DETAILS:\n`;
         item.order_log_items.forEach((orderLogItem, accountIndex) => {
+          const accountDetails = orderLogItem?.log_items?.account_details || 'Account Details Not Available';
           content += `Account ${accountIndex + 1}:\n`;
-          content += `${orderLogItem.log_items.account_details}\n\n`;
+          content += `${accountDetails}\n\n`;
         });
       }
-      content += `\n`;
     });
-
+    
     const blob = new Blob([content], { type: 'text/plain' });
     const url = URL.createObjectURL(blob);
     const link = document.createElement('a');
@@ -320,26 +320,31 @@ const OrderDetails = () => {
                                   {order.status === 'completed' && item.order_log_items && item.order_log_items.length > 0 ? (
                                     <div className="space-y-3">
                                       <h4 className="font-medium text-success">Account Details:</h4>
-                                      {item.order_log_items.map((orderLogItem, accountIndex) => (
-                                        <div key={orderLogItem.id} className="bg-muted/50 rounded-lg p-4">
-                                          <div className="flex items-center justify-between mb-2">
-                                            <h5 className="font-medium">Account {accountIndex + 1}</h5>
-                                            <Button
-                                              variant="ghost"
-                                              size="sm"
-                                              onClick={() => handleCopyText(orderLogItem.log_items.account_details, 'Account details')}
-                                            >
-                                              <Copy className="h-3 w-3" />
-                                            </Button>
+                                      {item.order_log_items.map((orderLogItem, accountIndex) => {
+                                        const accountDetails = orderLogItem?.log_items?.account_details || 'No account details available';
+                                        return (
+                                          <div key={orderLogItem.id} className="bg-muted/50 rounded-lg p-4">
+                                            <div className="flex items-center justify-between mb-2">
+                                              <h5 className="font-medium">Account {accountIndex + 1}</h5>
+                                              <Button
+                                                variant="ghost"
+                                                size="sm"
+                                                onClick={() => handleCopyText(accountDetails, 'Account details')}
+                                              >
+                                                <Copy className="h-3 w-3" />
+                                              </Button>
+                                            </div>
+                                            <pre className="text-sm whitespace-pre-wrap bg-background p-3 rounded border">
+                                              {accountDetails}
+                                            </pre>
+                                            {orderLogItem.log_items && (
+                                              <p className="text-xs text-muted-foreground mt-2">
+                                                Added: {new Date(orderLogItem.log_items.created_at).toLocaleDateString()}
+                                              </p>
+                                            )}
                                           </div>
-                                          <pre className="text-sm whitespace-pre-wrap bg-background p-3 rounded border">
-                                            {orderLogItem.log_items.account_details}
-                                          </pre>
-                                          <p className="text-xs text-muted-foreground mt-2">
-                                            Added: {new Date(orderLogItem.log_items.created_at).toLocaleDateString()}
-                                          </p>
-                                        </div>
-                                      ))}
+                                        );
+                                      })}
                                     </div>
                                   ) : order.status === 'pending' ? (
                                     <div className="bg-warning/10 border border-warning/20 rounded-lg p-4">
