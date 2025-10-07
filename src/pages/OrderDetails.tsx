@@ -123,7 +123,7 @@ const OrderDetails = () => {
       if (item.order_log_items && item.order_log_items.length > 0) {
         content += `ACCOUNT DETAILS:\n`;
         item.order_log_items.forEach((orderLogItem, accountIndex) => {
-          const accountDetails = orderLogItem?.log_items?.account_details || 'Account Details';
+          const accountDetails = orderLogItem?.account_details || 'Account Details';
           content += `Account ${accountIndex + 1}:\n`;
           content += `${accountDetails}\n\n`;
         });
@@ -321,7 +321,7 @@ const OrderDetails = () => {
                                     <div className="space-y-3">
                                       <h4 className="font-medium text-success">Account Details:</h4>
                                       {item.order_log_items.map((orderLogItem, accountIndex) => {
-                                        const accountDetails = orderLogItem?.log_items?.account_details || 'Account Details';
+                                        const accountDetails = orderLogItem?.account_details || 'Account Details';
                                         return (
                                           <div key={orderLogItem.id} className="bg-muted/50 rounded-lg p-4">
                                             <div className="flex items-center justify-between mb-2">
