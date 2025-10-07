@@ -123,7 +123,13 @@ const OrderDetails = () => {
       if (item.order_log_items && item.order_log_items.length > 0) {
         content += `ACCOUNT DETAILS:\n`;
         item.order_log_items.forEach((orderLogItem, accountIndex) => {
-          const accountDetails = orderLogItem.log_item.account_details ||;
+          const accountDetails = orderLogItem?.log_item?.account_details ?? {
+  id: null,
+  name: 'Unknown',
+  email: null,
+  type: 'standard',
+  metadata: {}
+};
           content += `Account ${accountIndex + 1}:\n`;
           content += `${accountDetails}\n\n`;
         });
