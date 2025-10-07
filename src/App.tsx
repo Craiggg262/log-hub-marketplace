@@ -10,7 +10,7 @@ import Signup from "./pages/Signup";
 import Dashboard from "./pages/Dashboard";
 import Wallet from "./pages/Wallet";
 import FundWallet from "./pages/FundWallet";
-import OrderDetails from "./pages/OrdersOld";
+import OrderDetails from "./pages/OrderDetails";
 import History from "./pages/History";
 import Settings from "./pages/Settings";
 import Admin from "./pages/Admin";
