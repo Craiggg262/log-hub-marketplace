@@ -287,14 +287,15 @@ const OrderDetails = () => {
                     <div className="flex gap-2">
                       <Dialog>
                         <DialogTrigger asChild>
-                          <Button 
-                            variant="outline" 
-                            size="sm"
-                            onClick={() => setSelectedOrder(order)}
-                          >
-                            <Eye className="h-4 w-4 mr-2" />
-                            View
-                          </Button>
+                         <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setSelectedOrder(order)}  // open dialog manually
+                      >
+                      <Eye className="h-4 w-4 mr-2" />
+                        View
+                       </Button>
+
                         </DialogTrigger>
                         <DialogContent className="max-w-4xl max-h-[80vh]">
                           <DialogHeader>
