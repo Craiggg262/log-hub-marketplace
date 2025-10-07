@@ -120,11 +120,9 @@ const OrderDetails = () => {
       content += `Price per item: ₦${item.price_per_item.toLocaleString('en-NG', { minimumFractionDigits: 2 })}\n\n`;
       
       if (item.order_log_items && item.order_log_items.length > 0) {
-        content += `ACCOUNT DETAILS:\n`;
+        content += `ACCOUNT DETAIL:\n`;
         item.order_log_items.forEach((orderLogItem, accountIndex) => {
-          const accountDetails = orderLogItem.account_details|| ;
-          content += `Account ${accountIndex + 1}:\n`;
-          content += `${accountDetails}\n\n`;
+          const accountDetails = orderLogItem.log_item.account_details||  ;
         });
       }
     });                        
