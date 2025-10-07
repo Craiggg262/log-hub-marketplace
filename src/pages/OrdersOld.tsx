@@ -121,15 +121,13 @@ const OrderDetails = () => {
       content += `Price per item: ₦${item.price_per_item.toLocaleString('en-NG', { minimumFractionDigits: 2 })}\n\n`;
       
       if (item.order_log_items && item.order_log_items.length > 0) {
-        content += `ACCOUNT DETAILS:\n`;
-        item.order_log_items.forEach((orderLogItem, accountIndex) => {
-          content += `Account ${accountIndex + 1}:\n`;
-          content += `${orderLogItem.log_items.account_details}\n\n`;
-        });
-      }
-      content += `\n`;
-    });
-
+  content += `ACCOUNT DETAILS:\n`;
+  item.order_log_items.forEach((orderLogItem, accountIndex) => {
+    const accountDetails = orderLogItem?.log_items?.account_details || 'Account Details';
+    content += `Account ${accountIndex + 1}:\n`;
+    content += `${accountDetails}\n\n`;
+  });
+}
     const blob = new Blob([content], { type: 'text/plain' });
     const url = URL.createObjectURL(blob);
     const link = document.createElement('a');
@@ -327,7 +325,7 @@ const OrderDetails = () => {
                                             <Button
                                               variant="ghost"
                                               size="sm"
-                                              onClick={() => handleCopyText(orderLogItem.log_items.account_details, 'Account details')}
+                                              onClick={() => handleCopyText(orderLogItem.log_items?.account_details, 'Account details')}
                                             >
                                               <Copy className="h-3 w-3" />
                                             </Button>
