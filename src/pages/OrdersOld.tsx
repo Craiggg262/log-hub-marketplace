@@ -144,6 +144,9 @@ const Orders = () => {
           <div className="text-center space-y-4">
             <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto"></div>
             <p className="text-muted-foreground">Loading orders...</p>
+            <Button onClick={() => navigate(`/orders/${order.id}`)}>
+  View
+</Button>
           </div>
         </div>
       ) : (
