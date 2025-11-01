@@ -41,22 +41,35 @@ const EtegramPayment: React.FC<EtegramPaymentProps> = ({ fundAmount, setFundAmou
     setLoading(true);
 
     try {
-      const nameParts = profile.full_name?.split(' ') || profile.email.split('@')[0].split('.');
+      // Better name parsing
+      let firstname = 'User';
+      let lastname = '';
+      
+      if (profile.full_name) {
+        const nameParts = profile.full_name.trim().split(' ');
+        firstname = nameParts[0] || 'User';
+        lastname = nameParts.slice(1).join(' ') || '';
+      } else {
+        const emailName = profile.email.split('@')[0];
+        firstname = emailName.charAt(0).toUpperCase() + emailName.slice(1);
+      }
+
       const dataToSubmit = {
         projectID: '6905b904aa62e896cfdac643',
         publicKey: 'pk_live-c6cf1d388527492c9493fc25951286b7',
         amount: amount.toString(),
         email: profile.email,
-        phone: profile.phone || '',
-        firstname: nameParts[0] || 'User',
-        lastname: nameParts[1] || '',
+        phone: profile.phone || '0000000000',
+        firstname: firstname,
+        lastname: lastname,
         reference: `loghub_${Date.now()}_${Math.random().toString(36).substring(7)}`,
       };
 
-      console.log('Initiating Etegram Pay:', dataToSubmit);
+      console.log('Initiating Etegram Pay with data:', dataToSubmit);
       
       // Call the payWithEtegram function
-      await payWithEtegram(dataToSubmit);
+      const result = await payWithEtegram(dataToSubmit);
+      console.log('Etegram Pay result:', result);
       
       toast({
         title: "Payment initiated",
@@ -65,7 +78,6 @@ const EtegramPayment: React.FC<EtegramPaymentProps> = ({ fundAmount, setFundAmou
 
       // Reset form after successful initiation
       setFundAmount('');
-      setLoading(false);
 
     } catch (error) {
       console.error('Error initializing Etegram Pay:', error);
@@ -74,6 +86,7 @@ const EtegramPayment: React.FC<EtegramPaymentProps> = ({ fundAmount, setFundAmou
         description: error instanceof Error ? error.message : "Unable to initialize payment. Please try again.",
         variant: "destructive",
       });
+    } finally {
       setLoading(false);
     }
   };
