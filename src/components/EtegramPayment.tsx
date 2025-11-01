@@ -6,88 +6,17 @@ import { Label } from '@/components/ui/label';
 import { Clock } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/hooks/useAuth';
-import { useTransactions } from '@/hooks/useTransactions';
+import { payWithEtegram } from 'etegram-pay';
+
 interface EtegramPaymentProps {
   fundAmount: string;
   setFundAmount: (amount: string) => void;
 }
 
-declare global {
-  interface Window {
-    EtegramPay: {
-      setup: (config: any) => void;
-    };
-  }
-}
-
 const EtegramPayment: React.FC<EtegramPaymentProps> = ({ fundAmount, setFundAmount }) => {
   const [loading, setLoading] = useState(false);
-  const [scriptLoaded, setScriptLoaded] = useState(false);
   const { toast } = useToast();
   const { profile } = useAuth();
-  const { createTransaction } = useTransactions();
-
-  // Load Etegram script
-  React.useEffect(() => {
-    const loadScript = () => {
-      // Check if script already exists
-      const existingScript = document.querySelector('script[src*="etegram"]');
-      if (existingScript) {
-        // Script exists, check if EtegramPay is available
-        if (window.EtegramPay) {
-          setScriptLoaded(true);
-          console.log('Etegram already loaded');
-        } else {
-          // Wait for it to load
-          const checkInterval = setInterval(() => {
-            if (window.EtegramPay) {
-              setScriptLoaded(true);
-              console.log('Etegram loaded after waiting');
-              clearInterval(checkInterval);
-            }
-          }, 100);
-          // Clear interval after 10 seconds if still not loaded
-          setTimeout(() => clearInterval(checkInterval), 10000);
-        }
-        return;
-      }
-
-      // Create and load new script
-      const script = document.createElement('script');
-      script.src = 'https://js.etegram.com/etegram-inline.js';
-      script.async = true;
-      
-      script.onload = () => {
-        // Give it a moment to initialize
-        setTimeout(() => {
-          if (window.EtegramPay) {
-            setScriptLoaded(true);
-            console.log('Etegram script loaded successfully');
-          } else {
-            console.error('Etegram script loaded but EtegramPay not available');
-            toast({
-              title: "Payment system initialization error",
-              description: "Please refresh the page and try again.",
-              variant: "destructive",
-            });
-          }
-        }, 500);
-      };
-      
-      script.onerror = (error) => {
-        console.error('Failed to load Etegram script:', error);
-        toast({
-          title: "Payment system error",
-          description: "Unable to load payment system. Please check your internet connection and refresh the page.",
-          variant: "destructive",
-        });
-      };
-      
-      document.head.appendChild(script);
-    };
-
-    loadScript();
-  }, [toast]);
 
   const handleEtegramPayment = async () => {
     if (!fundAmount || parseFloat(fundAmount) <= 0) {
@@ -99,10 +28,10 @@ const EtegramPayment: React.FC<EtegramPaymentProps> = ({ fundAmount, setFundAmou
       return;
     }
 
-    if (!scriptLoaded || !window.EtegramPay) {
+    if (!profile?.email) {
       toast({
-        title: "Payment system not ready",
-        description: "Please wait a moment and try again.",
+        title: "Profile required",
+        description: "Please update your profile with email before making a payment.",
         variant: "destructive",
       });
       return;
@@ -112,55 +41,37 @@ const EtegramPayment: React.FC<EtegramPaymentProps> = ({ fundAmount, setFundAmou
     setLoading(true);
 
     try {
-      const paymentConfig = {
-        key: 'pk_live-fc160084a6f541fb96ed52d02d45d883',
-        email: profile?.email || 'guest@example.com',
-        amount: amount * 100, // Convert to kobo
-        firstname: profile?.full_name?.split(' ')[0] || profile?.email?.split('@')[0] || 'Guest',
-        lastname: profile?.full_name?.split(' ')[1] || 'User',
-        phone: profile?.phone || '',
-        ref: `etegram_${Date.now()}_${Math.random().toString(36).substring(7)}`,
-        callback: function(response: any) {
-          console.log('Payment callback:', response);
-          if (response.status === 'success' || response.resp?.status === 'success') {
-            toast({
-              title: "Payment successful!",
-              description: `Your wallet has been funded with ₦${amount.toLocaleString()}.`,
-            });
-            
-            // Create transaction record
-            if (profile?.id) {
-              createTransaction(
-                amount,
-                'deposit',
-                `Wallet funding via Etegram - Ref: ${response.reference || response.resp?.reference}`
-              ).catch(console.error);
-            }
-            
-            // Reset form
-            setFundAmount('');
-          } else {
-            toast({
-              title: "Payment failed",
-              description: "Your payment could not be processed. Please try again.",
-              variant: "destructive",
-            });
-          }
-        },
-        onClose: function() {
-          console.log('Payment modal closed');
-          setLoading(false);
-        }
+      const nameParts = profile.full_name?.split(' ') || profile.email.split('@')[0].split('.');
+      const dataToSubmit = {
+        projectID: '6905b904aa62e896cfdac643',
+        publicKey: 'pk_live-c6cf1d388527492c9493fc25951286b7',
+        amount: amount.toString(),
+        email: profile.email,
+        phone: profile.phone || '',
+        firstname: nameParts[0] || 'User',
+        lastname: nameParts[1] || '',
+        reference: `loghub_${Date.now()}_${Math.random().toString(36).substring(7)}`,
       };
 
-      // Initialize Etegram payment
-      window.EtegramPay.setup(paymentConfig);
+      console.log('Initiating Etegram Pay:', dataToSubmit);
+      
+      // Call the payWithEtegram function
+      await payWithEtegram(dataToSubmit);
+      
+      toast({
+        title: "Payment initiated",
+        description: "Complete the payment to fund your wallet.",
+      });
+
+      // Reset form after successful initiation
+      setFundAmount('');
+      setLoading(false);
 
     } catch (error) {
-      console.error('Error initializing Etegram:', error);
+      console.error('Error initializing Etegram Pay:', error);
       toast({
-        title: "Payment system error",
-        description: "Unable to initialize payment system. Please try again later.",
+        title: "Payment error",
+        description: error instanceof Error ? error.message : "Unable to initialize payment. Please try again.",
         variant: "destructive",
       });
       setLoading(false);

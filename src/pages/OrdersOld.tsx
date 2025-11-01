@@ -11,8 +11,8 @@ import { useToast } from '@/hooks/use-toast';
 import { useOrders, type Order } from '@/hooks/useOrders';
 import { useAuth } from '@/hooks/useAuth';
 import { useTransactions } from '@/hooks/useTransactions';
-import { SocialIcon } from '@/components/SocialIcon';
-import { logoImage } from '@/assets/logo.png';
+import SocialIcon from '@/components/SocialIcon';
+import logoImage from '@/assets/logo.png';
 
 const OrderDetails = () => {
   const [searchTerm, setSearchTerm] = useState('');

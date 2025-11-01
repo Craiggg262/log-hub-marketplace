@@ -20,12 +20,14 @@ serve(async (req) => {
 
     const body = await req.json()
     
-    console.log('Etegram webhook received:', body)
+    console.log('Etegram Pay webhook received:', JSON.stringify(body, null, 2))
 
-    // Verify the webhook is from Etegram (you should add proper verification)
-    // For now, we'll process if it's a successful payment
+    // Handle Etegram Pay webhook format
+    // The webhook sends: status, email, amount, fullname, reference, accessCode, etc.
     if (body.status === 'successful' || body.status === 'success') {
-      const { email, amount, transaction_id, reference } = body
+      const { email, amount, reference, accessCode, fullname, phone } = body
+      
+      console.log(`Processing payment for ${email}, amount: ${amount}`)
       
       // Find user by email
       const { data: profile, error: profileError } = await supabase
@@ -35,9 +37,9 @@ serve(async (req) => {
         .single()
 
       if (profileError || !profile) {
-        console.error('User not found:', email)
+        console.error('User not found:', email, profileError)
         return new Response(
-          JSON.stringify({ error: 'User not found' }),
+          JSON.stringify({ error: 'User not found', email }),
           { 
             status: 404,
             headers: { ...corsHeaders, 'Content-Type': 'application/json' }
@@ -45,20 +47,20 @@ serve(async (req) => {
         )
       }
 
-      // Create transaction record
+      // Create transaction record in wallet_transactions
       const { error: transactionError } = await supabase
-        .from('transactions')
+        .from('wallet_transactions')
         .insert({
           user_id: profile.user_id,
           amount: parseFloat(amount),
           transaction_type: 'deposit',
-          description: `Etegram payment - Transaction ID: ${transaction_id || reference}`
+          description: `Etegram Pay deposit - Ref: ${reference || accessCode}`
         })
 
       if (transactionError) {
         console.error('Transaction creation failed:', transactionError)
         return new Response(
-          JSON.stringify({ error: 'Transaction creation failed' }),
+          JSON.stringify({ error: 'Transaction creation failed', details: transactionError }),
           { 
             status: 500,
             headers: { ...corsHeaders, 'Content-Type': 'application/json' }
@@ -76,7 +78,7 @@ serve(async (req) => {
       if (updateError) {
         console.error('Balance update failed:', updateError)
         return new Response(
-          JSON.stringify({ error: 'Balance update failed' }),
+          JSON.stringify({ error: 'Balance update failed', details: updateError }),
           { 
             status: 500,
             headers: { ...corsHeaders, 'Content-Type': 'application/json' }
@@ -84,22 +86,26 @@ serve(async (req) => {
         )
       }
 
-      console.log(`Successfully processed payment for ${email}: ₦${amount}`)
+      console.log(`✅ Successfully processed payment for ${email}: ₦${amount}. New balance: ₦${newBalance}`)
       
       return new Response(
         JSON.stringify({ 
           success: true, 
-          message: 'Payment processed successfully' 
+          message: 'Payment processed successfully',
+          newBalance 
         }),
         { 
+          status: 200,
           headers: { ...corsHeaders, 'Content-Type': 'application/json' }
         }
       )
     }
 
+    console.log('Webhook received but status not successful:', body.status)
     return new Response(
-      JSON.stringify({ message: 'Webhook received but not processed' }),
+      JSON.stringify({ message: 'Webhook received but not processed', status: body.status }),
       { 
+        status: 200,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' }
       }
     )
@@ -107,7 +113,7 @@ serve(async (req) => {
   } catch (error) {
     console.error('Webhook processing error:', error)
     return new Response(
-      JSON.stringify({ error: 'Internal server error' }),
+      JSON.stringify({ error: 'Internal server error', message: error.message }),
       { 
         status: 500,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' }
