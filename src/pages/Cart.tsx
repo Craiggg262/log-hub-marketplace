@@ -16,6 +16,7 @@ const Cart = () => {
   const { createOrderFromCart } = useOrders();
   const { createTransaction } = useTransactions();
   const { toast } = useToast();
+  const [isProcessing, setIsProcessing] = React.useState(false);
 
   const formatPrice = (price: number) => {
     return `₦${price.toLocaleString('en-NG', { minimumFractionDigits: 2 })}`;
@@ -50,6 +51,11 @@ const Cart = () => {
   };
 
   const handleCheckout = async () => {
+    // Prevent multiple clicks
+    if (isProcessing) {
+      return;
+    }
+
     if (cartItems.length === 0) {
       toast({
         title: "Cart is empty",
@@ -64,6 +70,7 @@ const Cart = () => {
     // Check if user has sufficient wallet balance
     if (profile && profile.wallet_balance >= totalAmount) {
       // Process with wallet balance
+      setIsProcessing(true);
       try {
         // Create order from cart
         await createOrderFromCart(cartItems, profile);
@@ -93,6 +100,7 @@ const Cart = () => {
           description: "There was an error processing your purchase. Please try again.",
           variant: "destructive",
         });
+        setIsProcessing(false);
       }
     } else {
       // Insufficient wallet balance - redirect to fund wallet
@@ -280,12 +288,14 @@ const Cart = () => {
                 onClick={handleCheckout} 
                 className="w-full gap-2" 
                 size="lg"
-                disabled={!profile}
+                disabled={!profile || isProcessing}
               >
                 <CreditCard className="h-4 w-4" />
-                {profile && profile.wallet_balance >= getTotalAmount() 
-                  ? 'Complete Purchase' 
-                  : 'Add Funds & Purchase'}
+                {isProcessing 
+                  ? 'Processing...'
+                  : profile && profile.wallet_balance >= getTotalAmount() 
+                    ? 'Complete Purchase' 
+                    : 'Add Funds & Purchase'}
               </Button>
 
               <div className="text-xs text-muted-foreground text-center">

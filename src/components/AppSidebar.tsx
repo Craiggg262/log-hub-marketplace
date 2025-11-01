@@ -32,11 +32,8 @@ import {
 ];
 
 export function AppSidebar() {
-  const { state } = useSidebar();
   const location = useLocation();
   const currentPath = location.pathname;
-  
-  const isCollapsed = state === "collapsed";
 
   const isActive = (path: string) => currentPath === path;
   const getNavCls = ({ isActive }: { isActive: boolean }) =>
@@ -65,9 +62,7 @@ export function AppSidebar() {
                         title={item.title}
                       >
                         <item.icon className="h-5 w-5 shrink-0" />
-                        <span className={isCollapsed ? "sr-only" : ""}>
-                          {item.title}
-                        </span>
+                        <span>{item.title}</span>
                       </NavLink>
                     </SidebarMenuButton>
                 </SidebarMenuItem>
