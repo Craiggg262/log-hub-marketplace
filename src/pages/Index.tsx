@@ -3,6 +3,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { ShoppingCart, Shield, Zap, CheckCircle } from 'lucide-react';
 import SocialIcon from '@/components/SocialIcon';
+import { InstallPWA } from '@/components/InstallPWA';
 import logoImage from '@/assets/logo.png';
 import heroImage from '@/assets/hero-shopping.jpg';
 
@@ -72,6 +73,7 @@ const Index = () => {
 
           {/* CTA Buttons */}
           <div className="flex flex-col sm:flex-row gap-4 justify-center items-center pt-4">
+            <InstallPWA />
             <Button 
               size="lg" 
               className="gap-2 px-8"
