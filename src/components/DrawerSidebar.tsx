@@ -8,13 +8,12 @@ import {
   Settings,
   Plus,
   User,
-  Shield,
   CreditCard,
   MessageCircle,
-  ShieldCheck,
   ExternalLink,
   LogOut,
   Menu,
+  Download,
 } from "lucide-react";
 import {
   Sheet,
@@ -27,6 +26,7 @@ import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { InstallPWA } from "@/components/InstallPWA";
 
 interface DrawerSidebarProps {
   trigger?: React.ReactNode;
@@ -34,14 +34,14 @@ interface DrawerSidebarProps {
 
 const menuItems = [
   { title: "Home", url: "/dashboard", icon: Home },
-  { title: "Orders", url: "/orders", icon: ShoppingCart },
+  { title: "Orders", url: "/orders", icon: History },
+  { title: "Cart", url: "/cart", icon: ShoppingCart },
   { title: "Wallet", url: "/wallet", icon: Wallet },
-  { title: "Account", url: "/settings", icon: User },
-  { title: "Admin", url: "/admin", icon: Shield, adminOnly: true },
+  { title: "Fund Wallet", url: "/fund-wallet", icon: Plus },
   { title: "Transactions", url: "/history", icon: CreditCard },
+  { title: "Settings", url: "/settings", icon: Settings },
   { title: "Support", url: "mailto:info.loghubmarketplace@gmail.com", icon: MessageCircle, external: true },
-  { title: "Privacy Policy", url: "/privacy", icon: ShieldCheck },
-  { title: "Buy Logs", url: "/cart", icon: ExternalLink },
+  { title: "Boost Account", url: "https://boosterhub.name.ng", icon: ExternalLink, external: true },
 ];
 
 export function DrawerSidebar({ trigger }: DrawerSidebarProps) {
@@ -86,10 +86,10 @@ export function DrawerSidebar({ trigger }: DrawerSidebarProps) {
           </Button>
         )}
       </SheetTrigger>
-      <SheetContent side="left" className="w-80 p-0 bg-slate-950 border-slate-800">
+      <SheetContent side="left" className="w-80 p-0 bg-primary/5 border-primary/20">
         <div className="flex flex-col h-full">
-          <SheetHeader className="p-6 pb-4 border-b border-slate-800">
-            <SheetTitle className="text-2xl font-bold text-blue-500">
+          <SheetHeader className="p-6 pb-4 border-b border-primary/20">
+            <SheetTitle className="text-2xl font-bold text-primary">
               Log Hub
             </SheetTitle>
           </SheetHeader>
@@ -97,7 +97,7 @@ export function DrawerSidebar({ trigger }: DrawerSidebarProps) {
           <ScrollArea className="flex-1">
             <div className="px-4 py-6">
               <div className="mb-4">
-                <h3 className="text-sm font-medium text-slate-400 px-3 mb-2">
+                <h3 className="text-sm font-medium text-muted-foreground px-3 mb-2">
                   Navigation
                 </h3>
               </div>
@@ -110,7 +110,7 @@ export function DrawerSidebar({ trigger }: DrawerSidebarProps) {
                     <button
                       key={item.title}
                       onClick={() => handleNavClick(item)}
-                      className="w-full flex items-center gap-3 px-3 py-3 text-slate-300 hover:bg-slate-800/50 rounded-lg transition-colors"
+                      className="w-full flex items-center gap-3 px-3 py-3 text-foreground hover:bg-primary/10 rounded-lg transition-colors"
                     >
                       <Icon className="h-5 w-5 shrink-0" />
                       <span className="text-sm">{item.title}</span>
@@ -124,11 +124,12 @@ export function DrawerSidebar({ trigger }: DrawerSidebarProps) {
             </div>
           </ScrollArea>
 
-          <div className="p-4 border-t border-slate-800">
+          <div className="p-4 border-t border-primary/20 space-y-2">
+            <InstallPWA />
             <Button
               onClick={handleLogout}
               variant="outline"
-              className="w-full justify-start gap-3 bg-transparent border-slate-700 text-slate-300 hover:bg-slate-800/50 hover:text-slate-100"
+              className="w-full justify-start gap-3"
             >
               <LogOut className="h-5 w-5" />
               Logout
