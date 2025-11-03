@@ -62,16 +62,15 @@ export const InstallPWA = () => {
     }
   };
 
-  if (!isInstallable) return null;
-
   return (
     <Button 
-      size="lg" 
-      variant="secondary"
-      className="gap-2 px-8"
+      size="sm" 
+      variant="outline"
+      className="gap-2 w-full justify-start"
       onClick={handleInstall}
+      disabled={!isInstallable}
     >
-      <Download className="h-5 w-5" />
+      <Download className="h-4 w-4" />
       Download App
     </Button>
   );

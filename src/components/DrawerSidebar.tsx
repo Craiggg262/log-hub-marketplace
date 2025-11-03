@@ -125,7 +125,9 @@ export function DrawerSidebar({ trigger }: DrawerSidebarProps) {
           </ScrollArea>
 
           <div className="p-4 border-t border-primary/40 space-y-2">
-            <InstallPWA />
+            <div className="w-full">
+              <InstallPWA />
+            </div>
             <Button
               onClick={handleLogout}
               variant="outline"
