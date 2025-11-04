@@ -68,7 +68,7 @@ const Dashboard = () => {
     }
   };
 
-  const handleBuyNow = async () => {
+  const handleBuyNow = () => {
     if (getTotalItems() === 0) {
       toast({
         title: "Cart is empty",
@@ -78,29 +78,8 @@ const Dashboard = () => {
       return;
     }
 
-    try {
-      // Create order in database
-      const order = await createOrderFromCart(cartItems, profile);
-      
-      if (order) {
-        // Clear cart after successful order creation
-        await clearCart();
-        
-        // Redirect to WhatsApp
-        window.open('https://wa.link/8rqbox', '_blank');
-        
-        toast({
-          title: "Order created successfully",
-          description: `Order #${order.id.slice(0, 8)} created. Complete payment via WhatsApp.`,
-        });
-      }
-    } catch (error) {
-      toast({
-        title: "Error creating order",
-        description: "Failed to create order. Please try again.",
-        variant: "destructive",
-      });
-    }
+    // Redirect to cart page to complete purchase
+    window.location.href = '/cart';
   };
 
   const formatPrice = (price: number) => {
