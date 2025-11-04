@@ -86,9 +86,9 @@ export function DrawerSidebar({ trigger }: DrawerSidebarProps) {
           </Button>
         )}
       </SheetTrigger>
-      <SheetContent side="left" className="w-80 p-0 bg-primary/35 border-primary/40">
+      <SheetContent side="left" className="w-80 p-0 bg-background border-border">
         <div className="flex flex-col h-full">
-          <SheetHeader className="p-6 pb-4 border-b border-primary/40">
+          <SheetHeader className="p-6 pb-4 border-b border-border">
             <SheetTitle className="text-2xl font-bold text-primary">
               Log Hub
             </SheetTitle>
@@ -110,7 +110,7 @@ export function DrawerSidebar({ trigger }: DrawerSidebarProps) {
                     <button
                       key={item.title}
                       onClick={() => handleNavClick(item)}
-                      className="w-full flex items-center gap-3 px-3 py-3 text-foreground hover:bg-primary/50 rounded-lg transition-colors"
+                      className="w-full flex items-center gap-3 px-3 py-3 text-foreground hover:bg-accent rounded-lg transition-colors"
                     >
                       <Icon className="h-5 w-5 shrink-0" />
                       <span className="text-sm">{item.title}</span>
@@ -124,7 +124,7 @@ export function DrawerSidebar({ trigger }: DrawerSidebarProps) {
             </div>
           </ScrollArea>
 
-          <div className="p-4 border-t border-primary/40 space-y-2">
+          <div className="p-4 border-t border-border space-y-2">
             <div className="w-full">
               <InstallPWA />
             </div>
