@@ -18,6 +18,7 @@ import Layout from "./components/Layout";
 import NotFound from "./pages/NotFound";
 import Cart from "./pages/Cart";
 import AISupport from "./components/AISupport";
+import UniversalLogs from "./pages/UniversalLogs";
 
 const queryClient = new QueryClient();
 
@@ -68,6 +69,7 @@ function AppContent() {
         
         {/* Protected Routes */}
         <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
+        <Route path="/universal-logs" element={<ProtectedRoute><UniversalLogs /></ProtectedRoute>} />
         <Route path="/wallet" element={<ProtectedRoute><Wallet /></ProtectedRoute>} />
         <Route path="/fund-wallet" element={<ProtectedRoute><FundWallet /></ProtectedRoute>} />
         <Route path="/orders" element={<ProtectedRoute><OrderDetails /></ProtectedRoute>} />

@@ -114,15 +114,17 @@ const Dashboard = () => {
       </Button>
 
       {/* Welcome Section */}
-      <div className="bg-gradient-to-r from-primary/10 to-accent/10 rounded-lg p-4 md:p-6">
+      <div className="bg-gradient-to-r from-primary/20 via-accent/10 to-orange-500/20 rounded-xl p-4 md:p-6 border border-border/50">
         <h1 className="text-2xl md:text-3xl font-bold mb-2">Welcome back{profile?.full_name ? `, ${profile.full_name.split(' ')[0]}` : ''}!</h1>
         <p className="text-sm md:text-base text-muted-foreground mb-4">Discover premium logs from our marketplace</p>
         
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 md:gap-4">
-          <Card className="bg-card/50 backdrop-blur-sm">
+          <Card className="bg-card/80 backdrop-blur-sm border-border/50">
             <CardContent className="p-3 md:p-4">
               <div className="flex items-center gap-2 md:gap-3">
-                <Wallet className="h-6 w-6 md:h-8 md:w-8 text-primary flex-shrink-0" />
+                <div className="h-10 w-10 md:h-12 md:w-12 rounded-xl gradient-primary flex items-center justify-center flex-shrink-0">
+                  <Wallet className="h-5 w-5 md:h-6 md:w-6 text-primary-foreground" />
+                </div>
                 <div className="min-w-0">
                   <p className="text-xs md:text-sm text-muted-foreground">Wallet Balance</p>
                   <p className="text-lg md:text-2xl font-bold truncate">{formatPrice(profile?.wallet_balance || 0)}</p>
@@ -131,10 +133,12 @@ const Dashboard = () => {
             </CardContent>
           </Card>
           
-          <Card className="bg-card/50 backdrop-blur-sm">
+          <Card className="bg-card/80 backdrop-blur-sm border-border/50">
             <CardContent className="p-3 md:p-4">
               <div className="flex items-center gap-2 md:gap-3">
-                <ShoppingCart className="h-6 w-6 md:h-8 md:w-8 text-primary flex-shrink-0" />
+                <div className="h-10 w-10 md:h-12 md:w-12 rounded-xl bg-accent/20 flex items-center justify-center flex-shrink-0">
+                  <ShoppingCart className="h-5 w-5 md:h-6 md:w-6 text-accent" />
+                </div>
                 <div>
                   <p className="text-xs md:text-sm text-muted-foreground">Cart Items</p>
                   <p className="text-lg md:text-2xl font-bold">{getTotalItems()}</p>
@@ -143,10 +147,12 @@ const Dashboard = () => {
             </CardContent>
           </Card>
 
-          <Card className="bg-card/50 backdrop-blur-sm">
+          <Card className="bg-card/80 backdrop-blur-sm border-border/50">
             <CardContent className="p-3 md:p-4">
               <div className="flex items-center gap-2 md:gap-3">
-                <Eye className="h-6 w-6 md:h-8 md:w-8 text-primary flex-shrink-0" />
+                <div className="h-10 w-10 md:h-12 md:w-12 rounded-xl bg-success/20 flex items-center justify-center flex-shrink-0">
+                  <Eye className="h-5 w-5 md:h-6 md:w-6 text-success" />
+                </div>
                 <div>
                   <p className="text-xs md:text-sm text-muted-foreground">Available Logs</p>
                   <p className="text-lg md:text-2xl font-bold">{logs.filter(log => log.in_stock).length}</p>
@@ -158,7 +164,7 @@ const Dashboard = () => {
 
         {getTotalItems() > 0 && (
           <div className="mt-4">
-            <Button onClick={handleBuyNow} size="lg" className="gap-2 w-full sm:w-auto">
+            <Button onClick={handleBuyNow} size="lg" className="gap-2 w-full sm:w-auto gradient-primary text-primary-foreground hover:opacity-90 glow-primary">
               <ShoppingCart className="h-4 w-4" />
               <span className="truncate">Checkout Cart (₦{getTotalItems() > 0 ? cartItems.reduce((total, item) => total + (item.logs.price * item.quantity), 0).toLocaleString('en-NG') : '0'})</span>
             </Button>
@@ -208,15 +214,15 @@ const Dashboard = () => {
       {/* Logs Grid */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6 px-4 sm:px-0">
         {sortedLogs.map((log) => (
-          <Card key={log.id} className="overflow-hidden hover:shadow-lg transition-shadow">
+          <Card key={log.id} className="overflow-hidden hover:shadow-lg hover:border-primary/50 transition-all duration-300 bg-card/80 backdrop-blur-sm border-border/50">
             <CardHeader className="pb-3">
               <div className="flex justify-between items-start mb-2">
-                <Badge variant={log.in_stock ? "default" : "secondary"}>
+                <Badge variant={log.in_stock ? "default" : "secondary"} className={log.in_stock ? "bg-success/20 text-success border-success/30" : ""}>
                   {log.in_stock ? `${log.stock} In Stock` : "Out of Stock"}
                 </Badge>
                 <div className="flex items-center gap-2">
                   <SocialIcon platform={log.categories?.name || ''} size={20} />
-                  <Badge variant="outline" className="capitalize">
+                  <Badge variant="outline" className="capitalize border-border/50">
                     {log.categories?.name}
                   </Badge>
                 </div>
@@ -240,7 +246,7 @@ const Dashboard = () => {
             <CardContent className="space-y-3 p-4 md:p-6">
               <div className="flex items-center gap-2">
                 <div className="flex items-center gap-1">
-                  <Star className="h-4 w-4 fill-yellow-400 text-yellow-400" />
+                  <Star className="h-4 w-4 fill-primary text-primary" />
                   <span className="text-sm font-medium">{log.rating}</span>
                 </div>
                 <span className="text-sm text-muted-foreground">
@@ -253,14 +259,14 @@ const Dashboard = () => {
                   <span className="text-xl md:text-2xl font-bold text-primary flex-shrink-0">
                     {formatPrice(log.price)}
                   </span>
-                  <Button variant="outline" size="sm" className="shrink-0">
+                  <Button variant="outline" size="sm" className="shrink-0 border-border/50 hover:border-primary/50">
                     <Eye className="h-4 w-4" />
                   </Button>
                 </div>
                 <Button
                   onClick={() => handleAddToCart(log)}
                   disabled={!log.in_stock}
-                  className="w-full gap-2"
+                  className="w-full gap-2 gradient-primary text-primary-foreground hover:opacity-90"
                   size="sm"
                 >
                   <Plus className="h-4 w-4" />

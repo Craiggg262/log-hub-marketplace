@@ -14,6 +14,7 @@ import {
   LogOut,
   Menu,
   Download,
+  Globe,
 } from "lucide-react";
 import {
   Sheet,
@@ -34,6 +35,7 @@ interface DrawerSidebarProps {
 
 const menuItems = [
   { title: "Home", url: "/dashboard", icon: Home },
+  { title: "Universal Logs", url: "/universal-logs", icon: Globe },
   { title: "Orders", url: "/orders", icon: History },
   { title: "Cart", url: "/cart", icon: ShoppingCart },
   { title: "Wallet", url: "/wallet", icon: Wallet },
