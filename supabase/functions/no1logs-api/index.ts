@@ -26,12 +26,6 @@ serve(async (req) => {
       );
     }
 
-    const { action, productId, categoryId, search } = await req.json();
-    console.log(`Processing request: action=${action}, productId=${productId}, categoryId=${categoryId}, search=${search}`);
-
-    let endpoint = '';
-    let method = 'GET';
-
     const { action, productId, categoryId, search, productDetailsIds } = await req.json();
     console.log(`Processing request: action=${action}, productId=${productId}, categoryId=${categoryId}, search=${search}`);
 
