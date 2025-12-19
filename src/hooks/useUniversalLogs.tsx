@@ -31,8 +31,14 @@ export function useUniversalLogs() {
       });
 
       if (error) throw error;
-      
-      setCategories(data || []);
+
+      // API may return either an array (docs) or an object wrapper { categories: [...] }
+      const normalized = Array.isArray(data)
+        ? data
+        : Array.isArray((data as any)?.categories)
+          ? (data as any).categories
+          : [];
+      setCategories(normalized);
     } catch (err) {
       console.error('Error fetching universal logs:', err);
       setError(err instanceof Error ? err.message : 'Failed to fetch products');
