@@ -135,25 +135,28 @@ serve(async (req) => {
 // Helper function to multiply prices by the configured multiplier
 function transformPrices(data: any, multiplier: number): any {
   if (Array.isArray(data)) {
-    return data.map(item => transformPrices(item, multiplier));
+    return data.map((item) => transformPrices(item, multiplier));
   }
-  
+
   if (data && typeof data === 'object') {
-    const transformed = { ...data };
-    
-    // Transform price if it exists
-    if (transformed.price) {
-      const originalPrice = parseFloat(transformed.price);
-      transformed.price = (originalPrice * multiplier).toFixed(2);
+    const transformed: Record<string, any> = { ...data };
+
+    for (const [key, value] of Object.entries(transformed)) {
+      if (key === 'price' && (typeof value === 'string' || typeof value === 'number')) {
+        const originalPrice = parseFloat(String(value));
+        transformed[key] = Number.isFinite(originalPrice)
+          ? (originalPrice * multiplier).toFixed(8)
+          : value;
+        continue;
+      }
+
+      if (Array.isArray(value) || (value && typeof value === 'object')) {
+        transformed[key] = transformPrices(value, multiplier);
+      }
     }
-    
-    // Recursively transform nested products
-    if (transformed.products) {
-      transformed.products = transformPrices(transformed.products, multiplier);
-    }
-    
+
     return transformed;
   }
-  
+
   return data;
 }
