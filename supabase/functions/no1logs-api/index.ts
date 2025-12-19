@@ -32,6 +32,13 @@ serve(async (req) => {
     let endpoint = '';
     let method = 'GET';
 
+    const { action, productId, categoryId, search, productDetailsIds } = await req.json();
+    console.log(`Processing request: action=${action}, productId=${productId}, categoryId=${categoryId}, search=${search}`);
+
+    let endpoint = '';
+    let method = 'GET';
+    let body = null;
+
     switch (action) {
       case 'get_products':
         endpoint = `/products?api_token=${apiKey}`;
@@ -60,6 +67,26 @@ serve(async (req) => {
       case 'check_balance':
         endpoint = `/check-balance?api_token=${apiKey}`;
         break;
+      case 'place_order':
+        if (!productDetailsIds) {
+          return new Response(
+            JSON.stringify({ error: 'Product details IDs are required' }),
+            { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+          );
+        }
+        endpoint = `/order/new?api_token=${apiKey}`;
+        method = 'POST';
+        body = JSON.stringify({ product_details_ids: productDetailsIds });
+        break;
+      case 'get_order':
+        if (!productId) {
+          return new Response(
+            JSON.stringify({ error: 'Order ID is required' }),
+            { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+          );
+        }
+        endpoint = `/order/new?api_token=${apiKey}&id=${productId}`;
+        break;
       default:
         return new Response(
           JSON.stringify({ error: 'Invalid action' }),
@@ -69,12 +96,18 @@ serve(async (req) => {
 
     console.log(`Fetching: ${API_BASE_URL}${endpoint}`);
 
-    const response = await fetch(`${API_BASE_URL}${endpoint}`, {
+    const fetchOptions: RequestInit = {
       method,
       headers: {
         'Content-Type': 'application/json',
       },
-    });
+    };
+
+    if (body) {
+      fetchOptions.body = body;
+    }
+
+    const response = await fetch(`${API_BASE_URL}${endpoint}`, fetchOptions);
 
     if (!response.ok) {
       console.error(`API error: ${response.status} ${response.statusText}`);
