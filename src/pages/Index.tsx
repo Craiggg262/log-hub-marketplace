@@ -52,8 +52,9 @@ const Index = () => {
               </Card>
             </div>
 
-            {/* Trust badge */}
-            <div className="flex justify-center mb-8">
+            {/* Logo and Trust badge */}
+            <div className="flex flex-col items-center gap-4 mb-8">
+              <img src={logoImage} alt="Log Hub Logo" className="h-20 w-20 object-contain rounded-xl" />
               <Badge variant="secondary" className="px-4 py-2 bg-card/50 backdrop-blur-sm border border-border/50">
                 <Star className="h-4 w-4 text-primary mr-2" />
                 Trusted by thousands of customers

@@ -4,14 +4,17 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { useToast } from '@/hooks/use-toast';
-import { Search, ShoppingCart, MessageCircle, Package, Globe, ChevronDown, ChevronUp } from 'lucide-react';
+import { Search, ShoppingCart, MessageCircle, Package, Globe, ChevronDown, ChevronUp, Eye } from 'lucide-react';
 import { useUniversalLogs, UniversalProduct, UniversalCategory } from '@/hooks/useUniversalLogs';
 import { useAuth } from '@/hooks/useAuth';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
+import ProductDetailsModal from '@/components/ProductDetailsModal';
 
 const UniversalLogs = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [expandedCategories, setExpandedCategories] = useState<Set<number>>(new Set());
+  const [selectedProduct, setSelectedProduct] = useState<UniversalProduct | null>(null);
+  const [modalOpen, setModalOpen] = useState(false);
   const { toast } = useToast();
   const { user } = useAuth();
   const { categories, loading, error, refetch } = useUniversalLogs();
@@ -32,9 +35,9 @@ const UniversalLogs = () => {
     });
   };
 
-  const handleContactForPurchase = (product: UniversalProduct) => {
-    const message = `Hello! I'm interested in purchasing: ${product.name} (Price: ₦${parseFloat(product.price).toLocaleString('en-NG')})`;
-    window.open(`https://wa.me/2347060847925?text=${encodeURIComponent(message)}`, '_blank');
+  const handleViewProduct = (product: UniversalProduct) => {
+    setSelectedProduct(product);
+    setModalOpen(true);
   };
 
   const formatPrice = (price: string) => {
@@ -81,7 +84,7 @@ const UniversalLogs = () => {
           <h1 className="text-2xl md:text-3xl font-bold">Universal Logs</h1>
         </div>
         <p className="text-muted-foreground mb-6">
-          Browse premium logs from our global inventory. Contact us via WhatsApp to purchase.
+          Browse premium logs from our global inventory. Order directly using your wallet balance.
         </p>
         
         {/* Search */}
@@ -156,15 +159,27 @@ const UniversalLogs = () => {
                               <span className="text-lg font-bold text-primary">
                                 {formatPrice(product.price)}
                               </span>
-                              <Button
-                                onClick={() => handleContactForPurchase(product)}
-                                disabled={product.in_stock === 0}
-                                size="sm"
-                                className="gap-1"
-                              >
-                                <MessageCircle className="h-3 w-3" />
-                                Buy Now
-                              </Button>
+                              <div className="flex gap-2">
+                                <Button
+                                  onClick={() => handleViewProduct(product)}
+                                  disabled={product.in_stock === 0}
+                                  size="sm"
+                                  variant="outline"
+                                  className="gap-1"
+                                >
+                                  <Eye className="h-3 w-3" />
+                                  View
+                                </Button>
+                                <Button
+                                  onClick={() => handleViewProduct(product)}
+                                  disabled={product.in_stock === 0}
+                                  size="sm"
+                                  className="gap-1"
+                                >
+                                  <ShoppingCart className="h-3 w-3" />
+                                  Buy
+                                </Button>
+                              </div>
                             </div>
                           </CardContent>
                         </Card>
@@ -177,6 +192,18 @@ const UniversalLogs = () => {
           ))
         )}
       </div>
+
+      {/* Product Details Modal */}
+      {selectedProduct && (
+        <ProductDetailsModal
+          open={modalOpen}
+          onOpenChange={setModalOpen}
+          productId={selectedProduct.id}
+          productName={selectedProduct.name}
+          price={selectedProduct.price}
+          inStock={selectedProduct.in_stock}
+        />
+      )}
     </div>
   );
 };
