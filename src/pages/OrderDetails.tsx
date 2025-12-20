@@ -3,12 +3,14 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { ShoppingCart, Search, Download, Eye, Calendar, Copy, Lock, Wallet } from 'lucide-react';
+import { ShoppingCart, Search, Download, Eye, Calendar, Copy, Lock, Wallet, Globe } from 'lucide-react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useToast } from '@/hooks/use-toast';
 import { useOrders, type Order } from '@/hooks/useOrders';
+import { useUniversalLogsOrders, type UniversalLogsOrder } from '@/hooks/useUniversalLogsOrders';
 import { useAuth } from '@/hooks/useAuth';
 import { useTransactions } from '@/hooks/useTransactions';
 import SocialIcon from '@/components/SocialIcon';
@@ -18,7 +20,9 @@ const OrderDetails = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
+  const [activeTab, setActiveTab] = useState('dashboard');
   const { orders, loading } = useOrders();
+  const { orders: universalOrders, loading: universalLoading } = useUniversalLogsOrders();
   const { profile } = useAuth();
   const { createTransaction } = useTransactions();
   const { toast } = useToast();
@@ -151,10 +155,23 @@ const OrderDetails = () => {
     return `₦${price.toLocaleString('en-NG', { minimumFractionDigits: 2 })}`;
   };
 
-  const completedOrders = orders.filter(order => order.status === 'completed').length;
+  const completedOrders = orders.filter(order => order.status === 'completed').length + 
+    universalOrders.filter(order => order.status === 'completed').length;
   const totalSpent = orders
     .filter(order => order.status === 'completed')
+    .reduce((sum, order) => sum + order.total_amount, 0) +
+    universalOrders
+    .filter(order => order.status === 'completed')
     .reduce((sum, order) => sum + order.total_amount, 0);
+  const totalOrders = orders.length + universalOrders.length;
+
+  // Filtered Universal Logs orders
+  const filteredUniversalOrders = universalOrders.filter(order => {
+    const matchesSearch = order.product_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      order.id.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesStatus = statusFilter === 'all' || order.status === statusFilter;
+    return matchesSearch && matchesStatus;
+  });
 
   return (
     <div className="container mx-auto px-4 py-8 space-y-8">
@@ -173,7 +190,7 @@ const OrderDetails = () => {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm text-muted-foreground">Total Orders</p>
-                <p className="text-2xl font-bold">{orders.length}</p>
+                <p className="text-2xl font-bold">{totalOrders}</p>
               </div>
               <ShoppingCart className="h-10 w-10 text-muted-foreground/20" />
             </div>
@@ -232,15 +249,29 @@ const OrderDetails = () => {
         </Select>
       </div>
 
-      {/* Orders List */}
-      {loading ? (
-        <div className="flex items-center justify-center py-12">
-          <div className="text-center space-y-4">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto"></div>
-            <p className="text-muted-foreground">Loading orders...</p>
-          </div>
-        </div>
-      ) : (
+      {/* Tabs for order types */}
+      <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+        <TabsList className="grid w-full grid-cols-2 mb-6">
+          <TabsTrigger value="dashboard" className="flex items-center gap-2">
+            <ShoppingCart className="h-4 w-4" />
+            Dashboard Orders ({orders.length})
+          </TabsTrigger>
+          <TabsTrigger value="universal" className="flex items-center gap-2">
+            <Globe className="h-4 w-4" />
+            Universal Logs ({universalOrders.length})
+          </TabsTrigger>
+        </TabsList>
+
+        {/* Dashboard Orders Tab */}
+        <TabsContent value="dashboard">
+          {loading ? (
+            <div className="flex items-center justify-center py-12">
+              <div className="text-center space-y-4">
+                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto"></div>
+                <p className="text-muted-foreground">Loading orders...</p>
+              </div>
+            </div>
+          ) : (
         <div className="space-y-4">
           {filteredOrders.map((order) => (
             <Card key={order.id} className="hover:shadow-md transition-shadow">
@@ -410,23 +441,197 @@ const OrderDetails = () => {
         <Card>
           <CardContent className="p-12 text-center">
             <ShoppingCart className="h-12 w-12 text-muted-foreground/20 mx-auto mb-4" />
-            <h3 className="text-lg font-semibold mb-2">No orders found</h3>
+            <h3 className="text-lg font-semibold mb-2">No dashboard orders found</h3>
             <p className="text-muted-foreground">
               {searchTerm || statusFilter !== 'all' 
                 ? "No orders match your filters."
-                : "You haven't purchased any logs yet. Visit Dashboard to browse."}
+                : "You haven't purchased any dashboard logs yet."}
             </p>
             {!searchTerm && statusFilter === 'all' && (
               <Button 
                 className="mt-4"
                 onClick={() => window.location.href = '/dashboard'}
               >
-                Browse Logs
+                Browse Dashboard Logs
               </Button>
             )}
           </CardContent>
         </Card>
       )}
+        </TabsContent>
+
+        {/* Universal Logs Orders Tab */}
+        <TabsContent value="universal">
+          {universalLoading ? (
+            <div className="flex items-center justify-center py-12">
+              <div className="text-center space-y-4">
+                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto"></div>
+                <p className="text-muted-foreground">Loading universal logs orders...</p>
+              </div>
+            </div>
+          ) : (
+            <div className="space-y-4">
+              {filteredUniversalOrders.map((order) => (
+                <Card key={order.id} className="hover:shadow-md transition-shadow">
+                  <CardContent className="p-6">
+                    <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                      <div className="flex-1">
+                        <div className="flex items-center gap-3 mb-2">
+                          <Badge variant="outline" className="font-mono text-xs">
+                            #{order.id.slice(0, 8)}
+                          </Badge>
+                          <Badge className={getStatusColor(order.status)}>
+                            {order.status.charAt(0).toUpperCase() + order.status.slice(1)}
+                          </Badge>
+                          <Badge variant="secondary" className="flex items-center gap-1">
+                            <Globe className="h-3 w-3" />
+                            Universal Logs
+                          </Badge>
+                        </div>
+                        
+                        <div className="flex items-center gap-2">
+                          <Globe className="h-5 w-5 text-primary" />
+                          <h3 className="text-lg font-semibold">{order.product_name}</h3>
+                          <span className="text-sm text-muted-foreground">×{order.quantity}</span>
+                        </div>
+                        
+                        <p className="text-sm text-muted-foreground mt-2">
+                          Ordered on {new Date(order.created_at).toLocaleDateString()}
+                        </p>
+                      </div>
+
+                      <div className="flex items-center gap-4">
+                        <div className="text-right">
+                          <p className="text-2xl font-bold text-primary">{formatPrice(order.total_amount)}</p>
+                          <p className="text-xs text-muted-foreground">{formatPrice(order.price_per_unit)} each</p>
+                        </div>
+                        
+                        <Dialog>
+                          <DialogTrigger asChild>
+                            <Button variant="outline" size="sm">
+                              <Eye className="h-4 w-4 mr-2" />
+                              View
+                            </Button>
+                          </DialogTrigger>
+                          <DialogContent className="max-w-2xl max-h-[80vh]">
+                            <DialogHeader>
+                              <DialogTitle className="flex items-center gap-2">
+                                <Globe className="h-5 w-5 text-primary" />
+                                Universal Logs Order #{order.id.slice(0, 8)}
+                              </DialogTitle>
+                              <DialogDescription>
+                                Placed on {new Date(order.created_at).toLocaleDateString()} • {order.status}
+                              </DialogDescription>
+                            </DialogHeader>
+                            <ScrollArea className="max-h-[60vh]">
+                              <div className="space-y-4">
+                                <div className="border rounded-lg p-4">
+                                  <h4 className="font-semibold mb-2">{order.product_name}</h4>
+                                  <div className="grid grid-cols-2 gap-4 text-sm">
+                                    <div>
+                                      <p className="text-muted-foreground">Quantity</p>
+                                      <p className="font-medium">{order.quantity}</p>
+                                    </div>
+                                    <div>
+                                      <p className="text-muted-foreground">Price per unit</p>
+                                      <p className="font-medium">{formatPrice(order.price_per_unit)}</p>
+                                    </div>
+                                    <div>
+                                      <p className="text-muted-foreground">Total</p>
+                                      <p className="font-medium text-primary">{formatPrice(order.total_amount)}</p>
+                                    </div>
+                                    <div>
+                                      <p className="text-muted-foreground">Status</p>
+                                      <Badge className={getStatusColor(order.status)}>
+                                        {order.status}
+                                      </Badge>
+                                    </div>
+                                  </div>
+                                </div>
+
+                                {order.order_response && (
+                                  <div className="border rounded-lg p-4">
+                                    <h4 className="font-semibold mb-2 text-success">API Order Details</h4>
+                                    {order.order_response.orders ? (
+                                      <div className="space-y-3">
+                                        {order.order_response.orders.map((apiOrder: any, idx: number) => (
+                                          <div key={idx} className="bg-muted/50 rounded-lg p-3">
+                                            <div className="flex items-center justify-between mb-2">
+                                              <span className="font-medium">Account {idx + 1}</span>
+                                              <Button
+                                                variant="ghost"
+                                                size="sm"
+                                                onClick={() => handleCopyText(
+                                                  apiOrder.url || apiOrder.data || JSON.stringify(apiOrder), 
+                                                  'Account details'
+                                                )}
+                                              >
+                                                <Copy className="h-3 w-3" />
+                                              </Button>
+                                            </div>
+                                            <pre className="text-sm whitespace-pre-wrap bg-background p-3 rounded border overflow-x-auto">
+                                              {apiOrder.url || apiOrder.data || JSON.stringify(apiOrder, null, 2)}
+                                            </pre>
+                                          </div>
+                                        ))}
+                                      </div>
+                                    ) : (
+                                      <div className="bg-muted/50 rounded-lg p-3">
+                                        <div className="flex items-center justify-between mb-2">
+                                          <span className="font-medium">Order Response</span>
+                                          <Button
+                                            variant="ghost"
+                                            size="sm"
+                                            onClick={() => handleCopyText(
+                                              JSON.stringify(order.order_response, null, 2), 
+                                              'Order response'
+                                            )}
+                                          >
+                                            <Copy className="h-3 w-3" />
+                                          </Button>
+                                        </div>
+                                        <pre className="text-sm whitespace-pre-wrap bg-background p-3 rounded border overflow-x-auto">
+                                          {JSON.stringify(order.order_response, null, 2)}
+                                        </pre>
+                                      </div>
+                                    )}
+                                  </div>
+                                )}
+                              </div>
+                            </ScrollArea>
+                          </DialogContent>
+                        </Dialog>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          )}
+
+          {!universalLoading && filteredUniversalOrders.length === 0 && (
+            <Card>
+              <CardContent className="p-12 text-center">
+                <Globe className="h-12 w-12 text-muted-foreground/20 mx-auto mb-4" />
+                <h3 className="text-lg font-semibold mb-2">No Universal Logs orders found</h3>
+                <p className="text-muted-foreground">
+                  {searchTerm || statusFilter !== 'all' 
+                    ? "No orders match your filters."
+                    : "You haven't purchased from Universal Logs yet."}
+                </p>
+                {!searchTerm && statusFilter === 'all' && (
+                  <Button 
+                    className="mt-4"
+                    onClick={() => window.location.href = '/universal-logs'}
+                  >
+                    Browse Universal Logs
+                  </Button>
+                )}
+              </CardContent>
+            </Card>
+          )}
+        </TabsContent>
+      </Tabs>
     </div>
   );
 };

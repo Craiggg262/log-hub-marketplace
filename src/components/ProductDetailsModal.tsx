@@ -135,6 +135,23 @@ const ProductDetailsModal: React.FC<ProductDetailsModalProps> = ({
 
       if (error) throw error;
 
+      // Save order to database
+      const { error: orderError } = await supabase
+        .from('universal_logs_orders')
+        .insert({
+          user_id: user.id,
+          api_order_id: data?.order_id || null,
+          product_id: productId,
+          product_name: productName,
+          quantity: quantity,
+          price_per_unit: parseFloat(price),
+          total_amount: totalCost,
+          status: 'completed',
+          order_response: data
+        });
+
+      if (orderError) throw orderError;
+
       // Deduct from wallet
       const { error: walletError } = await supabase
         .from('wallet_transactions')
