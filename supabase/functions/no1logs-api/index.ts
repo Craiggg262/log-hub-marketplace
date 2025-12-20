@@ -145,7 +145,7 @@ function transformPrices(data: any, multiplier: number): any {
       if (key === 'price' && (typeof value === 'string' || typeof value === 'number')) {
         const originalPrice = parseFloat(String(value));
         transformed[key] = Number.isFinite(originalPrice)
-          ? (originalPrice * multiplier).toFixed(8)
+          ? (originalPrice * multiplier).toFixed(2)
           : value;
         continue;
       }
