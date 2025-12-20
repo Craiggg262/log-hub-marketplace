@@ -290,6 +290,48 @@ export type Database = {
         }
         Relationships: []
       }
+      universal_logs_orders: {
+        Row: {
+          api_order_id: string | null
+          created_at: string
+          id: string
+          order_response: Json | null
+          price_per_unit: number
+          product_id: number
+          product_name: string
+          quantity: number
+          status: string
+          total_amount: number
+          user_id: string
+        }
+        Insert: {
+          api_order_id?: string | null
+          created_at?: string
+          id?: string
+          order_response?: Json | null
+          price_per_unit: number
+          product_id: number
+          product_name: string
+          quantity?: number
+          status?: string
+          total_amount: number
+          user_id: string
+        }
+        Update: {
+          api_order_id?: string | null
+          created_at?: string
+          id?: string
+          order_response?: Json | null
+          price_per_unit?: number
+          product_id?: number
+          product_name?: string
+          quantity?: number
+          status?: string
+          total_amount?: number
+          user_id?: string
+        }
+        Relationships: []
+      }
       user_roles: {
         Row: {
           created_at: string | null
