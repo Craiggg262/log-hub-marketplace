@@ -68,9 +68,9 @@ serve(async (req) => {
             { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
           );
         }
-        endpoint = `/order/new?api_token=${apiKey}`;
-        method = 'POST';
-        body = JSON.stringify({ product_details_ids: productDetailsIds });
+        // API requires GET method with product_details_ids as query parameter
+        endpoint = `/order/new?api_token=${apiKey}&product_details_ids=${encodeURIComponent(productDetailsIds)}`;
+        method = 'GET';
         console.log(`Placing order with product_details_ids: ${productDetailsIds}`);
         break;
       case 'get_order':
