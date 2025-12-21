@@ -7,7 +7,7 @@ const corsHeaders = {
 };
 
 const API_BASE_URL = 'https://www.no1logs.com/api/v1';
-const PRICE_MULTIPLIER = 4;
+const PRICE_MULTIPLIER = 1670; // Convert USD to Naira
 
 serve(async (req) => {
   // Handle CORS preflight requests
