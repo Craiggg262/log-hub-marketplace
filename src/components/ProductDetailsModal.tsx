@@ -56,9 +56,13 @@ const ProductDetailsModal: React.FC<ProductDetailsModalProps> = ({
 
   useEffect(() => {
     // Auto-select accounts based on quantity
-    if (details?.accounts) {
+    if (details?.accounts && details.accounts.length > 0) {
       const accountIds = details.accounts.slice(0, quantity).map(a => a.id);
       setSelectedAccounts(accountIds);
+    } else if (quantity > 0) {
+      // If no accounts array from API, create placeholder IDs based on quantity
+      // This allows ordering when the API doesn't return individual account IDs
+      setSelectedAccounts(Array.from({ length: quantity }, (_, i) => i + 1));
     }
   }, [quantity, details]);
 
