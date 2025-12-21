@@ -151,6 +151,53 @@ const OrderDetails = () => {
     });
   };
 
+  const handleDownloadUniversalOrder = (order: UniversalLogsOrder) => {
+    let content = `UNIVERSAL LOGS ORDER DETAILS\n`;
+    content += `================================\n`;
+    content += `Order ID: ${order.id}\n`;
+    content += `Date: ${new Date(order.created_at).toLocaleDateString()}\n`;
+    content += `Status: ${order.status}\n`;
+    content += `Product: ${order.product_name}\n`;
+    content += `Quantity: ${order.quantity}\n`;
+    content += `Price per unit: ₦${order.price_per_unit.toLocaleString('en-NG', { minimumFractionDigits: 2 })}\n`;
+    content += `Total: ₦${order.total_amount.toLocaleString('en-NG', { minimumFractionDigits: 2 })}\n\n`;
+
+    if (order.order_response) {
+      content += `ACCOUNT DETAILS:\n`;
+      content += `================================\n`;
+      
+      if (order.order_response.orders) {
+        order.order_response.orders.forEach((apiOrder: any, idx: number) => {
+          content += `\n--- Account ${idx + 1} ---\n`;
+          content += `${apiOrder.url || apiOrder.data || apiOrder.account || JSON.stringify(apiOrder, null, 2)}\n`;
+        });
+      } else if (order.order_response.data) {
+        const data = Array.isArray(order.order_response.data) ? order.order_response.data : [order.order_response.data];
+        data.forEach((item: any, idx: number) => {
+          content += `\n--- Account ${idx + 1} ---\n`;
+          content += `${typeof item === 'string' ? item : JSON.stringify(item, null, 2)}\n`;
+        });
+      } else {
+        content += JSON.stringify(order.order_response, null, 2);
+      }
+    }
+
+    const blob = new Blob([content], { type: 'text/plain' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `universal-logs-order-${order.id.slice(0, 8)}.txt`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+
+    toast({
+      title: "Download started",
+      description: "Your Universal Logs order details have been downloaded",
+    });
+  };
+
   const formatPrice = (price: number) => {
     return `₦${price.toLocaleString('en-NG', { minimumFractionDigits: 2 })}`;
   };
@@ -506,101 +553,137 @@ const OrderDetails = () => {
                           <p className="text-xs text-muted-foreground">{formatPrice(order.price_per_unit)} each</p>
                         </div>
                         
-                        <Dialog>
-                          <DialogTrigger asChild>
-                            <Button variant="outline" size="sm">
-                              <Eye className="h-4 w-4 mr-2" />
-                              View
-                            </Button>
-                          </DialogTrigger>
-                          <DialogContent className="max-w-2xl max-h-[80vh]">
-                            <DialogHeader>
-                              <DialogTitle className="flex items-center gap-2">
-                                <Globe className="h-5 w-5 text-primary" />
-                                Universal Logs Order #{order.id.slice(0, 8)}
-                              </DialogTitle>
-                              <DialogDescription>
-                                Placed on {new Date(order.created_at).toLocaleDateString()} • {order.status}
-                              </DialogDescription>
-                            </DialogHeader>
-                            <ScrollArea className="max-h-[60vh]">
-                              <div className="space-y-4">
-                                <div className="border rounded-lg p-4">
-                                  <h4 className="font-semibold mb-2">{order.product_name}</h4>
-                                  <div className="grid grid-cols-2 gap-4 text-sm">
-                                    <div>
-                                      <p className="text-muted-foreground">Quantity</p>
-                                      <p className="font-medium">{order.quantity}</p>
-                                    </div>
-                                    <div>
-                                      <p className="text-muted-foreground">Price per unit</p>
-                                      <p className="font-medium">{formatPrice(order.price_per_unit)}</p>
-                                    </div>
-                                    <div>
-                                      <p className="text-muted-foreground">Total</p>
-                                      <p className="font-medium text-primary">{formatPrice(order.total_amount)}</p>
-                                    </div>
-                                    <div>
-                                      <p className="text-muted-foreground">Status</p>
-                                      <Badge className={getStatusColor(order.status)}>
-                                        {order.status}
-                                      </Badge>
-                                    </div>
-                                  </div>
-                                </div>
-
-                                {order.order_response && (
+                        <div className="flex gap-2">
+                          <Dialog>
+                            <DialogTrigger asChild>
+                              <Button variant="outline" size="sm">
+                                <Eye className="h-4 w-4 mr-2" />
+                                View
+                              </Button>
+                            </DialogTrigger>
+                            <DialogContent className="max-w-2xl max-h-[80vh]">
+                              <DialogHeader>
+                                <DialogTitle className="flex items-center gap-2">
+                                  <Globe className="h-5 w-5 text-primary" />
+                                  Universal Logs Order #{order.id.slice(0, 8)}
+                                </DialogTitle>
+                                <DialogDescription>
+                                  Placed on {new Date(order.created_at).toLocaleDateString()} • {order.status}
+                                </DialogDescription>
+                              </DialogHeader>
+                              <ScrollArea className="max-h-[60vh]">
+                                <div className="space-y-4">
                                   <div className="border rounded-lg p-4">
-                                    <h4 className="font-semibold mb-2 text-success">API Order Details</h4>
-                                    {order.order_response.orders ? (
-                                      <div className="space-y-3">
-                                        {order.order_response.orders.map((apiOrder: any, idx: number) => (
-                                          <div key={idx} className="bg-muted/50 rounded-lg p-3">
-                                            <div className="flex items-center justify-between mb-2">
-                                              <span className="font-medium">Account {idx + 1}</span>
-                                              <Button
-                                                variant="ghost"
-                                                size="sm"
-                                                onClick={() => handleCopyText(
-                                                  apiOrder.url || apiOrder.data || JSON.stringify(apiOrder), 
-                                                  'Account details'
-                                                )}
-                                              >
-                                                <Copy className="h-3 w-3" />
-                                              </Button>
-                                            </div>
-                                            <pre className="text-sm whitespace-pre-wrap bg-background p-3 rounded border overflow-x-auto">
-                                              {apiOrder.url || apiOrder.data || JSON.stringify(apiOrder, null, 2)}
-                                            </pre>
-                                          </div>
-                                        ))}
+                                    <h4 className="font-semibold mb-2">{order.product_name}</h4>
+                                    <div className="grid grid-cols-2 gap-4 text-sm">
+                                      <div>
+                                        <p className="text-muted-foreground">Quantity</p>
+                                        <p className="font-medium">{order.quantity}</p>
                                       </div>
-                                    ) : (
-                                      <div className="bg-muted/50 rounded-lg p-3">
-                                        <div className="flex items-center justify-between mb-2">
-                                          <span className="font-medium">Order Response</span>
-                                          <Button
-                                            variant="ghost"
-                                            size="sm"
-                                            onClick={() => handleCopyText(
-                                              JSON.stringify(order.order_response, null, 2), 
-                                              'Order response'
-                                            )}
-                                          >
-                                            <Copy className="h-3 w-3" />
-                                          </Button>
-                                        </div>
-                                        <pre className="text-sm whitespace-pre-wrap bg-background p-3 rounded border overflow-x-auto">
-                                          {JSON.stringify(order.order_response, null, 2)}
-                                        </pre>
+                                      <div>
+                                        <p className="text-muted-foreground">Price per unit</p>
+                                        <p className="font-medium">{formatPrice(order.price_per_unit)}</p>
                                       </div>
-                                    )}
+                                      <div>
+                                        <p className="text-muted-foreground">Total</p>
+                                        <p className="font-medium text-primary">{formatPrice(order.total_amount)}</p>
+                                      </div>
+                                      <div>
+                                        <p className="text-muted-foreground">Status</p>
+                                        <Badge className={getStatusColor(order.status)}>
+                                          {order.status}
+                                        </Badge>
+                                      </div>
+                                    </div>
                                   </div>
-                                )}
-                              </div>
-                            </ScrollArea>
-                          </DialogContent>
-                        </Dialog>
+
+                                  {order.order_response && (
+                                    <div className="border rounded-lg p-4">
+                                      <h4 className="font-semibold mb-2 text-success">Account Details</h4>
+                                      {order.order_response.orders ? (
+                                        <div className="space-y-3">
+                                          {order.order_response.orders.map((apiOrder: any, idx: number) => (
+                                            <div key={idx} className="bg-muted/50 rounded-lg p-3">
+                                              <div className="flex items-center justify-between mb-2">
+                                                <span className="font-medium">Account {idx + 1}</span>
+                                                <Button
+                                                  variant="ghost"
+                                                  size="sm"
+                                                  onClick={() => handleCopyText(
+                                                    apiOrder.url || apiOrder.data || apiOrder.account || JSON.stringify(apiOrder), 
+                                                    'Account details'
+                                                  )}
+                                                >
+                                                  <Copy className="h-3 w-3" />
+                                                </Button>
+                                              </div>
+                                              <pre className="text-sm whitespace-pre-wrap bg-background p-3 rounded border overflow-x-auto">
+                                                {apiOrder.url || apiOrder.data || apiOrder.account || JSON.stringify(apiOrder, null, 2)}
+                                              </pre>
+                                            </div>
+                                          ))}
+                                        </div>
+                                      ) : order.order_response.data ? (
+                                        <div className="space-y-3">
+                                          {(Array.isArray(order.order_response.data) ? order.order_response.data : [order.order_response.data]).map((item: any, idx: number) => (
+                                            <div key={idx} className="bg-muted/50 rounded-lg p-3">
+                                              <div className="flex items-center justify-between mb-2">
+                                                <span className="font-medium">Account {idx + 1}</span>
+                                                <Button
+                                                  variant="ghost"
+                                                  size="sm"
+                                                  onClick={() => handleCopyText(
+                                                    typeof item === 'string' ? item : JSON.stringify(item), 
+                                                    'Account details'
+                                                  )}
+                                                >
+                                                  <Copy className="h-3 w-3" />
+                                                </Button>
+                                              </div>
+                                              <pre className="text-sm whitespace-pre-wrap bg-background p-3 rounded border overflow-x-auto">
+                                                {typeof item === 'string' ? item : JSON.stringify(item, null, 2)}
+                                              </pre>
+                                            </div>
+                                          ))}
+                                        </div>
+                                      ) : (
+                                        <div className="bg-muted/50 rounded-lg p-3">
+                                          <div className="flex items-center justify-between mb-2">
+                                            <span className="font-medium">Order Response</span>
+                                            <Button
+                                              variant="ghost"
+                                              size="sm"
+                                              onClick={() => handleCopyText(
+                                                JSON.stringify(order.order_response, null, 2), 
+                                                'Order response'
+                                              )}
+                                            >
+                                              <Copy className="h-3 w-3" />
+                                            </Button>
+                                          </div>
+                                          <pre className="text-sm whitespace-pre-wrap bg-background p-3 rounded border overflow-x-auto">
+                                            {JSON.stringify(order.order_response, null, 2)}
+                                          </pre>
+                                        </div>
+                                      )}
+                                    </div>
+                                  )}
+                                </div>
+                              </ScrollArea>
+                            </DialogContent>
+                          </Dialog>
+                          
+                          {order.status === 'completed' && order.order_response && (
+                            <Button 
+                              onClick={() => handleDownloadUniversalOrder(order)}
+                              size="sm"
+                              className="gap-2"
+                            >
+                              <Download className="h-4 w-4" />
+                              Download
+                            </Button>
+                          )}
+                        </div>
                       </div>
                     </div>
                   </CardContent>

@@ -71,6 +71,7 @@ serve(async (req) => {
         endpoint = `/order/new?api_token=${apiKey}`;
         method = 'POST';
         body = JSON.stringify({ product_details_ids: productDetailsIds });
+        console.log(`Placing order with product_details_ids: ${productDetailsIds}`);
         break;
       case 'get_order':
         if (!productId) {
@@ -79,7 +80,8 @@ serve(async (req) => {
             { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
           );
         }
-        endpoint = `/order/new?api_token=${apiKey}&id=${productId}`;
+        endpoint = `/order/${productId}?api_token=${apiKey}`;
+        console.log(`Fetching order details for order ID: ${productId}`);
         break;
       default:
         return new Response(
@@ -114,7 +116,7 @@ serve(async (req) => {
     }
 
     const data = await response.json();
-    console.log(`Response received successfully`);
+    console.log(`Response received successfully:`, JSON.stringify(data).slice(0, 500));
 
     // Apply 4x price multiplier to all products
     const transformedData = transformPrices(data, PRICE_MULTIPLIER);
