@@ -19,6 +19,16 @@ const UniversalLogs = () => {
   const { user } = useAuth();
   const { categories, loading, error, refetch } = useUniversalLogs();
 
+  const hiddenCategoryNames = new Set([
+    'Dating Facebook',
+    'Countries Facebook(Belo 50 Friends)',
+    'New Facebook Account Created About 3 months ago',
+    'Random Countries Facebook',
+  ]);
+
+  const visibleCategories = categories.filter((c) => !hiddenCategoryNames.has(c.name.trim()));
+
+
   const handleSearch = () => {
     refetch(searchTerm);
   };
@@ -105,13 +115,13 @@ const UniversalLogs = () => {
 
       {/* Categories */}
       <div className="space-y-4">
-        {categories.length === 0 ? (
+        {visibleCategories.length === 0 ? (
           <div className="text-center py-12">
             <Package className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
             <p className="text-muted-foreground">No products found.</p>
           </div>
         ) : (
-          categories.map((category) => (
+          visibleCategories.map((category) => (
             <Collapsible
               key={category.id}
               open={expandedCategories.has(category.id)}
