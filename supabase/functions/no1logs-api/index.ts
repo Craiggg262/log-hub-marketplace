@@ -9,6 +9,14 @@ const corsHeaders = {
 const API_BASE_URL = 'https://www.no1logs.com/api/v1';
 const PRICE_MULTIPLIER = 5010; // USD to Naira (1670) × 3 markup
 
+type ActionBody = {
+  action: string;
+  productId?: number | string;
+  categoryId?: number | string;
+  search?: string;
+  productDetailsIds?: string;
+};
+
 serve(async (req) => {
   // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
@@ -17,7 +25,7 @@ serve(async (req) => {
 
   try {
     const apiKey = Deno.env.get('NO1LOGS_API_KEY');
-    
+
     if (!apiKey) {
       console.error('NO1LOGS_API_KEY not found in environment');
       return new Response(
@@ -26,12 +34,22 @@ serve(async (req) => {
       );
     }
 
-    const { action, productId, categoryId, search, productDetailsIds } = await req.json();
-    console.log(`Processing request: action=${action}, productId=${productId}, categoryId=${categoryId}, search=${search}`);
+    let payload: ActionBody;
+    try {
+      payload = (await req.json()) as ActionBody;
+    } catch {
+      payload = { action: '' };
+    }
+
+    const { action, productId, categoryId, search, productDetailsIds } = payload;
+    console.log(
+      `Processing request: action=${action}, productId=${productId}, categoryId=${categoryId}, search=${search}`
+    );
 
     let endpoint = '';
-    let method = 'GET';
-    let body = null;
+    let method: 'GET' | 'POST' = 'GET';
+    let body: string | null = null;
+    let contentType: string | null = 'application/json';
 
     switch (action) {
       case 'get_products':
@@ -40,6 +58,7 @@ serve(async (req) => {
           endpoint += `&search=${encodeURIComponent(search)}`;
         }
         break;
+
       case 'get_category_products':
         if (!categoryId) {
           return new Response(
@@ -49,6 +68,7 @@ serve(async (req) => {
         }
         endpoint = `/category-products/${categoryId}?api_token=${apiKey}`;
         break;
+
       case 'get_product_details':
         if (!productId) {
           return new Response(
@@ -58,31 +78,46 @@ serve(async (req) => {
         }
         endpoint = `/product/details/${productId}?api_token=${apiKey}`;
         break;
+
       case 'check_balance':
         endpoint = `/check-balance?api_token=${apiKey}`;
         break;
-      case 'place_order':
+
+      case 'place_order': {
         if (!productDetailsIds) {
           return new Response(
             JSON.stringify({ error: 'Product details IDs are required' }),
             { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
           );
         }
-        // API requires GET method with product_details_ids as query parameter
-        endpoint = `/order/new?api_token=${apiKey}&product_details_ids=${encodeURIComponent(productDetailsIds)}`;
-        method = 'GET';
+
+        // Docs:
+        // POST https://www.no1logs.com/api/v1/order/new?api_token={apiKey}
+        // Body: product_details_ids=comma,separated,ids
+        endpoint = `/order/new?api_token=${apiKey}`;
+        method = 'POST';
+        contentType = 'application/x-www-form-urlencoded';
+        body = new URLSearchParams({ product_details_ids: String(productDetailsIds) }).toString();
         console.log(`Placing order with product_details_ids: ${productDetailsIds}`);
         break;
-      case 'get_order':
+      }
+
+      case 'get_order': {
         if (!productId) {
           return new Response(
             JSON.stringify({ error: 'Order ID is required' }),
             { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
           );
         }
-        endpoint = `/order/${productId}?api_token=${apiKey}`;
+
+        // Docs:
+        // GET https://www.no1logs.com/api/v1/order/new?api_token={apiKey}&id={orderId}
+        endpoint = `/order/new?api_token=${apiKey}&id=${encodeURIComponent(String(productId))}`;
+        method = 'GET';
         console.log(`Fetching order details for order ID: ${productId}`);
         break;
+      }
+
       default:
         return new Response(
           JSON.stringify({ error: 'Invalid action' }),
@@ -92,13 +127,12 @@ serve(async (req) => {
 
     console.log(`Fetching: ${API_BASE_URL}${endpoint}`);
 
-    const fetchOptions: RequestInit = {
-      method,
-      headers: {
-        'Content-Type': 'application/json',
-      },
+    const headers: Record<string, string> = {
+      Accept: 'application/json',
     };
+    if (contentType) headers['Content-Type'] = contentType;
 
+    const fetchOptions: RequestInit = { method, headers };
     if (body) {
       fetchOptions.body = body;
     }
@@ -106,31 +140,30 @@ serve(async (req) => {
     const response = await fetch(`${API_BASE_URL}${endpoint}`, fetchOptions);
 
     if (!response.ok) {
-      console.error(`API error: ${response.status} ${response.statusText}`);
       const errorText = await response.text();
+      console.error(`API error: ${response.status} ${response.statusText}`);
       console.error(`Error body: ${errorText}`);
       return new Response(
-        JSON.stringify({ error: `API error: ${response.status}` }),
+        JSON.stringify({ error: `API error: ${response.status}`, details: errorText }),
         { status: response.status, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
     const data = await response.json();
-    console.log(`Response received successfully:`, JSON.stringify(data).slice(0, 500));
+    console.log(`Response received successfully:`, JSON.stringify(data).slice(0, 800));
 
-    // Apply 4x price multiplier to all products
+    // Apply price multiplier to any 'price' fields
     const transformedData = transformPrices(data, PRICE_MULTIPLIER);
 
-    return new Response(
-      JSON.stringify(transformedData),
-      { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-    );
+    return new Response(JSON.stringify(transformedData), {
+      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+    });
   } catch (error) {
     console.error('Error in no1logs-api function:', error);
-    return new Response(
-      JSON.stringify({ error: error.message }),
-      { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-    );
+    return new Response(JSON.stringify({ error: error?.message ?? 'Unknown error' }), {
+      status: 500,
+      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+    });
   }
 });
 
@@ -146,9 +179,7 @@ function transformPrices(data: any, multiplier: number): any {
     for (const [key, value] of Object.entries(transformed)) {
       if (key === 'price' && (typeof value === 'string' || typeof value === 'number')) {
         const originalPrice = parseFloat(String(value));
-        transformed[key] = Number.isFinite(originalPrice)
-          ? (originalPrice * multiplier).toFixed(2)
-          : value;
+        transformed[key] = Number.isFinite(originalPrice) ? (originalPrice * multiplier).toFixed(2) : value;
         continue;
       }
 
