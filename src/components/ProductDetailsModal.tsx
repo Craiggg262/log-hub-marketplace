@@ -55,14 +55,13 @@ const ProductDetailsModal: React.FC<ProductDetailsModalProps> = ({
   }, [open, productId]);
 
   useEffect(() => {
-    // Auto-select accounts based on quantity
+    // Auto-select accounts based on quantity - only use REAL account IDs from API
     if (details?.accounts && details.accounts.length > 0) {
       const accountIds = details.accounts.slice(0, quantity).map(a => a.id);
       setSelectedAccounts(accountIds);
-    } else if (quantity > 0) {
-      // If no accounts array from API, create placeholder IDs based on quantity
-      // This allows ordering when the API doesn't return individual account IDs
-      setSelectedAccounts(Array.from({ length: quantity }, (_, i) => i + 1));
+    } else {
+      // No accounts available from API - clear selection
+      setSelectedAccounts([]);
     }
   }, [quantity, details]);
 
@@ -106,10 +105,10 @@ const ProductDetailsModal: React.FC<ProductDetailsModalProps> = ({
       return;
     }
 
-    if (selectedAccounts.length === 0) {
+    if (selectedAccounts.length === 0 || !details?.accounts || details.accounts.length === 0) {
       toast({
-        title: 'No Items Selected',
-        description: 'Please select at least one account to order',
+        title: 'No Accounts Available',
+        description: 'This product currently has no accounts available for purchase. Please try again later.',
         variant: 'destructive'
       });
       return;
@@ -299,10 +298,18 @@ const ProductDetailsModal: React.FC<ProductDetailsModalProps> = ({
               </div>
             )}
 
+            {/* No Accounts Warning */}
+            {(!details.accounts || details.accounts.length === 0) && (
+              <div className="p-4 bg-destructive/10 rounded-lg border border-destructive/30 text-center">
+                <p className="text-destructive font-medium">No accounts available for purchase</p>
+                <p className="text-sm text-muted-foreground mt-1">This product is currently out of stock. Please check back later.</p>
+              </div>
+            )}
+
             {/* Order Button */}
             <Button
               onClick={handleOrder}
-              disabled={ordering || !user || (profile?.wallet_balance || 0) < calculateTotal() || quantity === 0}
+              disabled={ordering || !user || (profile?.wallet_balance || 0) < calculateTotal() || quantity === 0 || !details.accounts || details.accounts.length === 0}
               className="w-full h-12 text-lg gap-2"
             >
               {ordering ? (
