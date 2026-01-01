@@ -321,28 +321,6 @@ const ProductDetailsModal: React.FC<ProductDetailsModalProps> = ({
               </Badge>
             </div>
 
-            {/* Variant selector (for products that return related_product first) */}
-            {variants.length > 0 && (
-              <div className="space-y-2">
-                <h4 className="font-semibold">Select Variant</h4>
-                <Select value={selectedVariantId ? String(selectedVariantId) : ''} onValueChange={handleVariantChange}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Choose a variant" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {variants.map((v) => (
-                      <SelectItem key={v.id} value={String(v.id)}>
-                        {`#${v.id} • ${v.in_stock} in stock • ${formatPrice(v.price)}`}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-                {selectedVariantId && (
-                  <p className="text-xs text-muted-foreground">Selected product ID: {activeProductId}</p>
-                )}
-              </div>
-            )}
-
             {/* Available Accounts Preview */}
             {details.accounts && details.accounts.length > 0 && (
               <div className="space-y-3">

@@ -6,7 +6,9 @@ import {
   ShoppingCart,
   History,
   Settings,
-  Plus
+  Plus,
+  Gift,
+  Globe
 } from "lucide-react";
 
 import {
@@ -23,11 +25,13 @@ import {
 
   const menuItems = [
   { title: "Dashboard", url: "/dashboard", icon: Home },
+  { title: "Universal Logs", url: "/universal-logs", icon: Globe },
   { title: "Cart", url: "/cart", icon: ShoppingCart },
   { title: "Wallet", url: "/wallet", icon: Wallet },
   { title: "Fund Wallet", url: "/fund-wallet", icon: Plus },
   { title: "Orders", url: "/orders", icon: History },
   { title: "History", url: "/history", icon: History },
+  { title: "Referral Earn", url: "/referral-earn", icon: Gift },
   { title: "Settings", url: "/settings", icon: Settings },
 ];
 

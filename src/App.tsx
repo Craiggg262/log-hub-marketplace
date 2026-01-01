@@ -19,6 +19,7 @@ import NotFound from "./pages/NotFound";
 import Cart from "./pages/Cart";
 import AISupport from "./components/AISupport";
 import UniversalLogs from "./pages/UniversalLogs";
+import ReferralEarn from "./pages/ReferralEarn";
 
 const queryClient = new QueryClient();
 
@@ -76,6 +77,7 @@ function AppContent() {
         <Route path="/history" element={<ProtectedRoute><History /></ProtectedRoute>} />
         <Route path="/settings" element={<ProtectedRoute><Settings /></ProtectedRoute>} />
         <Route path="/cart" element={<ProtectedRoute><Cart /></ProtectedRoute>} />
+        <Route path="/referral-earn" element={<ProtectedRoute><ReferralEarn /></ProtectedRoute>} />
         
         {/* Admin Route - Completely separate, no layout */}
         <Route path="/admin" element={<Admin />} />
