@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { useToast } from '@/hooks/use-toast';
-import { Wallet, ShoppingCart, Search, Star, Eye, Filter, Plus, Minus, MessageCircle } from 'lucide-react';
+import { Wallet, ShoppingCart, Search, Star, Eye, Filter, Plus, Minus, MessageCircle, Copy, Check, Gift } from 'lucide-react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useLogs } from '@/hooks/useLogs';
 import { useAuth } from '@/hooks/useAuth';
@@ -16,6 +16,7 @@ const Dashboard = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('all');
   const [sortBy, setSortBy] = useState('name');
+  const [copied, setCopied] = useState(false);
   const { toast } = useToast();
   const { user, profile } = useAuth();
   const { logs, categories, loading } = useLogs();
@@ -84,6 +85,19 @@ const Dashboard = () => {
 
   const formatPrice = (price: number) => {
     return `₦${price.toLocaleString('en-NG', { minimumFractionDigits: 2 })}`;
+  };
+
+  const referralCode = profile?.referral_code || '';
+  const referralLink = `${window.location.origin}/signup?ref=${referralCode}`;
+
+  const handleCopyReferralLink = () => {
+    navigator.clipboard.writeText(referralLink);
+    setCopied(true);
+    toast({
+      title: 'Copied!',
+      description: 'Referral link copied to clipboard',
+    });
+    setTimeout(() => setCopied(false), 2000);
   };
 
   const categoryOptions = [
@@ -161,6 +175,28 @@ const Dashboard = () => {
             </CardContent>
           </Card>
         </div>
+
+        {/* Referral Link Section */}
+        {profile?.referral_code && (
+          <div className="mt-4 p-3 bg-card/50 rounded-lg border border-border/50">
+            <div className="flex items-center gap-2 mb-2">
+              <Gift className="h-4 w-4 text-primary" />
+              <span className="text-sm font-medium">Your Referral Link</span>
+            </div>
+            <div className="flex gap-2">
+              <Input
+                value={referralLink}
+                readOnly
+                className="font-mono text-xs bg-background/50"
+              />
+              <Button onClick={handleCopyReferralLink} variant="outline" size="sm" className="shrink-0 gap-1">
+                {copied ? <Check className="h-3 w-3" /> : <Copy className="h-3 w-3" />}
+                {copied ? 'Copied' : 'Copy'}
+              </Button>
+            </div>
+            <p className="text-xs text-muted-foreground mt-1">Earn 5% on every purchase your referrals make!</p>
+          </div>
+        )}
 
         {getTotalItems() > 0 && (
           <div className="mt-4">

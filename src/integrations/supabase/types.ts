@@ -266,6 +266,8 @@ export type Database = {
           email: string
           full_name: string | null
           id: string
+          referral_code: string | null
+          total_referral_earnings: number
           updated_at: string
           user_id: string
           wallet_balance: number
@@ -275,6 +277,8 @@ export type Database = {
           email: string
           full_name?: string | null
           id?: string
+          referral_code?: string | null
+          total_referral_earnings?: number
           updated_at?: string
           user_id: string
           wallet_balance?: number
@@ -284,9 +288,68 @@ export type Database = {
           email?: string
           full_name?: string | null
           id?: string
+          referral_code?: string | null
+          total_referral_earnings?: number
           updated_at?: string
           user_id?: string
           wallet_balance?: number
+        }
+        Relationships: []
+      }
+      referral_earnings: {
+        Row: {
+          amount: number
+          created_at: string
+          id: string
+          order_id: string | null
+          percentage: number
+          referred_id: string
+          referrer_id: string
+          universal_order_id: string | null
+        }
+        Insert: {
+          amount: number
+          created_at?: string
+          id?: string
+          order_id?: string | null
+          percentage?: number
+          referred_id: string
+          referrer_id: string
+          universal_order_id?: string | null
+        }
+        Update: {
+          amount?: number
+          created_at?: string
+          id?: string
+          order_id?: string | null
+          percentage?: number
+          referred_id?: string
+          referrer_id?: string
+          universal_order_id?: string | null
+        }
+        Relationships: []
+      }
+      referrals: {
+        Row: {
+          created_at: string
+          id: string
+          referral_code: string
+          referred_id: string
+          referrer_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          referral_code: string
+          referred_id: string
+          referrer_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          referral_code?: string
+          referred_id?: string
+          referrer_id?: string
         }
         Relationships: []
       }
@@ -380,6 +443,48 @@ export type Database = {
         }
         Relationships: []
       }
+      withdrawal_requests: {
+        Row: {
+          account_name: string | null
+          account_number: string | null
+          admin_note: string | null
+          amount: number
+          bank_name: string | null
+          created_at: string
+          id: string
+          status: string
+          updated_at: string
+          user_id: string
+          withdrawal_type: string
+        }
+        Insert: {
+          account_name?: string | null
+          account_number?: string | null
+          admin_note?: string | null
+          amount: number
+          bank_name?: string | null
+          created_at?: string
+          id?: string
+          status?: string
+          updated_at?: string
+          user_id: string
+          withdrawal_type: string
+        }
+        Update: {
+          account_name?: string | null
+          account_number?: string | null
+          admin_note?: string | null
+          amount?: number
+          bank_name?: string | null
+          created_at?: string
+          id?: string
+          status?: string
+          updated_at?: string
+          user_id?: string
+          withdrawal_type?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
@@ -394,6 +499,15 @@ export type Database = {
         Returns: number
       }
       is_admin: { Args: never; Returns: boolean }
+      process_referral_earning: {
+        Args: {
+          p_buyer_id: string
+          p_order_amount: number
+          p_order_id?: string
+          p_universal_order_id?: string
+        }
+        Returns: undefined
+      }
     }
     Enums: {
       app_role: "admin" | "user"

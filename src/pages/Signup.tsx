@@ -1,14 +1,18 @@
-import React, { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import React, { useState, useEffect } from 'react';
+import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/hooks/useAuth';
+import { processReferralOnSignup } from '@/hooks/useReferral';
 import { Eye, EyeOff, UserPlus } from 'lucide-react';
 
 const Signup = () => {
+  const [searchParams] = useSearchParams();
+  const referralCode = searchParams.get('ref') || '';
+  
   const [formData, setFormData] = useState({
     email: '',
     password: '',
@@ -20,7 +24,7 @@ const Signup = () => {
   const [isLoading, setIsLoading] = useState(false);
   const navigate = useNavigate();
   const { toast } = useToast();
-  const { signUp, signInWithGoogle } = useAuth();
+  const { signUp, signInWithGoogle, user } = useAuth();
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setFormData({
@@ -43,6 +47,11 @@ const Signup = () => {
       }
 
       await signUp(formData.email, formData.password, formData.fullName);
+      
+      // Process referral after successful signup
+      if (referralCode && user?.id) {
+        await processReferralOnSignup(referralCode, user.id);
+      }
       
       toast({
         title: "Account created successfully",

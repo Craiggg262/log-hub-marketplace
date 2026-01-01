@@ -5,7 +5,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/hooks/use-toast';
-import { Shield, Plus, Users, Edit, Trash2, TrendingUp, Database, Eye, Settings } from 'lucide-react';
+import { Shield, Plus, Users, Edit, Trash2, TrendingUp, Database, Eye, Settings, CheckCircle, XCircle, Clock, Banknote } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -42,6 +42,23 @@ interface LogItem {
   created_at: string;
 }
 
+interface WithdrawalRequest {
+  id: string;
+  user_id: string;
+  amount: number;
+  withdrawal_type: string;
+  bank_name: string | null;
+  account_number: string | null;
+  account_name: string | null;
+  status: string;
+  admin_note: string | null;
+  created_at: string;
+  profiles?: {
+    email: string;
+    full_name: string | null;
+  };
+}
+
 const Admin = () => {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [loginData, setLoginData] = useState({ email: '', password: '' });
@@ -67,6 +84,7 @@ const Admin = () => {
   const [newLogItem, setNewLogItem] = useState({ log_id: '', account_details: '' });
   const [categories, setCategories] = useState<any[]>([]);
   const [selectedLogForItems, setSelectedLogForItems] = useState<string | null>(null);
+  const [withdrawalRequests, setWithdrawalRequests] = useState<WithdrawalRequest[]>([]);
   const { toast } = useToast();
 
   // Check authentication and admin status on mount
@@ -170,6 +188,14 @@ const Admin = () => {
 
       const completedOrders = ordersData?.filter(order => order.status === 'completed') || [];
       const totalRevenue = completedOrders.reduce((sum, order) => sum + order.total_amount, 0);
+
+      // Fetch withdrawal requests
+      const { data: withdrawalsData } = await supabase
+        .from('withdrawal_requests')
+        .select('*')
+        .order('created_at', { ascending: false });
+
+      setWithdrawalRequests(withdrawalsData || []);
 
       setStats({
         totalUsers: profilesData?.length || 0,
@@ -515,6 +541,46 @@ const Admin = () => {
     return logItems[logId]?.filter(item => item.is_available).length || 0;
   };
 
+  const handleConfirmWithdrawal = async (requestId: string, userId: string, amount: number, type: string) => {
+    try {
+      // Update withdrawal status
+      const { error } = await supabase
+        .from('withdrawal_requests')
+        .update({ status: 'completed' })
+        .eq('id', requestId);
+
+      if (error) throw error;
+
+      // If wallet withdrawal, add to user's wallet
+      if (type === 'wallet') {
+        const { data: profile } = await supabase
+          .from('profiles')
+          .select('wallet_balance')
+          .eq('user_id', userId)
+          .single();
+
+        if (profile) {
+          await supabase
+            .from('profiles')
+            .update({ wallet_balance: profile.wallet_balance + amount })
+            .eq('user_id', userId);
+
+          await supabase.from('wallet_transactions').insert({
+            user_id: userId,
+            amount,
+            transaction_type: 'referral_withdrawal',
+            description: `Referral earnings withdrawal - ₦${amount.toLocaleString('en-NG')}`
+          });
+        }
+      }
+
+      toast({ title: 'Withdrawal confirmed', description: 'Status updated to completed' });
+      fetchData();
+    } catch (error) {
+      toast({ title: 'Error', description: 'Failed to confirm withdrawal', variant: 'destructive' });
+    }
+  };
+
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
@@ -646,10 +712,11 @@ const Admin = () => {
         </div>
 
         <Tabs defaultValue="logs" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-4">
-            <TabsTrigger value="logs">Manage Logs</TabsTrigger>
+          <TabsList className="grid w-full grid-cols-5">
+            <TabsTrigger value="logs">Logs</TabsTrigger>
             <TabsTrigger value="sub-accounts">Sub-Accounts</TabsTrigger>
-            <TabsTrigger value="users">User Management</TabsTrigger>
+            <TabsTrigger value="users">Users</TabsTrigger>
+            <TabsTrigger value="withdrawals">Withdrawals</TabsTrigger>
             <TabsTrigger value="settings">Settings</TabsTrigger>
           </TabsList>
 
@@ -1028,6 +1095,60 @@ const Admin = () => {
                     </div>
                   </div>
                 </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          <TabsContent value="withdrawals" className="space-y-6">
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Banknote className="h-5 w-5" />
+                  Withdrawal Requests
+                </CardTitle>
+                <CardDescription>Manage user referral withdrawal requests</CardDescription>
+              </CardHeader>
+              <CardContent>
+                {withdrawalRequests.length === 0 ? (
+                  <p className="text-center text-muted-foreground py-8">No withdrawal requests</p>
+                ) : (
+                  <div className="space-y-4">
+                    {withdrawalRequests.map((request) => (
+                      <div key={request.id} className="flex items-center justify-between p-4 border rounded-lg">
+                        <div className="space-y-1">
+                          <p className="font-medium">{formatPrice(request.amount)}</p>
+                          <p className="text-sm text-muted-foreground">
+                            {request.withdrawal_type === 'wallet' ? 'To Wallet' : `To Bank: ${request.bank_name}`}
+                          </p>
+                          {request.withdrawal_type === 'bank' && (
+                            <p className="text-xs text-muted-foreground">
+                              {request.account_name} - {request.account_number}
+                            </p>
+                          )}
+                          <p className="text-xs text-muted-foreground">
+                            {new Date(request.created_at).toLocaleDateString('en-NG')}
+                          </p>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          {request.status === 'pending' ? (
+                            <Button
+                              size="sm"
+                              onClick={() => handleConfirmWithdrawal(request.id, request.user_id, request.amount, request.withdrawal_type)}
+                              className="gap-1"
+                            >
+                              <CheckCircle className="h-4 w-4" />
+                              Confirm
+                            </Button>
+                          ) : (
+                            <Badge className={request.status === 'completed' ? 'bg-green-500/20 text-green-500' : 'bg-red-500/20 text-red-500'}>
+                              {request.status}
+                            </Badge>
+                          )}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
               </CardContent>
             </Card>
           </TabsContent>
