@@ -15,6 +15,7 @@ import {
   Menu,
   Download,
   Globe,
+  Gift,
 } from "lucide-react";
 import {
   Sheet,
@@ -40,6 +41,7 @@ const menuItems = [
   { title: "Cart", url: "/cart", icon: ShoppingCart },
   { title: "Wallet", url: "/wallet", icon: Wallet },
   { title: "Fund Wallet", url: "/fund-wallet", icon: Plus },
+  { title: "Referral Earn", url: "/referral-earn", icon: Gift },
   { title: "Transactions", url: "/history", icon: CreditCard },
   { title: "Settings", url: "/settings", icon: Settings },
   { title: "Support", url: "mailto:info.loghubmarketplace@gmail.com", icon: MessageCircle, external: true },

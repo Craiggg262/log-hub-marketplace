@@ -1,9 +1,10 @@
 import { useState, useEffect, createContext, useContext, ReactNode } from 'react';
-import { User } from '@supabase/supabase-js';
+import { User, Session } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
 
 interface AuthContextType {
   user: User | null;
+  session: Session | null;
   profile: any | null;
   loading: boolean;
   signIn: (email: string, password: string) => Promise<void>;
@@ -17,42 +18,27 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
+  const [session, setSession] = useState<Session | null>(null);
   const [profile, setProfile] = useState<any | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     let mounted = true;
 
-    const initializeAuth = async () => {
-      try {
-        const { data: { session } } = await supabase.auth.getSession();
-        
-        if (!mounted) return;
-        
-        setUser(session?.user ?? null);
-        if (session?.user) {
-          await fetchProfile(session.user.id);
-        }
-      } catch (error) {
-        console.error('Auth initialization error:', error);
-      } finally {
-        if (mounted) {
-          setLoading(false);
-        }
-      }
-    };
-
+    // Set up auth state listener FIRST
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      (event, session) => {
+      (event, newSession) => {
         if (!mounted) return;
         
-        setUser(session?.user ?? null);
+        // Update session and user synchronously
+        setSession(newSession);
+        setUser(newSession?.user ?? null);
         
-        if (session?.user) {
-          // Use setTimeout to prevent blocking the auth state change
+        if (newSession?.user) {
+          // Use setTimeout to prevent Supabase deadlock
           setTimeout(() => {
             if (mounted) {
-              fetchProfile(session.user.id);
+              fetchProfile(newSession.user.id);
             }
           }, 0);
         } else {
@@ -63,7 +49,19 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }
     );
 
-    initializeAuth();
+    // THEN check for existing session
+    supabase.auth.getSession().then(({ data: { session: existingSession } }) => {
+      if (!mounted) return;
+      
+      setSession(existingSession);
+      setUser(existingSession?.user ?? null);
+      
+      if (existingSession?.user) {
+        fetchProfile(existingSession.user.id);
+      }
+      
+      setLoading(false);
+    });
 
     return () => {
       mounted = false;
@@ -137,6 +135,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const value = {
     user,
+    session,
     profile,
     loading,
     signIn,
