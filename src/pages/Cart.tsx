@@ -7,6 +7,7 @@ import { useCart } from '@/hooks/useCart';
 import { useAuth } from '@/hooks/useAuth';
 import { useOrders } from '@/hooks/useOrders';
 import { useTransactions } from '@/hooks/useTransactions';
+import { processReferralEarning } from '@/hooks/useReferral';
 import { ShoppingCart, Plus, Minus, Trash2, CreditCard } from 'lucide-react';
 import SocialIcon from '@/components/SocialIcon';
 
@@ -73,7 +74,7 @@ const Cart = () => {
       setIsProcessing(true);
       try {
         // Create order from cart
-        await createOrderFromCart(cartItems, profile);
+        const order = await createOrderFromCart(cartItems, profile);
         
         // Deduct amount from wallet
         await createTransaction(
@@ -81,6 +82,11 @@ const Cart = () => {
           'purchase', 
           `Purchase of ${getTotalItems()} items from cart`
         );
+
+        // Process referral earning (5% to referrer)
+        if (profile?.user_id) {
+          await processReferralEarning(profile.user_id, totalAmount, order?.id);
+        }
 
         // Clear cart after successful purchase
         await clearCart();

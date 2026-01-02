@@ -15,6 +15,7 @@ type ActionBody = {
   categoryId?: number | string;
   search?: string;
   productDetailsIds?: string;
+  quantity?: number;
 };
 
 serve(async (req) => {
@@ -41,9 +42,9 @@ serve(async (req) => {
       payload = { action: '' };
     }
 
-    const { action, productId, categoryId, search, productDetailsIds } = payload;
+    const { action, productId, categoryId, search, productDetailsIds, quantity } = payload;
     console.log(
-      `Processing request: action=${action}, productId=${productId}, categoryId=${categoryId}, search=${search}`
+      `Processing request: action=${action}, productId=${productId}, categoryId=${categoryId}, search=${search}, quantity=${quantity}`
     );
 
     let endpoint = '';
@@ -91,14 +92,14 @@ serve(async (req) => {
           );
         }
 
-        // Docs:
-        // POST https://www.no1logs.com/api/v1/order/new?api_token={apiKey}
-        // Body: product_details_ids=comma,separated,ids
+        // POST to https://www.no1logs.com/api/v1/order/new?api_token={apiKey}
+        // Body: product_details_ids=comma,separated,ids (form-urlencoded)
         endpoint = `/order/new?api_token=${apiKey}`;
         method = 'POST';
         contentType = 'application/x-www-form-urlencoded';
-        body = new URLSearchParams({ product_details_ids: String(productDetailsIds) }).toString();
+        body = `product_details_ids=${encodeURIComponent(String(productDetailsIds))}`;
         console.log(`Placing order with product_details_ids: ${productDetailsIds}`);
+        console.log(`POST body: ${body}`);
         break;
       }
 
@@ -110,7 +111,6 @@ serve(async (req) => {
           );
         }
 
-        // Docs:
         // GET https://www.no1logs.com/api/v1/order/new?api_token={apiKey}&id={orderId}
         endpoint = `/order/new?api_token=${apiKey}&id=${encodeURIComponent(String(productId))}`;
         method = 'GET';
@@ -125,7 +125,9 @@ serve(async (req) => {
         );
     }
 
-    console.log(`Fetching: ${API_BASE_URL}${endpoint}`);
+    const fullUrl = `${API_BASE_URL}${endpoint}`;
+    console.log(`Fetching: ${fullUrl}`);
+    console.log(`Method: ${method}`);
 
     const headers: Record<string, string> = {
       Accept: 'application/json',
@@ -137,20 +139,32 @@ serve(async (req) => {
       fetchOptions.body = body;
     }
 
-    const response = await fetch(`${API_BASE_URL}${endpoint}`, fetchOptions);
+    const response = await fetch(fullUrl, fetchOptions);
+    const responseText = await response.text();
+    
+    console.log(`Response status: ${response.status}`);
+    console.log(`Response body: ${responseText.slice(0, 1000)}`);
 
     if (!response.ok) {
-      const errorText = await response.text();
       console.error(`API error: ${response.status} ${response.statusText}`);
-      console.error(`Error body: ${errorText}`);
       return new Response(
-        JSON.stringify({ error: `API error: ${response.status}`, details: errorText }),
+        JSON.stringify({ error: `API error: ${response.status}`, details: responseText }),
         { status: response.status, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
-    const data = await response.json();
-    console.log(`Response received successfully:`, JSON.stringify(data).slice(0, 800));
+    let data;
+    try {
+      data = JSON.parse(responseText);
+    } catch (e) {
+      console.error('Failed to parse response as JSON:', e);
+      return new Response(
+        JSON.stringify({ error: 'Invalid JSON response from API', details: responseText }),
+        { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    console.log(`Parsed response:`, JSON.stringify(data).slice(0, 800));
 
     // Apply price multiplier to any 'price' fields
     const transformedData = transformPrices(data, PRICE_MULTIPLIER);

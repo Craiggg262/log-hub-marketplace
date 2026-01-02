@@ -112,7 +112,7 @@ export function useOrders() {
       if (orderError) throw orderError;
 
       await fetchOrders();
-      return { id: orderId };
+      return { id: orderId, total_amount: totalAmount };
     } catch (err) {
       console.error('Error creating order:', err);
       throw err;
