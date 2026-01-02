@@ -196,10 +196,13 @@ const ProductDetailsModal: React.FC<ProductDetailsModalProps> = ({
       return;
     }
 
-    if (selectedAccounts.length === 0) {
+    // Get account IDs - prefer from details.accounts, fallback to selectedAccounts
+    const accountIds = details?.accounts?.slice(0, quantity).map(a => a.id) || selectedAccounts;
+    
+    if (accountIds.length === 0) {
       toast({
         title: 'Unable to Place Order',
-        description: 'No account IDs were returned for this product. Please refresh and try again.',
+        description: 'No accounts available for this product. Please try a different product or try again later.',
         variant: 'destructive',
       });
       return;
@@ -219,14 +222,23 @@ const ProductDetailsModal: React.FC<ProductDetailsModalProps> = ({
 
     setOrdering(true);
     try {
+      console.log('Placing order with account IDs:', accountIds.join(','));
+      
       const { data, error } = await supabase.functions.invoke('no1logs-api', {
         body: {
           action: 'place_order',
-          productDetailsIds: selectedAccounts.join(','),
+          productDetailsIds: accountIds.join(','),
         },
       });
 
+      console.log('Order response:', data);
+
       if (error) throw error;
+
+      // Check for error in response
+      if ((data as any)?.error) {
+        throw new Error((data as any).error);
+      }
 
       if ((data as any)?.status && (data as any).status !== 'success') {
         throw new Error((data as any)?.message || 'Order failed');
@@ -239,17 +251,17 @@ const ProductDetailsModal: React.FC<ProductDetailsModalProps> = ({
         (orderPayload as any)?.product_name || details?.product?.product_name || productName;
 
       // Save order to database
-      const { error: orderError } = await supabase.from('universal_logs_orders').insert({
+      const { data: insertedOrder, error: orderError } = await supabase.from('universal_logs_orders').insert({
         user_id: user.id,
         api_order_id: apiOrderId != null ? String(apiOrderId) : null,
         product_id: activeProductId,
         product_name: displayProductName,
-        quantity,
+        quantity: accountIds.length,
         price_per_unit: parseFloat(unitPrice),
         total_amount: totalCost,
         status: 'completed',
         order_response: orderPayload,
-      });
+      }).select().single();
 
       if (orderError) throw orderError;
 
@@ -258,7 +270,7 @@ const ProductDetailsModal: React.FC<ProductDetailsModalProps> = ({
         user_id: user.id,
         amount: -totalCost,
         transaction_type: 'purchase',
-        description: `Universal Logs: ${displayProductName} x${quantity}`,
+        description: `Universal Logs: ${displayProductName} x${accountIds.length}`,
       });
 
       if (walletError) throw walletError;
@@ -271,12 +283,23 @@ const ProductDetailsModal: React.FC<ProductDetailsModalProps> = ({
 
       if (updateError) throw updateError;
 
+      // Process referral earning (5% to referrer)
+      try {
+        const { processReferralEarning } = await import('@/hooks/useReferral');
+        await processReferralEarning(user.id, totalCost, undefined, insertedOrder?.id);
+      } catch (refErr) {
+        console.error('Error processing referral:', refErr);
+      }
+
       toast({
         title: 'Order Placed Successfully!',
         description: `Your order for ${displayProductName} has been placed. Check your order history for details.`,
       });
 
       onOpenChange(false);
+      
+      // Navigate to order details
+      window.location.href = `/order-details?type=universal&id=${insertedOrder?.id}`;
     } catch (err) {
       console.error('Error placing order:', err);
       toast({
