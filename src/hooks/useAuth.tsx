@@ -1,6 +1,7 @@
 import { useState, useEffect, createContext, useContext, ReactNode } from 'react';
 import { User, Session } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
+import { processReferralOnSignup } from '@/hooks/useReferral';
 
 interface AuthContextType {
   user: User | null;
@@ -29,11 +30,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       (event, newSession) => {
         if (!mounted) return;
-        
+
         // Update session and user synchronously
         setSession(newSession);
         setUser(newSession?.user ?? null);
-        
+
         if (newSession?.user) {
           // Use setTimeout to prevent Supabase deadlock
           setTimeout(() => {
@@ -44,7 +45,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         } else {
           setProfile(null);
         }
-        
+
         setLoading(false);
       }
     );
@@ -52,14 +53,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     // THEN check for existing session
     supabase.auth.getSession().then(({ data: { session: existingSession } }) => {
       if (!mounted) return;
-      
-      setSession(existingSession);
-      setUser(existingSession?.user ?? null);
-      
+
+      // IMPORTANT: never overwrite a valid session/user with null from getSession
+      setSession((prev) => prev ?? existingSession);
+      setUser((prev) => prev ?? existingSession?.user ?? null);
+
       if (existingSession?.user) {
         fetchProfile(existingSession.user.id);
       }
-      
+
       setLoading(false);
     });
 
@@ -68,6 +70,30 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       subscription.unsubscribe();
     };
   }, []);
+
+  // Process referral code after the user is actually authenticated (Signup.tsx stores it in localStorage)
+  useEffect(() => {
+    if (!user?.id) return;
+
+    const pending = localStorage.getItem('pending_referral_code');
+    if (!pending) return;
+
+    const code = pending.trim().toLowerCase();
+    if (!code) {
+      localStorage.removeItem('pending_referral_code');
+      return;
+    }
+
+    setTimeout(() => {
+      processReferralOnSignup(code, user.id)
+        .then(() => {
+          localStorage.removeItem('pending_referral_code');
+        })
+        .catch((err) => {
+          console.error('Error processing pending referral:', err);
+        });
+    }, 0);
+  }, [user?.id]);
 
   const fetchProfile = async (userId: string) => {
     try {

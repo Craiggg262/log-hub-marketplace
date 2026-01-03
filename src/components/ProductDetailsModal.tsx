@@ -3,7 +3,6 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } f
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent } from '@/components/ui/card';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useToast } from '@/hooks/use-toast';
 import { Loader2, Package, ShoppingCart, Minus, Plus, ExternalLink } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
@@ -52,10 +51,10 @@ const ProductDetailsModal: React.FC<ProductDetailsModalProps> = ({
   const [ordering, setOrdering] = useState(false);
   const [details, setDetails] = useState<ProductDetails | null>(null);
 
-  const [activeProductId, setActiveProductId] = useState(productId);
-  const [variants, setVariants] = useState<RelatedProduct[]>([]);
-  const [selectedVariantId, setSelectedVariantId] = useState<number | null>(null);
+  // The ID we actually resolved details/accounts from (some products require resolving via related_product)
+  const [resolvedProductId, setResolvedProductId] = useState(productId);
 
+  // IMPORTANT: keep pricing/name consistent with the product the user clicked (no "switching" in UI)
   const [unitPrice, setUnitPrice] = useState(price);
   const [availableStock, setAvailableStock] = useState(inStock);
 
@@ -79,10 +78,7 @@ const ProductDetailsModal: React.FC<ProductDetailsModalProps> = ({
     setQuantity(1);
     setSelectedAccounts([]);
 
-    setActiveProductId(productId);
-    setVariants([]);
-    setSelectedVariantId(null);
-
+    setResolvedProductId(productId);
     setUnitPrice(price);
     setAvailableStock(inStock);
 
@@ -101,9 +97,11 @@ const ProductDetailsModal: React.FC<ProductDetailsModalProps> = ({
     }
   }, [quantity, details]);
 
-  const fetchProductDetails = async (id: number) => {
+  const fetchProductDetails = async (id: number, allowFallback = true) => {
     setLoading(true);
     try {
+      setResolvedProductId(id);
+
       const { data, error } = await supabase.functions.invoke('no1logs-api', {
         body: { action: 'get_product_details', productId: id },
       });
@@ -112,43 +110,26 @@ const ProductDetailsModal: React.FC<ProductDetailsModalProps> = ({
 
       setDetails(data);
 
-      const rel: RelatedProduct[] = Array.isArray((data as any)?.related_product)
-        ? ((data as any).related_product as RelatedProduct[])
+      const accounts = Array.isArray((data as any)?.accounts)
+        ? ((data as any).accounts as ProductAccount[])
         : [];
-
-      if (rel.length > 0) {
-        setVariants(rel);
-      }
-
-      const accounts = Array.isArray((data as any)?.accounts) ? ((data as any).accounts as ProductAccount[]) : [];
 
       if (accounts.length > 0) {
         setAvailableStock(accounts.length);
         return;
       }
 
-      // Some products return related_product variants instead of accounts on the first call.
-      // Auto-pick the first in-stock variant (or first) and refetch details for that variant.
-      if (rel.length > 0) {
+      // Some products return accounts on a related_product item.
+      // We resolve accounts in the background, but we keep the UI name/price as the clicked product.
+      const rel: RelatedProduct[] = Array.isArray((data as any)?.related_product)
+        ? ((data as any).related_product as RelatedProduct[])
+        : [];
+
+      if (allowFallback && rel.length > 0) {
         const preferred = rel.find((v) => Number(v.in_stock) > 0) ?? rel[0];
-        if (preferred) {
-          setSelectedVariantId(preferred.id);
-          setUnitPrice(String(preferred.price ?? price));
+        if (preferred?.id && preferred.id !== id) {
           setAvailableStock(Number(preferred.in_stock ?? inStock));
-
-          if (preferred.id !== id) {
-            setActiveProductId(preferred.id);
-            const { data: d2, error: e2 } = await supabase.functions.invoke('no1logs-api', {
-              body: { action: 'get_product_details', productId: preferred.id },
-            });
-            if (e2) throw e2;
-            setDetails(d2);
-
-            const accounts2 = Array.isArray((d2 as any)?.accounts) ? ((d2 as any).accounts as ProductAccount[]) : [];
-            if (accounts2.length > 0) {
-              setAvailableStock(accounts2.length);
-            }
-          }
+          await fetchProductDetails(preferred.id, false);
         }
       }
     } catch (err) {
@@ -161,20 +142,6 @@ const ProductDetailsModal: React.FC<ProductDetailsModalProps> = ({
     } finally {
       setLoading(false);
     }
-  };
-
-  const handleVariantChange = async (value: string) => {
-    const id = Number(value);
-    if (!Number.isFinite(id)) return;
-
-    const v = variants.find((x) => x.id === id);
-    setSelectedVariantId(id);
-    setActiveProductId(id);
-
-    if (v?.price) setUnitPrice(String(v.price));
-    if (typeof v?.in_stock === 'number') setAvailableStock(v.in_stock);
-
-    await fetchProductDetails(id);
   };
 
   const handleQuantityChange = (delta: number) => {
@@ -197,12 +164,12 @@ const ProductDetailsModal: React.FC<ProductDetailsModalProps> = ({
     }
 
     // Get account IDs - prefer from details.accounts, fallback to selectedAccounts
-    const accountIds = details?.accounts?.slice(0, quantity).map(a => a.id) || selectedAccounts;
-    
+    const accountIds = details?.accounts?.slice(0, quantity).map((a) => a.id) || selectedAccounts;
+
     if (accountIds.length === 0) {
       toast({
         title: 'Unable to Place Order',
-        description: 'No accounts available for this product. Please try a different product or try again later.',
+        description: 'No accounts available for this product right now. Please try again later.',
         variant: 'destructive',
       });
       return;
@@ -222,16 +189,12 @@ const ProductDetailsModal: React.FC<ProductDetailsModalProps> = ({
 
     setOrdering(true);
     try {
-      console.log('Placing order with account IDs:', accountIds.join(','));
-      
       const { data, error } = await supabase.functions.invoke('no1logs-api', {
         body: {
           action: 'place_order',
           productDetailsIds: accountIds.join(','),
         },
       });
-
-      console.log('Order response:', data);
 
       if (error) throw error;
 
@@ -244,24 +207,30 @@ const ProductDetailsModal: React.FC<ProductDetailsModalProps> = ({
         throw new Error((data as any)?.message || 'Order failed');
       }
 
-      const apiOrderId = (data as any)?.order?.id ?? (data as any)?.id ?? null;
+      const apiOrderId =
+        (data as any)?.order?.id ??
+        (data as any)?.order_id ??
+        (data as any)?.id ??
+        null;
+
       const orderPayload = (data as any)?.order ?? data;
 
-      const displayProductName =
-        (orderPayload as any)?.product_name || details?.product?.product_name || productName;
-
       // Save order to database
-      const { data: insertedOrder, error: orderError } = await supabase.from('universal_logs_orders').insert({
-        user_id: user.id,
-        api_order_id: apiOrderId != null ? String(apiOrderId) : null,
-        product_id: activeProductId,
-        product_name: displayProductName,
-        quantity: accountIds.length,
-        price_per_unit: parseFloat(unitPrice),
-        total_amount: totalCost,
-        status: 'completed',
-        order_response: orderPayload,
-      }).select().single();
+      const { data: insertedOrder, error: orderError } = await supabase
+        .from('universal_logs_orders')
+        .insert({
+          user_id: user.id,
+          api_order_id: apiOrderId != null ? String(apiOrderId) : null,
+          product_id: productId,
+          product_name: productName,
+          quantity: accountIds.length,
+          price_per_unit: parseFloat(unitPrice),
+          total_amount: totalCost,
+          status: 'completed',
+          order_response: orderPayload,
+        })
+        .select()
+        .single();
 
       if (orderError) throw orderError;
 
@@ -270,7 +239,7 @@ const ProductDetailsModal: React.FC<ProductDetailsModalProps> = ({
         user_id: user.id,
         amount: -totalCost,
         transaction_type: 'purchase',
-        description: `Universal Logs: ${displayProductName} x${accountIds.length}`,
+        description: `Universal Logs: ${productName} x${accountIds.length}`,
       });
 
       if (walletError) throw walletError;
@@ -293,13 +262,11 @@ const ProductDetailsModal: React.FC<ProductDetailsModalProps> = ({
 
       toast({
         title: 'Order Placed Successfully!',
-        description: `Your order for ${displayProductName} has been placed. Check your order history for details.`,
+        description: `Your order for ${productName} has been placed. Check your order history for details.`,
       });
 
       onOpenChange(false);
-      
-      // Navigate to order details
-      window.location.href = `/order-details?type=universal&id=${insertedOrder?.id}`;
+      window.location.href = '/orders';
     } catch (err) {
       console.error('Error placing order:', err);
       toast({
