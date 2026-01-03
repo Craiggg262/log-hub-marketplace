@@ -6,8 +6,6 @@ import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/hooks/useAuth';
-import { processReferralOnSignup } from '@/hooks/useReferral';
-import { supabase } from '@/integrations/supabase/client';
 import { Eye, EyeOff, UserPlus, Gift } from 'lucide-react';
 
 const Signup = () => {
@@ -26,7 +24,7 @@ const Signup = () => {
   const [isLoading, setIsLoading] = useState(false);
   const navigate = useNavigate();
   const { toast } = useToast();
-  const { signUp, signInWithGoogle, user } = useAuth();
+  const { signUp, signInWithGoogle } = useAuth();
 
   // Update referral code from URL if it changes
   useEffect(() => {
@@ -57,9 +55,7 @@ const Signup = () => {
 
       await signUp(formData.email, formData.password, formData.fullName);
       
-      // After signup, we need to wait for the user to be created
-      // The referral will be processed after auth state changes
-      // Store the referral code in localStorage to process after redirect
+      // Store referral code to be processed after auth state changes (AuthProvider handles processing)
       if (formData.referralCode.trim()) {
         localStorage.setItem('pending_referral_code', formData.referralCode.trim().toLowerCase());
       }
@@ -79,25 +75,6 @@ const Signup = () => {
       setIsLoading(false);
     }
   };
-
-  // Process pending referral when user is available
-  useEffect(() => {
-    const processPendingReferral = async () => {
-      const pendingCode = localStorage.getItem('pending_referral_code');
-      if (pendingCode && user?.id) {
-        try {
-          await processReferralOnSignup(pendingCode, user.id);
-          localStorage.removeItem('pending_referral_code');
-        } catch (error) {
-          console.error('Error processing referral:', error);
-        }
-      }
-    };
-
-    if (user) {
-      processPendingReferral();
-    }
-  }, [user]);
 
   const handleGoogleSignUp = async () => {
     // Store referral code before OAuth redirect

@@ -93,12 +93,24 @@ serve(async (req) => {
         }
 
         // POST to https://www.no1logs.com/api/v1/order/new?api_token={apiKey}
-        // Body: product_details_ids=comma,separated,ids (form-urlencoded)
+        // Some NO1LOGS deployments expect `id` (single), others accept `product_details_ids` (comma-separated).
         endpoint = `/order/new?api_token=${apiKey}`;
         method = 'POST';
         contentType = 'application/x-www-form-urlencoded';
-        body = `product_details_ids=${encodeURIComponent(String(productDetailsIds))}`;
-        console.log(`Placing order with product_details_ids: ${productDetailsIds}`);
+
+        const idsRaw = String(productDetailsIds);
+        const firstId = idsRaw.split(',')[0]?.trim();
+        const params = new URLSearchParams();
+
+        params.set('product_details_ids', idsRaw);
+        if (firstId) {
+          params.set('id', firstId);
+          params.set('product_details_id', firstId);
+        }
+
+        body = params.toString();
+
+        console.log(`Placing order with product_details_ids: ${idsRaw}`);
         console.log(`POST body: ${body}`);
         break;
       }
