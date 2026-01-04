@@ -93,10 +93,10 @@ const ReferralEarn = () => {
   const totalEarnings = profile?.total_referral_earnings || 0;
 
   useEffect(() => {
-    if (user) {
+    if (user?.id) {
       fetchData();
     }
-  }, [user]);
+  }, [user?.id]);
 
   const fetchData = async () => {
     setLoading(true);

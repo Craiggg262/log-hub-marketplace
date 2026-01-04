@@ -25,25 +25,37 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     let mounted = true;
+    let initialSessionLoaded = false;
 
     // Set up auth state listener FIRST
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       (event, newSession) => {
         if (!mounted) return;
 
-        // Update session and user synchronously
-        setSession(newSession);
-        setUser(newSession?.user ?? null);
+        // Ignore INITIAL_SESSION event if we haven't loaded from getSession yet
+        // This prevents race conditions on desktop browsers
+        if (event === 'INITIAL_SESSION' && !initialSessionLoaded) {
+          return;
+        }
 
-        if (newSession?.user) {
+        // Only update if there's an actual change (don't log out on empty events)
+        if (event === 'SIGNED_OUT') {
+          setSession(null);
+          setUser(null);
+          setProfile(null);
+          setLoading(false);
+          return;
+        }
+
+        if (newSession) {
+          setSession(newSession);
+          setUser(newSession.user);
           // Use setTimeout to prevent Supabase deadlock
           setTimeout(() => {
             if (mounted) {
               fetchProfile(newSession.user.id);
             }
           }, 0);
-        } else {
-          setProfile(null);
         }
 
         setLoading(false);
@@ -54,11 +66,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     supabase.auth.getSession().then(({ data: { session: existingSession } }) => {
       if (!mounted) return;
 
-      // IMPORTANT: never overwrite a valid session/user with null from getSession
-      setSession((prev) => prev ?? existingSession);
-      setUser((prev) => prev ?? existingSession?.user ?? null);
+      initialSessionLoaded = true;
 
-      if (existingSession?.user) {
+      if (existingSession) {
+        setSession(existingSession);
+        setUser(existingSession.user);
         fetchProfile(existingSession.user.id);
       }
 

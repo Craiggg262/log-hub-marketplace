@@ -413,17 +413,19 @@ const OrderDetails = () => {
 
                                         return (
                                           <div key={orderLogItem.id} className="bg-muted/50 rounded-lg p-4">
-                                            <div className="flex items-center justify-between mb-2">
-                                              <h5 className="font-medium">Account {accountIndex + 1}</h5>
+                                            <div className="flex items-start gap-2 mb-2">
                                               <Button
-                                                variant="ghost"
+                                                variant="outline"
                                                 size="sm"
                                                 onClick={() => handleCopyText(accountDetails, 'Account details')}
+                                                className="shrink-0"
                                               >
-                                                <Copy className="h-3 w-3" />
+                                                <Copy className="h-3 w-3 mr-1" />
+                                                Copy
                                               </Button>
+                                              <h5 className="font-medium">Account {accountIndex + 1}</h5>
                                             </div>
-                                            <pre className="text-sm whitespace-pre-wrap bg-background p-3 rounded border">
+                                            <pre className="text-sm whitespace-pre-wrap break-all bg-background p-3 rounded border overflow-hidden">
                                               {accountDetails}
                                             </pre>
                                             <p className="text-xs text-muted-foreground mt-2">
@@ -611,22 +613,24 @@ const OrderDetails = () => {
                                                 const copyText = item?.details || item?.url || JSON.stringify(item);
                                                 return (
                                                   <div key={idx} className="bg-muted/50 rounded-lg p-3">
-                                                    <div className="flex items-center justify-between mb-2">
-                                                      <span className="font-medium">Account {idx + 1}</span>
+                                                    <div className="flex items-start gap-2 mb-2">
                                                       <Button
-                                                        variant="ghost"
+                                                        variant="outline"
                                                         size="sm"
                                                         onClick={() => handleCopyText(copyText, 'Account details')}
+                                                        className="shrink-0"
                                                       >
-                                                        <Copy className="h-3 w-3" />
+                                                        <Copy className="h-3 w-3 mr-1" />
+                                                        Copy
                                                       </Button>
+                                                      <span className="font-medium">Account {idx + 1}</span>
                                                     </div>
 
                                                     {item?.url && (
                                                       <p className="text-xs text-muted-foreground mb-2 break-all">URL: {item.url}</p>
                                                     )}
 
-                                                    <pre className="text-sm whitespace-pre-wrap bg-background p-3 rounded border overflow-x-auto">
+                                                    <pre className="text-sm whitespace-pre-wrap break-all bg-background p-3 rounded border overflow-hidden">
                                                       {item?.details || JSON.stringify(item, null, 2)}
                                                     </pre>
                                                   </div>
