@@ -1,10 +1,11 @@
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { useToast } from '@/hooks/use-toast';
-import { Wallet, ShoppingCart, Search, Star, Eye, Filter, Plus, Minus, MessageCircle, Copy, Check, Gift } from 'lucide-react';
+import { Wallet, ShoppingCart, Search, Star, Eye, Filter, Plus, Minus, MessageCircle, Copy, Check, Gift, Phone, Wifi, Zap, Tv } from 'lucide-react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useLogs } from '@/hooks/useLogs';
 import { useAuth } from '@/hooks/useAuth';
@@ -13,6 +14,7 @@ import { useOrders } from '@/hooks/useOrders';
 import SocialIcon from '@/components/SocialIcon';
 
 const Dashboard = () => {
+  const navigate = useNavigate();
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('all');
   const [sortBy, setSortBy] = useState('name');
@@ -206,6 +208,60 @@ const Dashboard = () => {
             </Button>
           </div>
         )}
+      </div>
+
+      {/* Quick Services Section */}
+      <div className="px-4 sm:px-0">
+        <h2 className="text-lg font-semibold mb-3">Quick Services</h2>
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+          <Card 
+            onClick={() => navigate('/services/airtime')} 
+            className="cursor-pointer hover:shadow-lg hover:border-primary/50 transition-all duration-300 bg-card/80 backdrop-blur-sm border-border/50"
+          >
+            <CardContent className="p-4 flex flex-col items-center justify-center text-center">
+              <div className="h-12 w-12 rounded-full bg-blue-500/20 flex items-center justify-center mb-2">
+                <Phone className="h-6 w-6 text-blue-500" />
+              </div>
+              <span className="text-sm font-medium">Buy Airtime</span>
+            </CardContent>
+          </Card>
+
+          <Card 
+            onClick={() => navigate('/services/data')} 
+            className="cursor-pointer hover:shadow-lg hover:border-primary/50 transition-all duration-300 bg-card/80 backdrop-blur-sm border-border/50"
+          >
+            <CardContent className="p-4 flex flex-col items-center justify-center text-center">
+              <div className="h-12 w-12 rounded-full bg-green-500/20 flex items-center justify-center mb-2">
+                <Wifi className="h-6 w-6 text-green-500" />
+              </div>
+              <span className="text-sm font-medium">Buy Data</span>
+            </CardContent>
+          </Card>
+
+          <Card 
+            onClick={() => navigate('/services/electricity')} 
+            className="cursor-pointer hover:shadow-lg hover:border-primary/50 transition-all duration-300 bg-card/80 backdrop-blur-sm border-border/50"
+          >
+            <CardContent className="p-4 flex flex-col items-center justify-center text-center">
+              <div className="h-12 w-12 rounded-full bg-yellow-500/20 flex items-center justify-center mb-2">
+                <Zap className="h-6 w-6 text-yellow-500" />
+              </div>
+              <span className="text-sm font-medium">Electricity</span>
+            </CardContent>
+          </Card>
+
+          <Card 
+            onClick={() => navigate('/services/cable')} 
+            className="cursor-pointer hover:shadow-lg hover:border-primary/50 transition-all duration-300 bg-card/80 backdrop-blur-sm border-border/50"
+          >
+            <CardContent className="p-4 flex flex-col items-center justify-center text-center">
+              <div className="h-12 w-12 rounded-full bg-purple-500/20 flex items-center justify-center mb-2">
+                <Tv className="h-6 w-6 text-purple-500" />
+              </div>
+              <span className="text-sm font-medium">Cable TV</span>
+            </CardContent>
+          </Card>
+        </div>
       </div>
 
       {/* Search and Filters */}
