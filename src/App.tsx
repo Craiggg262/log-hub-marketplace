@@ -8,6 +8,11 @@ import Index from "./pages/Index";
 import Login from "./pages/Login";
 import Signup from "./pages/Signup";
 import Dashboard from "./pages/Dashboard";
+import Services from "./pages/Services";
+import BuyAirtime from "./pages/BuyAirtime";
+import BuyData from "./pages/BuyData";
+import PayElectricity from "./pages/PayElectricity";
+import CableTV from "./pages/CableTV";
 import Wallet from "./pages/Wallet";
 import FundWallet from "./pages/FundWallet";
 import OrderDetails from "./pages/OrderDetails";
@@ -70,6 +75,11 @@ function AppContent() {
         
         {/* Protected Routes */}
         <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
+        <Route path="/services" element={<ProtectedRoute><Services /></ProtectedRoute>} />
+        <Route path="/services/airtime" element={<ProtectedRoute><BuyAirtime /></ProtectedRoute>} />
+        <Route path="/services/data" element={<ProtectedRoute><BuyData /></ProtectedRoute>} />
+        <Route path="/services/electricity" element={<ProtectedRoute><PayElectricity /></ProtectedRoute>} />
+        <Route path="/services/cable" element={<ProtectedRoute><CableTV /></ProtectedRoute>} />
         <Route path="/universal-logs" element={<ProtectedRoute><UniversalLogs /></ProtectedRoute>} />
         <Route path="/wallet" element={<ProtectedRoute><Wallet /></ProtectedRoute>} />
         <Route path="/fund-wallet" element={<ProtectedRoute><FundWallet /></ProtectedRoute>} />
