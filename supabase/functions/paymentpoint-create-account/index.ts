@@ -114,10 +114,11 @@ serve(async (req) => {
       )
     }
 
-    // Extract account details from response
-    const accountNumber = responseData.data?.accountNumber || responseData.accountNumber
-    const bankName = responseData.data?.bankName || responseData.bankName || 'PaymentPoint'
-    const accountName = responseData.data?.accountName || responseData.accountName || name
+    // Extract account details from response - PaymentPoint returns data in bankAccounts array
+    const bankAccount = responseData.bankAccounts?.[0]
+    const accountNumber = bankAccount?.accountNumber
+    const bankName = bankAccount?.bankName || 'PaymentPoint'
+    const accountName = bankAccount?.accountName || name
 
     if (!accountNumber) {
       console.error('No account number in response:', responseData)
