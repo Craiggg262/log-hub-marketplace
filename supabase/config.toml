@@ -29,8 +29,11 @@ verify_jwt = false
 [functions.get-logs]
 verify_jwt = false
 
-[functions.etegram-webhook]
+[functions.no1logs-api]
 verify_jwt = false
 
-[functions.no1logs-api]
+[functions.paymentpoint-create-account]
+verify_jwt = false
+
+[functions.paymentpoint-webhook]
 verify_jwt = false
