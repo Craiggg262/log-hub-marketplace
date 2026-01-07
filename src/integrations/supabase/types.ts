@@ -266,10 +266,14 @@ export type Database = {
           email: string
           full_name: string | null
           id: string
+          phone: string | null
           referral_code: string | null
           total_referral_earnings: number
           updated_at: string
           user_id: string
+          virtual_account_bank: string | null
+          virtual_account_name: string | null
+          virtual_account_number: string | null
           wallet_balance: number
         }
         Insert: {
@@ -277,10 +281,14 @@ export type Database = {
           email: string
           full_name?: string | null
           id?: string
+          phone?: string | null
           referral_code?: string | null
           total_referral_earnings?: number
           updated_at?: string
           user_id: string
+          virtual_account_bank?: string | null
+          virtual_account_name?: string | null
+          virtual_account_number?: string | null
           wallet_balance?: number
         }
         Update: {
@@ -288,10 +296,14 @@ export type Database = {
           email?: string
           full_name?: string | null
           id?: string
+          phone?: string | null
           referral_code?: string | null
           total_referral_earnings?: number
           updated_at?: string
           user_id?: string
+          virtual_account_bank?: string | null
+          virtual_account_name?: string | null
+          virtual_account_number?: string | null
           wallet_balance?: number
         }
         Relationships: []

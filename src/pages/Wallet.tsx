@@ -8,7 +8,7 @@ import { Wallet as WalletIcon, Plus, MessageCircle, CreditCard, TrendingUp, Hist
 import { Badge } from '@/components/ui/badge';
 import { useAuth } from '@/hooks/useAuth';
 import { useTransactions } from '@/hooks/useTransactions';
-import EtegramPayment from '@/components/EtegramPayment';
+import PaymentPointAccount from '@/components/PaymentPointAccount';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
 const Wallet = () => {
@@ -120,24 +120,14 @@ const Wallet = () => {
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <Tabs defaultValue="manual" className="w-full">
+          <Tabs defaultValue="automatic" className="w-full">
             <TabsList className="grid w-full grid-cols-2">
-              <TabsTrigger value="etegram">Coming Soon!!!</TabsTrigger>
+              <TabsTrigger value="automatic">Automatic Payment</TabsTrigger>
               <TabsTrigger value="manual">Manual Payment</TabsTrigger>
             </TabsList>
             
-            <TabsContent value="etegram" className="mt-6">
-              <Card>
-                <CardHeader>
-                  <CardTitle>Automatic Payment</CardTitle>
-                  <CardDescription>This feature is coming soon!</CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <p className="text-muted-foreground">
-                    We're working on integrating automatic payment processing. In the meantime, please use the manual payment option.
-                  </p>
-                </CardContent>
-              </Card>
+            <TabsContent value="automatic" className="mt-6">
+              <PaymentPointAccount />
             </TabsContent>
             
             <TabsContent value="manual" className="mt-6 space-y-4">

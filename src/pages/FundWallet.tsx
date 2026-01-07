@@ -4,10 +4,9 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
-import { Wallet as WalletIcon, MessageCircle, Clock, Copy } from 'lucide-react';
-import { Badge } from '@/components/ui/badge';
+import { Wallet as WalletIcon, MessageCircle, Copy } from 'lucide-react';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
-import EtegramPayment from '@/components/EtegramPayment';
+import PaymentPointAccount from '@/components/PaymentPointAccount';
 
 const FundWallet = () => {
   const [fundAmount, setFundAmount] = useState('');
@@ -65,7 +64,7 @@ const FundWallet = () => {
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Payment Methods */}
         <div className="space-y-4">
-          <EtegramPayment fundAmount={fundAmount} setFundAmount={setFundAmount} />
+          <PaymentPointAccount />
 
           <Card>
             <CardHeader>
@@ -197,35 +196,21 @@ const FundWallet = () => {
                 <div className="bg-primary text-primary-foreground rounded-full w-6 h-6 flex items-center justify-center text-sm font-medium">
                   1
                 </div>
-                <p className="text-sm">Enter the amount you want to add to your wallet</p>
+                <p className="text-sm">Generate your personal account number (one-time setup)</p>
               </div>
               
               <div className="flex items-start gap-3">
                 <div className="bg-primary text-primary-foreground rounded-full w-6 h-6 flex items-center justify-center text-sm font-medium">
                   2
                 </div>
-                <p className="text-sm">Click "Proceed to Payment" to see bank account details</p>
+                <p className="text-sm">Transfer any amount to your personal account</p>
               </div>
               
               <div className="flex items-start gap-3">
                 <div className="bg-primary text-primary-foreground rounded-full w-6 h-6 flex items-center justify-center text-sm font-medium">
                   3
                 </div>
-                <p className="text-sm">Transfer the exact amount to the provided account</p>
-              </div>
-              
-              <div className="flex items-start gap-3">
-                <div className="bg-primary text-primary-foreground rounded-full w-6 h-6 flex items-center justify-center text-sm font-medium">
-                  4
-                </div>
-                <p className="text-sm">Send payment screenshot and your email via WhatsApp</p>
-              </div>
-
-              <div className="flex items-start gap-3">
-                <div className="bg-primary text-primary-foreground rounded-full w-6 h-6 flex items-center justify-center text-sm font-medium">
-                  5
-                </div>
-                <p className="text-sm">Your wallet will be credited within 5-10 minutes</p>
+                <p className="text-sm">Your wallet will be credited instantly!</p>
               </div>
             </div>
 
