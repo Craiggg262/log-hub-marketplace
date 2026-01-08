@@ -17,6 +17,7 @@ const Signup = () => {
     password: '',
     confirmPassword: '',
     fullName: '',
+    phone: '',
     referralCode: referralFromUrl
   });
   const [showPassword, setShowPassword] = useState(false);
@@ -49,11 +50,11 @@ const Signup = () => {
         throw new Error('Passwords do not match');
       }
 
-      if (formData.password.length < 6) {
-        throw new Error('Password must be at least 6 characters');
+      if (!formData.phone.trim()) {
+        throw new Error('Phone number is required');
       }
 
-      await signUp(formData.email, formData.password, formData.fullName);
+      await signUp(formData.email, formData.password, formData.fullName, formData.phone);
       
       // Store referral code to be processed after auth state changes (AuthProvider handles processing)
       if (formData.referralCode.trim()) {
@@ -197,6 +198,21 @@ const Signup = () => {
                     )}
                   </Button>
                 </div>
+              </div>
+
+              {/* Phone Number Field */}
+              <div className="space-y-2">
+                <Label htmlFor="phone">Phone Number</Label>
+                <Input
+                  id="phone"
+                  name="phone"
+                  type="tel"
+                  placeholder="e.g. 08012345678"
+                  value={formData.phone}
+                  onChange={handleInputChange}
+                  required
+                />
+                <p className="text-xs text-muted-foreground">Required for generating your funding account</p>
               </div>
 
               {/* Referral Code Field */}

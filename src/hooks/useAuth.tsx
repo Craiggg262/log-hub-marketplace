@@ -9,7 +9,7 @@ interface AuthContextType {
   profile: any | null;
   loading: boolean;
   signIn: (email: string, password: string) => Promise<void>;
-  signUp: (email: string, password: string, fullName: string) => Promise<void>;
+  signUp: (email: string, password: string, fullName: string, phone?: string) => Promise<void>;
   signOut: () => Promise<void>;
   signInWithGoogle: () => Promise<void>;
   resetPassword: (email: string) => Promise<void>;
@@ -134,19 +134,39 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     if (error) throw error;
   };
 
-  const signUp = async (email: string, password: string, fullName: string) => {
+  const signUp = async (email: string, password: string, fullName: string, phone?: string) => {
     const { data, error } = await supabase.auth.signUp({
       email,
       password,
       options: {
         data: {
           full_name: fullName,
+          phone: phone,
         },
         emailRedirectTo: `${window.location.origin}/dashboard`,
       }
     });
     
     if (error) throw error;
+
+    // If signup succeeded and we have phone, generate account immediately
+    if (data?.user && phone) {
+      try {
+        const { error: funcError } = await supabase.functions.invoke('paymentpoint-create-account', {
+          body: {
+            userId: data.user.id,
+            email: email,
+            name: fullName,
+            phoneNumber: phone
+          }
+        });
+        if (funcError) {
+          console.error('Failed to auto-generate account:', funcError);
+        }
+      } catch (err) {
+        console.error('Error calling paymentpoint-create-account:', err);
+      }
+    }
   };
 
   const signOut = async () => {
