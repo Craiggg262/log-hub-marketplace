@@ -23,37 +23,33 @@ serve(async (req) => {
     console.log('PaymentPoint webhook received:', JSON.stringify(body, null, 2))
 
     // PaymentPoint webhook format - adjust based on actual webhook payload
-    const { 
-      status, 
-      amount, 
-      accountNumber, 
-      reference,
-      transactionReference,
-      senderName,
-      senderAccountNumber,
-      narration
-    } = body
+    // PaymentPoint uses different field names
+    const notificationStatus = body.notification_status
+    const transactionStatus = body.transaction_status
+    const transactionId = body.transaction_id
+    const amountPaid = body.amount_paid
+    const receiverAccountNumber = body.receiver?.account_number
 
     // Check if this is a successful transaction
-    if (status === 'successful' || status === 'success' || status === 'completed') {
-      console.log(`Processing payment for account: ${accountNumber}, amount: ${amount}`)
+    if (notificationStatus === 'payment_successful' || transactionStatus === 'success') {
+      console.log(`Processing payment for account: ${receiverAccountNumber}, amount: ${amountPaid}`)
       
       // Find user by virtual account number
       const { data: profile, error: profileError } = await supabase
         .from('profiles')
         .select('*')
-        .eq('virtual_account_number', accountNumber)
+        .eq('virtual_account_number', receiverAccountNumber)
         .single()
 
       if (profileError || !profile) {
-        console.error('User not found for account:', accountNumber, profileError)
+        console.error('User not found for account:', receiverAccountNumber, profileError)
         return new Response(
-          JSON.stringify({ error: 'User not found', accountNumber }),
+          JSON.stringify({ error: 'User not found', accountNumber: receiverAccountNumber }),
           { status: 404, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
         )
       }
 
-      const transactionRef = reference || transactionReference || `PP_${Date.now()}`
+      const transactionRef = transactionId || `PP_${Date.now()}`
 
       // Check for duplicate transaction
       const { data: existingTx } = await supabase
@@ -75,7 +71,7 @@ serve(async (req) => {
         .from('wallet_transactions')
         .insert({
           user_id: profile.user_id,
-          amount: parseFloat(amount),
+          amount: parseFloat(amountPaid),
           transaction_type: 'deposit',
           description: `PaymentPoint deposit - Ref: ${transactionRef}`
         })
@@ -89,7 +85,7 @@ serve(async (req) => {
       }
 
       // Update user wallet balance
-      const newBalance = (profile.wallet_balance || 0) + parseFloat(amount)
+      const newBalance = (profile.wallet_balance || 0) + parseFloat(amountPaid)
       const { error: updateError } = await supabase
         .from('profiles')
         .update({ wallet_balance: newBalance })
@@ -103,7 +99,7 @@ serve(async (req) => {
         )
       }
 
-      console.log(`✅ Successfully processed PaymentPoint payment for ${profile.email}: ₦${amount}. New balance: ₦${newBalance}`)
+      console.log(`✅ Successfully processed PaymentPoint payment for ${profile.email}: ₦${amountPaid}. New balance: ₦${newBalance}`)
       
       return new Response(
         JSON.stringify({ 
@@ -115,7 +111,7 @@ serve(async (req) => {
       )
     }
 
-    console.log('Webhook received but status not successful:', status)
+    console.log('Webhook received but status not successful:', notificationStatus, transactionStatus)
     return new Response(
       JSON.stringify({ message: 'Webhook received', status }),
       { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
