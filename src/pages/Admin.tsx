@@ -947,22 +947,22 @@ const Admin = () => {
                       <div className="space-y-2">
                         {logItems[log.id]?.length > 0 ? (
                           logItems[log.id].map((item) => (
-                            <div key={item.id} className="flex items-start justify-between p-3 bg-muted/50 rounded-md">
-                              <div className="flex-1">
-                                <pre className="text-xs whitespace-pre-wrap">{item.account_details}</pre>
-                                <p className="text-xs text-muted-foreground mt-1">
+                            <div key={item.id} className="p-3 bg-muted/50 rounded-md">
+                              <div className="flex items-center justify-between mb-2">
+                                <p className="text-xs text-muted-foreground">
                                   Added: {new Date(item.created_at).toLocaleDateString()}
                                   {!item.is_available && <span className="text-destructive"> • Sold</span>}
                                 </p>
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  onClick={() => handleDeleteLogItem(item.id, log.id)}
+                                  className="text-destructive hover:text-destructive h-7 px-2"
+                                >
+                                  <Trash2 className="h-3 w-3" />
+                                </Button>
                               </div>
-                              <Button
-                                variant="outline"
-                                size="sm"
-                                onClick={() => handleDeleteLogItem(item.id, log.id)}
-                                className="text-destructive hover:text-destructive ml-2"
-                              >
-                                <Trash2 className="h-3 w-3" />
-                              </Button>
+                              <pre className="text-xs whitespace-pre-wrap break-all overflow-hidden max-w-full">{item.account_details}</pre>
                             </div>
                           ))
                         ) : (
