@@ -25,6 +25,7 @@ import Cart from "./pages/Cart";
 import AISupport from "./components/AISupport";
 import UniversalLogs from "./pages/UniversalLogs";
 import ReferralEarn from "./pages/ReferralEarn";
+import SmsVerification from "./pages/SmsVerification";
 
 const queryClient = new QueryClient();
 
@@ -81,6 +82,7 @@ function AppContent() {
         <Route path="/services/electricity" element={<ProtectedRoute><PayElectricity /></ProtectedRoute>} />
         <Route path="/services/cable" element={<ProtectedRoute><CableTV /></ProtectedRoute>} />
         <Route path="/universal-logs" element={<ProtectedRoute><UniversalLogs /></ProtectedRoute>} />
+        <Route path="/sms-verification" element={<ProtectedRoute><SmsVerification /></ProtectedRoute>} />
         <Route path="/wallet" element={<ProtectedRoute><Wallet /></ProtectedRoute>} />
         <Route path="/fund-wallet" element={<ProtectedRoute><FundWallet /></ProtectedRoute>} />
         <Route path="/orders" element={<ProtectedRoute><OrderDetails /></ProtectedRoute>} />
