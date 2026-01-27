@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { useToast } from '@/hooks/use-toast';
-import { Wallet, ShoppingCart, Search, Star, Eye, Filter, Plus, Minus, MessageCircle, Copy, Check, Gift, Phone, Wifi, Zap, Tv, CreditCard } from 'lucide-react';
+import { Wallet, ShoppingCart, Search, Star, Eye, Filter, Plus, Minus, MessageCircle, Copy, Check, Gift, Phone, Wifi, Zap, Tv, CreditCard, Globe } from 'lucide-react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useLogs } from '@/hooks/useLogs';
 import { useAuth } from '@/hooks/useAuth';
@@ -248,7 +248,19 @@ const Dashboard = () => {
       {/* Quick Services Section */}
       <div className="px-4 sm:px-0">
         <h2 className="text-lg font-semibold mb-3">Quick Services</h2>
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+        <div className="grid grid-cols-2 sm:grid-cols-5 gap-3">
+          <Card 
+            onClick={() => navigate('/sms-verification')} 
+            className="cursor-pointer hover:shadow-lg hover:border-primary/50 transition-all duration-300 bg-card/80 backdrop-blur-sm border-border/50"
+          >
+            <CardContent className="p-4 flex flex-col items-center justify-center text-center">
+              <div className="h-12 w-12 rounded-full bg-primary/20 flex items-center justify-center mb-2">
+                <Globe className="h-6 w-6 text-primary" />
+              </div>
+              <span className="text-sm font-medium">SMS Verify</span>
+            </CardContent>
+          </Card>
+
           <Card 
             onClick={() => navigate('/services/airtime')} 
             className="cursor-pointer hover:shadow-lg hover:border-primary/50 transition-all duration-300 bg-card/80 backdrop-blur-sm border-border/50"

@@ -18,9 +18,6 @@ import {
   Gift,
   LayoutGrid,
   Phone,
-  Wifi,
-  Zap,
-  Tv,
 } from "lucide-react";
 import {
   Sheet,
@@ -42,10 +39,7 @@ interface DrawerSidebarProps {
 const menuItems = [
   { title: "Home", url: "/dashboard", icon: Home },
   { title: "Services", url: "/services", icon: LayoutGrid },
-  { title: "Buy Airtime", url: "/services/airtime", icon: Phone },
-  { title: "Buy Data", url: "/services/data", icon: Wifi },
-  { title: "Electricity", url: "/services/electricity", icon: Zap },
-  { title: "Cable TV", url: "/services/cable", icon: Tv },
+  { title: "SMS Verification", url: "/sms-verification", icon: Phone },
   { title: "Universal Logs", url: "/universal-logs", icon: Globe },
   { title: "Orders", url: "/orders", icon: History },
   { title: "Cart", url: "/cart", icon: ShoppingCart },

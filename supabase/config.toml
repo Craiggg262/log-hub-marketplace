@@ -37,3 +37,6 @@ verify_jwt = false
 
 [functions.paymentpoint-webhook]
 verify_jwt = false
+
+[functions.sms-verification]
+verify_jwt = false
