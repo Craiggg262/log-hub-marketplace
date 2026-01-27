@@ -365,6 +365,57 @@ export type Database = {
         }
         Relationships: []
       }
+      sms_verification_orders: {
+        Row: {
+          api_price: number
+          charged_price: number
+          created_at: string
+          expires_at: string
+          id: string
+          phone_number: string | null
+          refunded: boolean
+          rental_id: string
+          service_id: string
+          service_name: string
+          status: string
+          updated_at: string
+          user_id: string
+          verification_code: string | null
+        }
+        Insert: {
+          api_price: number
+          charged_price: number
+          created_at?: string
+          expires_at: string
+          id?: string
+          phone_number?: string | null
+          refunded?: boolean
+          rental_id: string
+          service_id: string
+          service_name: string
+          status?: string
+          updated_at?: string
+          user_id: string
+          verification_code?: string | null
+        }
+        Update: {
+          api_price?: number
+          charged_price?: number
+          created_at?: string
+          expires_at?: string
+          id?: string
+          phone_number?: string | null
+          refunded?: boolean
+          rental_id?: string
+          service_id?: string
+          service_name?: string
+          status?: string
+          updated_at?: string
+          user_id?: string
+          verification_code?: string | null
+        }
+        Relationships: []
+      }
       universal_logs_orders: {
         Row: {
           api_order_id: string | null
