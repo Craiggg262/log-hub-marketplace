@@ -40,7 +40,8 @@ const menuItems = [
   { title: "Home", url: "/dashboard", icon: Home },
   { title: "Services", url: "/services", icon: LayoutGrid },
   { title: "SMS Verification", url: "/sms-verification", icon: Phone },
-  { title: "Universal Logs", url: "/universal-logs", icon: Globe },
+  // Universal Logs hidden - integration not complete
+  // { title: "Universal Logs", url: "/universal-logs", icon: Globe },
   { title: "Orders", url: "/orders", icon: History },
   { title: "Cart", url: "/cart", icon: ShoppingCart },
   { title: "Wallet", url: "/wallet", icon: Wallet },
