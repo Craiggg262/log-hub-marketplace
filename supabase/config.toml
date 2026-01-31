@@ -40,3 +40,6 @@ verify_jwt = false
 
 [functions.sms-verification]
 verify_jwt = false
+
+[functions.betasub-vtu]
+verify_jwt = false

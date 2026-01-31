@@ -479,6 +479,54 @@ export type Database = {
         }
         Relationships: []
       }
+      vtu_orders: {
+        Row: {
+          amount: number
+          api_response: Json | null
+          created_at: string
+          id: string
+          mobile_number: string
+          network: string
+          network_id: number
+          order_type: string
+          plan_id: number | null
+          plan_name: string | null
+          status: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          amount: number
+          api_response?: Json | null
+          created_at?: string
+          id?: string
+          mobile_number: string
+          network: string
+          network_id: number
+          order_type: string
+          plan_id?: number | null
+          plan_name?: string | null
+          status?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          amount?: number
+          api_response?: Json | null
+          created_at?: string
+          id?: string
+          mobile_number?: string
+          network?: string
+          network_id?: number
+          order_type?: string
+          plan_id?: number | null
+          plan_name?: string | null
+          status?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       wallet_transactions: {
         Row: {
           amount: number
