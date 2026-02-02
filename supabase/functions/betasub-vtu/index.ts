@@ -6,8 +6,16 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version',
 };
 
-const BETASUB_API_URL = "https://www.betasub.com.ng/api";
-const BETASUB_API_KEY = Deno.env.get("BETASUB_API_KEY");
+// NOTE: Use the non-www base URL to match BetaSub's documented endpoint.
+const BETASUB_API_URL = "https://betasub.com.ng/api";
+// Can be saved as either "Token <value>" or just "<value>".
+const BETASUB_API_KEY_RAW = Deno.env.get("BETASUB_API_KEY")?.trim();
+
+const getBetaSubAuthHeader = () => {
+  if (!BETASUB_API_KEY_RAW) return null;
+  const lower = BETASUB_API_KEY_RAW.toLowerCase();
+  return lower.startsWith("token ") ? BETASUB_API_KEY_RAW : `Token ${BETASUB_API_KEY_RAW}`;
+};
 
 // Network mapping
 const NETWORKS: Record<string, { id: number; name: string; color: string }> = {
@@ -131,7 +139,8 @@ serve(async (req) => {
 
     // Buy data
     if (action === "buyData") {
-      if (!BETASUB_API_KEY) {
+      const betasubAuth = getBetaSubAuthHeader();
+      if (!betasubAuth) {
         console.error("BETASUB_API_KEY not configured");
         return new Response(
           JSON.stringify({ error: "VTU service not configured" }),
@@ -143,16 +152,16 @@ serve(async (req) => {
       const plan = DATA_PLANS.find(p => p.id === planId);
       if (!plan) {
         return new Response(
-          JSON.stringify({ error: "Invalid plan selected" }),
-          { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+          JSON.stringify({ status: "error", error: "Invalid plan selected" }),
+          { headers: { ...corsHeaders, "Content-Type": "application/json" } }
         );
       }
 
       const networkInfo = NETWORKS[plan.network];
       if (!networkInfo) {
         return new Response(
-          JSON.stringify({ error: "Invalid network" }),
-          { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+          JSON.stringify({ status: "error", error: "Invalid network" }),
+          { headers: { ...corsHeaders, "Content-Type": "application/json" } }
         );
       }
 
@@ -174,8 +183,8 @@ serve(async (req) => {
       // Check if user has enough balance
       if (profile.wallet_balance < plan.price) {
         return new Response(
-          JSON.stringify({ error: "Insufficient wallet balance", requiredAmount: plan.price }),
-          { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+          JSON.stringify({ status: "error", error: "Insufficient wallet balance", requiredAmount: plan.price }),
+          { headers: { ...corsHeaders, "Content-Type": "application/json" } }
         );
       }
 
@@ -209,7 +218,7 @@ serve(async (req) => {
       const apiResponse = await fetch(`${BETASUB_API_URL}/data/`, {
         method: "POST",
         headers: {
-          "Authorization": `Token ${BETASUB_API_KEY}`,
+          "Authorization": betasubAuth,
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
@@ -271,7 +280,7 @@ serve(async (req) => {
             status: "error",
             error: apiResult.error || apiResult.msg || "Data purchase failed",
           }),
-          { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+          { headers: { ...corsHeaders, "Content-Type": "application/json" } }
         );
       }
     }
