@@ -10,7 +10,7 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { useToast } from '@/hooks/use-toast';
 import { useOrders, type Order } from '@/hooks/useOrders';
 import { useAuth } from '@/hooks/useAuth';
-import { useTransactions } from '@/hooks/useTransactions';
+import { supabase } from '@/integrations/supabase/client';
 import SocialIcon from '@/components/SocialIcon';
 import logoImage from '@/assets/logo.png';
 
@@ -18,9 +18,9 @@ const OrderDetails = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
-  const { orders, loading, markOrderAsCashedOut, refetch: refetchOrders } = useOrders();
-  const { profile } = useAuth();
-  const { createTransaction } = useTransactions();
+  const [cashingOut, setCashingOut] = useState<string | null>(null);
+  const { orders, loading, refetch: refetchOrders } = useOrders();
+  const { profile, user } = useAuth();
   const { toast } = useToast();
 
   const filteredOrders = orders.filter(order => {
@@ -56,7 +56,7 @@ const OrderDetails = () => {
   };
 
   const handleCashout = async (order: Order) => {
-    if (!profile) {
+    if (!profile || !user) {
       toast({
         title: "Authentication required",
         description: "Please log in to cashout your order.",
@@ -65,7 +65,7 @@ const OrderDetails = () => {
       return;
     }
 
-    // Check if already cashed out
+    // Check if already cashed out (client-side check for UI responsiveness)
     if (order.cashed_out) {
       toast({
         title: "Already cashed out",
@@ -75,21 +75,31 @@ const OrderDetails = () => {
       return;
     }
 
-    const cashoutAmount = order.total_amount * 0.8;
-    
+    setCashingOut(order.id);
+
     try {
-      // First mark the order as cashed out to prevent race conditions
-      await markOrderAsCashedOut(order.id);
-      
-      await createTransaction(
-        cashoutAmount,
-        'refund',
-        `Cashout from order #${order.id.slice(0, 8)} - ${order.order_items.length} items`
-      );
+      // Use secure server-side RPC function to prevent race conditions and double refunds
+      const { data, error } = await supabase.rpc('process_order_cashout', {
+        p_order_id: order.id,
+        p_user_id: user.id
+      });
+
+      if (error) throw error;
+
+      const result = data as { success: boolean; error?: string; refund_amount?: number; message?: string };
+
+      if (!result.success) {
+        toast({
+          title: "Cashout failed",
+          description: result.error || "Unable to process cashout",
+          variant: "destructive",
+        });
+        return;
+      }
 
       toast({
         title: "Cashout successful!",
-        description: `₦${cashoutAmount.toLocaleString('en-NG', { minimumFractionDigits: 2 })} has been added to your wallet balance.`,
+        description: `₦${(result.refund_amount || 0).toLocaleString('en-NG', { minimumFractionDigits: 2 })} has been added to your wallet balance.`,
       });
 
       // Refetch orders to update UI
@@ -97,21 +107,13 @@ const OrderDetails = () => {
 
     } catch (error) {
       console.error('Cashout error:', error);
-      const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
-      
-      if (errorMessage.includes('insufficient')) {
-        toast({
-          title: "Insufficient balance",
-          description: "You don't have sufficient balance for this cashout.",
-          variant: "destructive",
-        });
-      } else {
-        toast({
-          title: "Cashout failed",
-          description: "There was an error processing your cashout. Please try again.",
-          variant: "destructive",
-        });
-      }
+      toast({
+        title: "Cashout failed",
+        description: "There was an error processing your cashout. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setCashingOut(null);
     }
   };
 

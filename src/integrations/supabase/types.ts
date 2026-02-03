@@ -604,6 +604,15 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      admin_adjust_balance: {
+        Args: {
+          p_admin_user_id: string
+          p_amount: number
+          p_reason: string
+          p_target_user_id: string
+        }
+        Returns: Json
+      }
       create_order_from_cart: {
         Args: { p_cart_items: Json; p_total_amount: number; p_user_id: string }
         Returns: string
@@ -613,6 +622,10 @@ export type Database = {
         Returns: number
       }
       is_admin: { Args: never; Returns: boolean }
+      process_order_cashout: {
+        Args: { p_order_id: string; p_user_id: string }
+        Returns: Json
+      }
       process_referral_earning: {
         Args: {
           p_buyer_id: string
