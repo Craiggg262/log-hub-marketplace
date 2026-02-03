@@ -5,13 +5,14 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/hooks/use-toast';
-import { Shield, Plus, Users, Edit, Trash2, TrendingUp, Database, Eye, Settings, CheckCircle, XCircle, Clock, Banknote } from 'lucide-react';
+import { Shield, Plus, Users, Edit, Trash2, TrendingUp, Database, Eye, Settings, CheckCircle, XCircle, Clock, Banknote, Wallet } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { supabase } from '@/integrations/supabase/client';
+import AdminBalanceManagement from '@/components/AdminBalanceManagement';
 
 interface Profile {
   id: string;
@@ -712,10 +713,11 @@ const Admin = () => {
         </div>
 
         <Tabs defaultValue="logs" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-5">
+          <TabsList className="grid w-full grid-cols-6">
             <TabsTrigger value="logs">Logs</TabsTrigger>
             <TabsTrigger value="sub-accounts">Sub-Accounts</TabsTrigger>
             <TabsTrigger value="users">Users</TabsTrigger>
+            <TabsTrigger value="balances">Balances</TabsTrigger>
             <TabsTrigger value="withdrawals">Withdrawals</TabsTrigger>
             <TabsTrigger value="settings">Settings</TabsTrigger>
           </TabsList>
@@ -1056,6 +1058,10 @@ const Admin = () => {
                 </div>
               </CardContent>
             </Card>
+          </TabsContent>
+
+          <TabsContent value="balances">
+            <AdminBalanceManagement profiles={profiles} onRefresh={fetchData} />
           </TabsContent>
 
           <TabsContent value="settings">
