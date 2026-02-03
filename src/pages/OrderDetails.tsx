@@ -21,7 +21,7 @@ const OrderDetails = () => {
   const [statusFilter, setStatusFilter] = useState('all');
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
   const [activeTab, setActiveTab] = useState('dashboard');
-  const { orders, loading } = useOrders();
+  const { orders, loading, markOrderAsCashedOut, refetch: refetchOrders } = useOrders();
   const { orders: universalOrders, loading: universalLoading } = useUniversalLogsOrders();
   const { profile } = useAuth();
   const { createTransaction } = useTransactions();
@@ -69,9 +69,22 @@ const OrderDetails = () => {
       return;
     }
 
+    // Check if already cashed out
+    if (order.cashed_out) {
+      toast({
+        title: "Already cashed out",
+        description: "This order has already been cashed out.",
+        variant: "destructive",
+      });
+      return;
+    }
+
     const cashoutAmount = order.total_amount * 0.8;
     
     try {
+      // First mark the order as cashed out to prevent race conditions
+      await markOrderAsCashedOut(order.id);
+      
       await createTransaction(
         cashoutAmount,
         'refund',
@@ -82,6 +95,9 @@ const OrderDetails = () => {
         title: "Cashout successful!",
         description: `₦${cashoutAmount.toLocaleString('en-NG', { minimumFractionDigits: 2 })} has been added to your wallet balance.`,
       });
+
+      // Refetch orders to update UI
+      await refetchOrders();
 
     } catch (error) {
       console.error('Cashout error:', error);
@@ -470,9 +486,10 @@ const OrderDetails = () => {
                             size="sm"
                             variant="outline"
                             className="gap-2"
+                            disabled={order.cashed_out}
                           >
                             <Wallet className="h-4 w-4" />
-                            Cashout
+                            {order.cashed_out ? 'Cashed Out' : 'Cashout'}
                           </Button>
                         </div>
                       )}
