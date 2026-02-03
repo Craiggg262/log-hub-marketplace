@@ -8,6 +8,7 @@ export interface Order {
   total_amount: number;
   status: 'pending' | 'completed' | 'failed';
   created_at: string;
+  cashed_out: boolean;
   order_items: {
     id: string;
     log_id: string;
@@ -134,6 +135,21 @@ export function useOrders() {
     }
   };
 
+  const markOrderAsCashedOut = async (orderId: string) => {
+    try {
+      const { error } = await supabase
+        .from('orders')
+        .update({ cashed_out: true })
+        .eq('id', orderId);
+
+      if (error) throw error;
+      await fetchOrders();
+    } catch (err) {
+      console.error('Error marking order as cashed out:', err);
+      throw err;
+    }
+  };
+
   useEffect(() => {
     if (user) {
       fetchOrders();
@@ -147,6 +163,7 @@ export function useOrders() {
     loading,
     createOrderFromCart,
     updateOrderStatus,
+    markOrderAsCashedOut,
     refetch: fetchOrders,
   };
 }

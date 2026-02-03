@@ -238,6 +238,7 @@ export type Database = {
       }
       orders: {
         Row: {
+          cashed_out: boolean
           created_at: string
           id: string
           status: string
@@ -245,6 +246,7 @@ export type Database = {
           user_id: string
         }
         Insert: {
+          cashed_out?: boolean
           created_at?: string
           id?: string
           status?: string
@@ -252,6 +254,7 @@ export type Database = {
           user_id: string
         }
         Update: {
+          cashed_out?: boolean
           created_at?: string
           id?: string
           status?: string
