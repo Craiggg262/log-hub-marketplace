@@ -622,10 +622,9 @@ export type Database = {
         Returns: number
       }
       is_admin: { Args: never; Returns: boolean }
-      process_order_cashout: {
-        Args: { p_order_id: string; p_user_id: string }
-        Returns: Json
-      }
+      process_order_cashout:
+        | { Args: { p_order_id: string; p_user_id: string }; Returns: Json }
+        | { Args: { p_order_id: string; p_user_id: string }; Returns: Json }
       process_referral_earning: {
         Args: {
           p_buyer_id: string
