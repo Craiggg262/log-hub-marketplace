@@ -3,7 +3,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { ShoppingCart, Search, Download, Eye, Calendar, Copy, Lock, Wallet, Globe } from 'lucide-react';
+import { ShoppingCart, Search, Download, Eye, Calendar, Copy, Lock, Globe } from 'lucide-react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -11,20 +11,15 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useToast } from '@/hooks/use-toast';
 import { useOrders, type Order } from '@/hooks/useOrders';
 import { useUniversalLogsOrders, type UniversalLogsOrder } from '@/hooks/useUniversalLogsOrders';
-import { useAuth } from '@/hooks/useAuth';
-import { supabase } from '@/integrations/supabase/client';
 import SocialIcon from '@/components/SocialIcon';
 import logoImage from '@/assets/logo.png';
 
 const OrderDetails = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
-  const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
   const [activeTab, setActiveTab] = useState('dashboard');
-  const [cashingOut, setCashingOut] = useState<string | null>(null);
-  const { orders, loading, refetch: refetchOrders } = useOrders();
+  const { orders, loading } = useOrders();
   const { orders: universalOrders, loading: universalLoading } = useUniversalLogsOrders();
-  const { profile, user } = useAuth();
   const { toast } = useToast();
 
   const filteredOrders = orders.filter(order => {
@@ -57,68 +52,6 @@ const OrderDetails = () => {
       title: "Copied!",
       description: `${description} copied to clipboard`,
     });
-  };
-
-  const handleCashout = async (order: Order) => {
-    if (!profile || !user) {
-      toast({
-        title: "Authentication required",
-        description: "Please log in to cashout your order.",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    // Check if already cashed out (client-side check for UI responsiveness)
-    if (order.cashed_out) {
-      toast({
-        title: "Already cashed out",
-        description: "This order has already been cashed out.",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    setCashingOut(order.id);
-
-    try {
-      // Use secure server-side RPC function to prevent race conditions and double refunds
-      const { data, error } = await supabase.rpc('process_order_cashout', {
-        p_order_id: order.id,
-        p_user_id: user.id
-      });
-
-      if (error) throw error;
-
-      const result = data as { success: boolean; error?: string; refund_amount?: number; message?: string };
-
-      if (!result.success) {
-        toast({
-          title: "Cashout failed",
-          description: result.error || "Unable to process cashout",
-          variant: "destructive",
-        });
-        return;
-      }
-
-      toast({
-        title: "Cashout successful!",
-        description: `₦${(result.refund_amount || 0).toLocaleString('en-NG', { minimumFractionDigits: 2 })} has been added to your wallet balance.`,
-      });
-
-      // Refetch orders to update UI
-      await refetchOrders();
-
-    } catch (error) {
-      console.error('Cashout error:', error);
-      toast({
-        title: "Cashout failed",
-        description: "There was an error processing your cashout. Please try again.",
-        variant: "destructive",
-      });
-    } finally {
-      setCashingOut(null);
-    }
   };
 
   const handleDownloadOrder = (order: Order) => {
@@ -386,7 +319,6 @@ const OrderDetails = () => {
                           <Button 
                             variant="outline" 
                             size="sm"
-                            onClick={() => setSelectedOrder(order)}
                           >
                             <Eye className="h-4 w-4 mr-2" />
                             View
@@ -473,27 +405,14 @@ const OrderDetails = () => {
                       </Dialog>
                       
                       {order.status === 'completed' && (
-                        <div className="flex gap-2">
-                          <Button 
-                            onClick={() => handleDownloadOrder(order)}
-                            size="sm"
-                            className="gap-2"
-                          >
-                            <Download className="h-4 w-4" />
-                            Download
-                          </Button>
-                          
-                          <Button 
-                            onClick={() => handleCashout(order)}
-                            size="sm"
-                            variant="outline"
-                            className="gap-2"
-                            disabled={order.cashed_out}
-                          >
-                            <Wallet className="h-4 w-4" />
-                            {order.cashed_out ? 'Cashed Out' : 'Cashout'}
-                          </Button>
-                        </div>
+                        <Button 
+                          onClick={() => handleDownloadOrder(order)}
+                          size="sm"
+                          className="gap-2"
+                        >
+                          <Download className="h-4 w-4" />
+                          Download
+                        </Button>
                       )}
                     </div>
                   </div>

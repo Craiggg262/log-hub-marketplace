@@ -17,6 +17,11 @@ import {
 import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
+import {
+  FunctionsFetchError,
+  FunctionsHttpError,
+  FunctionsRelayError,
+} from "@supabase/supabase-js";
 
 interface DataPlan {
   id: number;
@@ -68,6 +73,26 @@ const BuyData = () => {
   const [loadingOrders, setLoadingOrders] = useState(false);
   const [activeTab, setActiveTab] = useState("purchase");
 
+  const getAuthHeaders = async () => {
+    const {
+      data: { session },
+    } = await supabase.auth.getSession();
+    if (!session?.access_token) throw new Error("Not authenticated");
+    return { Authorization: `Bearer ${session.access_token}` };
+  };
+
+  const unwrapFunctionError = async (err: unknown) => {
+    if (err instanceof FunctionsHttpError) {
+      const body = await err.context.json().catch(() => null);
+      const msg = body?.error || body?.message || JSON.stringify(body) || err.message;
+      return new Error(msg);
+    }
+    if (err instanceof FunctionsRelayError || err instanceof FunctionsFetchError) {
+      return new Error(err.message);
+    }
+    return err instanceof Error ? err : new Error("Request failed");
+  };
+
   // Fetch plans when network changes
   useEffect(() => {
     if (network) {
@@ -87,22 +112,22 @@ const BuyData = () => {
   const fetchPlans = async () => {
     setLoadingPlans(true);
     try {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session) return;
-
       const response = await supabase.functions.invoke("betasub-vtu", {
+        headers: await getAuthHeaders(),
         body: { action: "getPlans", network },
       });
 
-      if (response.error) throw response.error;
+      if (response.error) throw await unwrapFunctionError(response.error);
       if (response.data?.status === "success") {
         setPlans(response.data.data);
+      } else {
+        throw new Error(response.data?.error || "Failed to load plans");
       }
     } catch (error: any) {
       console.error("Failed to fetch plans:", error);
       toast({
         title: "Error",
-        description: "Failed to load data plans",
+        description: error?.message || "Failed to load data plans",
         variant: "destructive",
       });
     } finally {
@@ -113,16 +138,16 @@ const BuyData = () => {
   const fetchOrderHistory = async () => {
     setLoadingOrders(true);
     try {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session) return;
-
       const response = await supabase.functions.invoke("betasub-vtu", {
+        headers: await getAuthHeaders(),
         body: { action: "getOrderHistory" },
       });
 
-      if (response.error) throw response.error;
+      if (response.error) throw await unwrapFunctionError(response.error);
       if (response.data?.status === "success") {
         setOrders(response.data.data);
+      } else {
+        throw new Error(response.data?.error || "Failed to load history");
       }
     } catch (error: any) {
       console.error("Failed to fetch orders:", error);
@@ -168,10 +193,8 @@ const BuyData = () => {
     setLoading(true);
     
     try {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session) throw new Error("Not authenticated");
-
       const response = await supabase.functions.invoke("betasub-vtu", {
+        headers: await getAuthHeaders(),
         body: {
           action: "buyData",
           network,
@@ -180,7 +203,7 @@ const BuyData = () => {
         },
       });
 
-      if (response.error) throw response.error;
+      if (response.error) throw await unwrapFunctionError(response.error);
 
       if (response.data?.status === "success") {
         toast({
