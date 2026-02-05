@@ -58,6 +58,14 @@ Dark theme with blue/orange accents inspired by no1logsmarketplace.com
     --gradient-primary: linear-gradient(135deg, hsl(38, 92%, 50%), hsl(25, 95%, 53%));
     --gradient-hero: linear-gradient(135deg, hsl(220, 25%, 14%) 0%, hsl(220, 20%, 10%) 50%, hsl(25, 30%, 15%) 100%);
     --gradient-card: linear-gradient(180deg, hsl(220, 25%, 16%) 0%, hsl(220, 25%, 12%) 100%);
+     
+     /* Mobile Glass Design Tokens */
+     --glass-bg: 220 25% 14% / 0.6;
+     --glass-border: 220 20% 30% / 0.3;
+     --glass-blur: 20px;
+     --glass-glow: 38 92% 50% / 0.15;
+     --mobile-nav-height: 80px;
+     --safe-area-bottom: env(safe-area-inset-bottom, 0px);
   }
 
   .dark {
@@ -149,4 +157,125 @@ Dark theme with blue/orange accents inspired by no1logsmarketplace.com
   .glow-accent {
     box-shadow: 0 0 20px hsl(217 91% 60% / 0.3);
   }
+   
+   /* Glassmorphism Utilities */
+   .glass {
+     background: hsl(var(--glass-bg));
+     backdrop-filter: blur(var(--glass-blur));
+     -webkit-backdrop-filter: blur(var(--glass-blur));
+     border: 1px solid hsl(var(--glass-border));
+   }
+   
+   .glass-card {
+     background: hsl(220 25% 14% / 0.7);
+     backdrop-filter: blur(24px);
+     -webkit-backdrop-filter: blur(24px);
+     border: 1px solid hsl(220 20% 30% / 0.4);
+     box-shadow: 
+       0 8px 32px hsl(0 0% 0% / 0.3),
+       inset 0 1px 0 hsl(0 0% 100% / 0.05);
+   }
+   
+   .glass-nav {
+     background: hsl(220 25% 12% / 0.85);
+     backdrop-filter: blur(30px);
+     -webkit-backdrop-filter: blur(30px);
+     border-top: 1px solid hsl(220 20% 30% / 0.3);
+     box-shadow: 0 -4px 30px hsl(0 0% 0% / 0.3);
+   }
+   
+   .glass-header {
+     background: hsl(220 25% 12% / 0.8);
+     backdrop-filter: blur(30px);
+     -webkit-backdrop-filter: blur(30px);
+     border-bottom: 1px solid hsl(220 20% 30% / 0.2);
+   }
+   
+   .glass-button {
+     background: hsl(220 25% 20% / 0.6);
+     backdrop-filter: blur(10px);
+     -webkit-backdrop-filter: blur(10px);
+     border: 1px solid hsl(220 20% 30% / 0.4);
+     transition: all 0.3s ease;
+   }
+   
+   .glass-button:hover {
+     background: hsl(220 25% 25% / 0.7);
+     border-color: hsl(38 92% 50% / 0.3);
+   }
+   
+   .glass-button:active {
+     transform: scale(0.98);
+   }
+   
+   .glass-input {
+     background: hsl(220 25% 14% / 0.5);
+     backdrop-filter: blur(10px);
+     -webkit-backdrop-filter: blur(10px);
+     border: 1px solid hsl(220 20% 30% / 0.3);
+   }
+   
+   .glass-glow {
+     box-shadow: 
+       0 0 40px hsl(var(--glass-glow)),
+       inset 0 1px 0 hsl(0 0% 100% / 0.1);
+   }
+   
+   /* Silk Gradient Overlays */
+   .silk-gradient {
+     background: linear-gradient(
+       135deg,
+       hsl(220 25% 14% / 0.9) 0%,
+       hsl(220 20% 10% / 0.95) 50%,
+       hsl(38 30% 12% / 0.9) 100%
+     );
+   }
+   
+   .silk-shimmer {
+     position: relative;
+     overflow: hidden;
+   }
+   
+   .silk-shimmer::before {
+     content: '';
+     position: absolute;
+     top: 0;
+     left: -100%;
+     width: 100%;
+     height: 100%;
+     background: linear-gradient(
+       90deg,
+       transparent,
+       hsl(0 0% 100% / 0.05),
+       transparent
+     );
+     animation: silk-shine 3s ease-in-out infinite;
+   }
+   
+   @keyframes silk-shine {
+     0% { left: -100%; }
+     50%, 100% { left: 100%; }
+   }
+   
+   /* Mobile-specific utilities */
+   .mobile-safe-bottom {
+     padding-bottom: calc(var(--mobile-nav-height) + var(--safe-area-bottom) + 1rem);
+   }
+   
+   .mobile-nav-safe {
+     padding-bottom: var(--safe-area-bottom);
+   }
+   
+   /* Touch-friendly interactions */
+   .touch-highlight {
+     -webkit-tap-highlight-color: hsl(38 92% 50% / 0.2);
+   }
+   
+   .touch-scale {
+     transition: transform 0.15s ease;
+   }
+   
+   .touch-scale:active {
+     transform: scale(0.96);
+   }
 }

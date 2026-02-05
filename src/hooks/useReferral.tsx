@@ -1,4 +1,46 @@
 import { supabase } from '@/integrations/supabase/client';
+ import { useQuery } from '@tanstack/react-query';
+ import { useAuth } from '@/hooks/useAuth';
+ 
+ export const useReferral = () => {
+   const { user } = useAuth();
+ 
+   const { data: referrals = [], isLoading: referralsLoading } = useQuery({
+     queryKey: ['referrals', user?.id],
+     queryFn: async () => {
+       if (!user?.id) return [];
+       const { data, error } = await supabase
+         .from('referrals')
+         .select('*')
+         .eq('referrer_id', user.id)
+         .order('created_at', { ascending: false });
+       if (error) throw error;
+       return data || [];
+     },
+     enabled: !!user?.id,
+   });
+ 
+   const { data: earnings = [], isLoading: earningsLoading } = useQuery({
+     queryKey: ['referral_earnings', user?.id],
+     queryFn: async () => {
+       if (!user?.id) return [];
+       const { data, error } = await supabase
+         .from('referral_earnings')
+         .select('*')
+         .eq('referrer_id', user.id)
+         .order('created_at', { ascending: false });
+       if (error) throw error;
+       return data || [];
+     },
+     enabled: !!user?.id,
+   });
+ 
+   return {
+     referrals,
+     earnings,
+     loading: referralsLoading || earningsLoading,
+   };
+ };
 
 export const processReferralOnSignup = async (referralCode: string, newUserId: string) => {
   if (!referralCode || !newUserId) return;

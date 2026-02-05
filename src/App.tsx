@@ -26,6 +26,15 @@ import AISupport from "./components/AISupport";
 import UniversalLogs from "./pages/UniversalLogs";
 import ReferralEarn from "./pages/ReferralEarn";
 import SmsVerification from "./pages/SmsVerification";
+ 
+ // Mobile App Pages
+ import MobileHome from "./pages/mobile/MobileHome";
+ import MobileServices from "./pages/mobile/MobileServices";
+ import MobileWallet from "./pages/mobile/MobileWallet";
+ import MobileOrders from "./pages/mobile/MobileOrders";
+ import MobileProfile from "./pages/mobile/MobileProfile";
+ import MobileLogs from "./pages/mobile/MobileLogs";
+ import MobileReferrals from "./pages/mobile/MobileReferrals";
 
 const queryClient = new QueryClient();
 
@@ -65,6 +74,24 @@ function AppContent() {
     
     return user ? <Navigate to="/dashboard" replace /> : <>{children}</>;
   };
+ 
+   // Mobile Protected Route Component
+   const MobileProtectedRoute = ({ children }: { children: React.ReactNode }) => {
+     const { user, loading } = useAuth();
+     
+     if (loading) {
+       return (
+         <div className="min-h-screen flex items-center justify-center bg-background silk-gradient">
+           <div className="text-center space-y-4">
+             <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto"></div>
+             <p className="text-muted-foreground">Loading...</p>
+           </div>
+         </div>
+       );
+     }
+     
+     return user ? <>{children}</> : <Navigate to="/login" replace />;
+   };
 
   return (
     <BrowserRouter>
@@ -91,6 +118,23 @@ function AppContent() {
         <Route path="/cart" element={<ProtectedRoute><Cart /></ProtectedRoute>} />
         <Route path="/referral-earn" element={<ProtectedRoute><ReferralEarn /></ProtectedRoute>} />
         
+         {/* Mobile App Routes */}
+         <Route path="/app" element={<MobileProtectedRoute><MobileHome /></MobileProtectedRoute>} />
+         <Route path="/app/services" element={<MobileProtectedRoute><MobileServices /></MobileProtectedRoute>} />
+         <Route path="/app/services/airtime" element={<MobileProtectedRoute><BuyAirtime /></MobileProtectedRoute>} />
+         <Route path="/app/services/data" element={<MobileProtectedRoute><BuyData /></MobileProtectedRoute>} />
+         <Route path="/app/services/electricity" element={<MobileProtectedRoute><PayElectricity /></MobileProtectedRoute>} />
+         <Route path="/app/services/cable" element={<MobileProtectedRoute><CableTV /></MobileProtectedRoute>} />
+         <Route path="/app/wallet" element={<MobileProtectedRoute><MobileWallet /></MobileProtectedRoute>} />
+         <Route path="/app/wallet/fund" element={<MobileProtectedRoute><FundWallet /></MobileProtectedRoute>} />
+         <Route path="/app/orders" element={<MobileProtectedRoute><MobileOrders /></MobileProtectedRoute>} />
+         <Route path="/app/profile" element={<MobileProtectedRoute><MobileProfile /></MobileProtectedRoute>} />
+         <Route path="/app/logs" element={<MobileProtectedRoute><MobileLogs /></MobileProtectedRoute>} />
+         <Route path="/app/referrals" element={<MobileProtectedRoute><MobileReferrals /></MobileProtectedRoute>} />
+         <Route path="/app/sms" element={<MobileProtectedRoute><SmsVerification /></MobileProtectedRoute>} />
+         <Route path="/app/history" element={<MobileProtectedRoute><History /></MobileProtectedRoute>} />
+         <Route path="/app/settings" element={<MobileProtectedRoute><Settings /></MobileProtectedRoute>} />
+         
         {/* Admin Route - Completely separate, no layout */}
         <Route path="/admin" element={<Admin />} />
         
