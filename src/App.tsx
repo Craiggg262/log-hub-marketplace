@@ -35,6 +35,7 @@ import SmsVerification from "./pages/SmsVerification";
  import MobileProfile from "./pages/mobile/MobileProfile";
  import MobileLogs from "./pages/mobile/MobileLogs";
  import MobileReferrals from "./pages/mobile/MobileReferrals";
+ import MobileInstall from "./pages/mobile/MobileInstall";
 
 const queryClient = new QueryClient();
 
@@ -119,6 +120,7 @@ function AppContent() {
         <Route path="/referral-earn" element={<ProtectedRoute><ReferralEarn /></ProtectedRoute>} />
         
          {/* Mobile App Routes */}
+         <Route path="/install" element={<MobileInstall />} />
          <Route path="/app" element={<MobileProtectedRoute><MobileHome /></MobileProtectedRoute>} />
          <Route path="/app/services" element={<MobileProtectedRoute><MobileServices /></MobileProtectedRoute>} />
          <Route path="/app/services/airtime" element={<MobileProtectedRoute><BuyAirtime /></MobileProtectedRoute>} />

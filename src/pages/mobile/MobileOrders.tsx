@@ -1,7 +1,8 @@
- import React from 'react';
+ import React, { useCallback } from 'react';
  import { useNavigate } from 'react-router-dom';
  import { MobileLayout } from '@/components/mobile/MobileLayout';
  import { GlassCard } from '@/components/mobile/GlassCard';
+ import { PullToRefresh } from '@/components/mobile/PullToRefresh';
  import { Badge } from '@/components/ui/badge';
  import { 
    ShoppingBag, ChevronRight, Package, Clock, 
@@ -50,9 +51,14 @@
      }
    };
  
-   return (
-     <MobileLayout title="Orders">
-       <div className="p-4 space-y-4">
+  const handleRefresh = useCallback(async () => {
+    window.location.reload();
+  }, []);
+
+  return (
+    <MobileLayout title="Orders">
+      <PullToRefresh onRefresh={handleRefresh}>
+        <div className="p-4 space-y-4">
          {/* Header */}
          <div className="mb-2">
            <h2 className="text-lg font-bold">Order History</h2>
@@ -123,8 +129,9 @@
              })}
            </div>
          )}
-       </div>
-     </MobileLayout>
+        </div>
+      </PullToRefresh>
+    </MobileLayout>
    );
  };
  

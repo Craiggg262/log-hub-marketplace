@@ -20,11 +20,11 @@ export default defineConfig(({ mode }) => ({
         name: 'Log Hub Marketplace',
         short_name: 'Log Hub',
         description: 'Your trusted marketplace for premium social media accounts',
-        theme_color: '#1E40AF',
-        background_color: '#ffffff',
+        theme_color: '#151922',
+        background_color: '#151922',
         display: 'standalone',
         orientation: 'portrait',
-        start_url: '/',
+        start_url: '/app',
         icons: [
           {
             src: '/icon-192.png',
