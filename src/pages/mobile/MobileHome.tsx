@@ -1,19 +1,20 @@
- import React, { useState } from 'react';
- import { useNavigate } from 'react-router-dom';
- import { MobileLayout } from '@/components/mobile/MobileLayout';
- import { GlassCard } from '@/components/mobile/GlassCard';
- import { QuickActionGrid } from '@/components/mobile/QuickActionGrid';
- import { 
-   Wallet, ShoppingCart, Star, Copy, Check, 
-   CreditCard, Gift, ChevronRight, TrendingUp
- } from 'lucide-react';
- import { Button } from '@/components/ui/button';
- import { Badge } from '@/components/ui/badge';
- import { useAuth } from '@/hooks/useAuth';
- import { useLogs } from '@/hooks/useLogs';
- import { useCart } from '@/hooks/useCart';
- import { useToast } from '@/hooks/use-toast';
- import SocialIcon from '@/components/SocialIcon';
+import React, { useState, useCallback } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { MobileLayout } from '@/components/mobile/MobileLayout';
+import { GlassCard } from '@/components/mobile/GlassCard';
+import { PullToRefresh } from '@/components/mobile/PullToRefresh';
+import { QuickActionGrid } from '@/components/mobile/QuickActionGrid';
+import { 
+  Wallet, ShoppingCart, Star, Copy, Check, 
+  CreditCard, Gift, ChevronRight, TrendingUp
+} from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
+import { useAuth } from '@/hooks/useAuth';
+import { useLogs } from '@/hooks/useLogs';
+import { useCart } from '@/hooks/useCart';
+import { useToast } from '@/hooks/use-toast';
+import SocialIcon from '@/components/SocialIcon';
  
  const MobileHome = () => {
    const navigate = useNavigate();
@@ -34,11 +35,16 @@
      }
    };
  
-   const featuredLogs = logs.filter(log => log.in_stock).slice(0, 6);
- 
-   return (
-     <MobileLayout title="Dashboard">
-       <div className="space-y-6">
+  const featuredLogs = logs.filter(log => log.in_stock).slice(0, 6);
+
+  const handleRefresh = useCallback(async () => {
+    window.location.reload();
+  }, []);
+
+  return (
+    <MobileLayout title="Dashboard">
+      <PullToRefresh onRefresh={handleRefresh}>
+        <div className="space-y-6">
          {/* Balance Card */}
          <div className="px-4 pt-4">
            <GlassCard variant="elevated" glow className="silk-shimmer">
@@ -184,8 +190,9 @@
              </GlassCard>
            </div>
          )}
-       </div>
-     </MobileLayout>
+        </div>
+      </PullToRefresh>
+    </MobileLayout>
    );
  };
  

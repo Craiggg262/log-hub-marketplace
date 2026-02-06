@@ -1,7 +1,8 @@
- import React, { useState } from 'react';
+ import React, { useState, useCallback } from 'react';
  import { useNavigate } from 'react-router-dom';
  import { MobileLayout } from '@/components/mobile/MobileLayout';
  import { GlassCard } from '@/components/mobile/GlassCard';
+ import { PullToRefresh } from '@/components/mobile/PullToRefresh';
  import { Button } from '@/components/ui/button';
  import { Badge } from '@/components/ui/badge';
  import { 
@@ -32,11 +33,16 @@
      }
    };
  
-   const recentTransactions = transactions.slice(0, 5);
- 
-   return (
-     <MobileLayout title="Wallet">
-       <div className="p-4 space-y-6">
+  const recentTransactions = transactions.slice(0, 5);
+
+  const handleRefresh = useCallback(async () => {
+    window.location.reload();
+  }, []);
+
+  return (
+    <MobileLayout title="Wallet">
+      <PullToRefresh onRefresh={handleRefresh}>
+        <div className="p-4 space-y-6">
          {/* Balance Card */}
          <GlassCard variant="elevated" glow className="silk-shimmer">
            <div className="p-6 text-center">
@@ -166,8 +172,9 @@
              </div>
            )}
          </div>
-       </div>
-     </MobileLayout>
+        </div>
+      </PullToRefresh>
+    </MobileLayout>
    );
  };
  
