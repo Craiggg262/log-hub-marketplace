@@ -1,7 +1,7 @@
  import React, { useEffect } from 'react';
  import { useLocation, useNavigate } from 'react-router-dom';
- import { Home, Grid3X3, Wallet, ShoppingBag, User } from 'lucide-react';
- import { useAuth } from '@/hooks/useAuth';
+import { Home, Grid3X3, Wallet, ShoppingBag, User, ArrowLeft } from 'lucide-react';
+import { useAuth } from '@/hooks/useAuth';
  import logoImage from '@/assets/logo.png';
  import { cn } from '@/lib/utils';
  
@@ -45,10 +45,12 @@
      initCapacitor();
    }, []);
  
-   const isActive = (path: string) => {
-     if (path === '/app') return location.pathname === '/app';
-     return location.pathname.startsWith(path);
-   };
+    const isActive = (path: string) => {
+      if (path === '/app') return location.pathname === '/app';
+      return location.pathname.startsWith(path);
+    };
+
+    const showBackButton = location.pathname !== '/app' && location.key !== 'default';
  
    return (
      <div className="min-h-screen flex flex-col bg-background silk-gradient">
@@ -62,8 +64,16 @@
        {showHeader && (
          <header className="glass-header sticky top-0 z-40 px-4 py-3 safe-area-top">
            <div className="flex items-center justify-between">
-             <div className="flex items-center gap-3">
-               <img src={logoImage} alt="Log Hub" className="h-9 w-9 rounded-xl" />
+              <div className="flex items-center gap-2">
+                {showBackButton && (
+                  <button 
+                    onClick={() => navigate(-1)} 
+                    className="glass-button w-9 h-9 rounded-xl flex items-center justify-center"
+                  >
+                    <ArrowLeft className="h-5 w-5 text-foreground" />
+                  </button>
+                )}
+                <img src={logoImage} alt="Log Hub" className="h-9 w-9 rounded-xl" />
                <div>
                  <h1 className="text-lg font-bold text-gradient">
                    {title || 'Log Hub'}
