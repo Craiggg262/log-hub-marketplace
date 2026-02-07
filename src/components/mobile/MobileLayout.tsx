@@ -1,7 +1,8 @@
  import React, { useEffect } from 'react';
  import { useLocation, useNavigate } from 'react-router-dom';
-import { Home, Grid3X3, Wallet, ShoppingBag, User, ArrowLeft } from 'lucide-react';
+import { Home, Grid3X3, Wallet, ShoppingBag, User, ArrowLeft, ShoppingCart } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
+import { useCart } from '@/hooks/useCart';
  import logoImage from '@/assets/logo.png';
  import { cn } from '@/lib/utils';
  
@@ -26,8 +27,9 @@ import { useAuth } from '@/hooks/useAuth';
  }) => {
    const location = useLocation();
    const navigate = useNavigate();
-   const { profile } = useAuth();
- 
+    const { profile } = useAuth();
+    const { cartItems } = useCart();
+    const cartCount = cartItems.reduce((sum, item) => sum + item.quantity, 0);
    // Initialize Capacitor plugins
    useEffect(() => {
      const initCapacitor = async () => {
@@ -85,12 +87,25 @@ import { useAuth } from '@/hooks/useAuth';
                  )}
                </div>
              </div>
-             
-             <div className="glass-button px-3 py-1.5 rounded-full">
-               <span className="text-sm font-semibold text-primary">
-                 ₦{(profile?.wallet_balance || 0).toLocaleString()}
-               </span>
-             </div>
+              
+              <div className="flex items-center gap-2">
+                <button 
+                  onClick={() => navigate('/app/cart')}
+                  className="glass-button w-9 h-9 rounded-xl flex items-center justify-center relative"
+                >
+                  <ShoppingCart className="h-5 w-5 text-foreground" />
+                  {cartCount > 0 && (
+                    <span className="absolute -top-1 -right-1 w-5 h-5 rounded-full bg-primary text-primary-foreground text-[10px] font-bold flex items-center justify-center">
+                      {cartCount > 9 ? '9+' : cartCount}
+                    </span>
+                  )}
+                </button>
+                <div className="glass-button px-3 py-1.5 rounded-full">
+                  <span className="text-sm font-semibold text-primary">
+                    ₦{(profile?.wallet_balance || 0).toLocaleString()}
+                  </span>
+                </div>
+              </div>
            </div>
          </header>
        )}
