@@ -95,11 +95,11 @@ import SocialIcon from '@/components/SocialIcon';
  
                {/* Stats Row */}
                <div className="grid grid-cols-2 gap-3 mt-4">
-                 <div className="glass-button rounded-xl p-3 text-center">
-                   <ShoppingCart className="h-5 w-5 mx-auto mb-1 text-accent" />
-                   <p className="text-lg font-bold">{getTotalItems()}</p>
-                   <p className="text-[10px] text-muted-foreground">Cart Items</p>
-                 </div>
+                  <div className="glass-button rounded-xl p-3 text-center cursor-pointer" onClick={() => navigate('/app/cart')}>
+                    <ShoppingCart className="h-5 w-5 mx-auto mb-1 text-accent" />
+                    <p className="text-lg font-bold">{getTotalItems()}</p>
+                    <p className="text-[10px] text-muted-foreground">Cart Items</p>
+                  </div>
                  <div className="glass-button rounded-xl p-3 text-center">
                    <TrendingUp className="h-5 w-5 mx-auto mb-1 text-success" />
                    <p className="text-lg font-bold">{formatPrice(profile?.total_referral_earnings || 0)}</p>

@@ -162,6 +162,8 @@ function AppContent() {
         <Route path="/app/wallet" element={<MobileProtectedRoute><MobileWallet /></MobileProtectedRoute>} />
         <Route path="/app/wallet/fund" element={<MobileProtectedRoute><FundWallet /></MobileProtectedRoute>} />
         <Route path="/app/orders" element={<MobileProtectedRoute><MobileOrders /></MobileProtectedRoute>} />
+        <Route path="/app/order/:orderId" element={<MobileProtectedRoute><OrderDetails /></MobileProtectedRoute>} />
+        <Route path="/app/cart" element={<MobileProtectedRoute><Cart /></MobileProtectedRoute>} />
         <Route path="/app/profile" element={<MobileProtectedRoute><MobileProfile /></MobileProtectedRoute>} />
         <Route path="/app/logs" element={<MobileProtectedRoute><MobileLogs /></MobileProtectedRoute>} />
         <Route path="/app/referrals" element={<MobileProtectedRoute><MobileReferrals /></MobileProtectedRoute>} />
