@@ -97,7 +97,8 @@ const Cart = () => {
         });
 
         // Redirect to orders page
-        window.location.href = '/orders';
+        const isMobile = window.location.pathname.startsWith('/app');
+        window.location.href = isMobile ? '/app/orders' : '/orders';
         
       } catch (error) {
         console.error('Checkout error:', error);
@@ -117,7 +118,8 @@ const Cart = () => {
       });
       
       // Redirect to fund wallet page
-      window.location.href = '/fund-wallet';
+      const isMobile = window.location.pathname.startsWith('/app');
+      window.location.href = isMobile ? '/app/wallet/fund' : '/fund-wallet';
     }
   };
 
@@ -148,7 +150,7 @@ const Cart = () => {
             <ShoppingCart className="h-16 w-16 text-muted-foreground mx-auto mb-4" />
             <h3 className="text-xl font-semibold mb-2">Your cart is empty</h3>
             <p className="text-muted-foreground mb-4">Start shopping to add items to your cart.</p>
-            <Button onClick={() => window.location.href = '/dashboard'}>
+            <Button onClick={() => window.location.href = window.location.pathname.startsWith('/app') ? '/app/logs' : '/dashboard'}>
               Browse Logs
             </Button>
           </CardContent>
