@@ -33,7 +33,7 @@
      { icon: Gift, label: 'Referral & Earn', path: '/app/referrals' },
      { icon: Settings, label: 'Settings', path: '/app/settings' },
      { icon: Shield, label: 'Privacy Policy', path: '/app/privacy' },
-     { icon: HelpCircle, label: 'Help & Support', path: '/app/support' },
+     { icon: HelpCircle, label: 'Help & Support', action: () => window.open('https://wa.me/+12252801497', '_blank'), external: true },
      { 
        icon: ExternalLink, 
        label: 'Boost Account', 

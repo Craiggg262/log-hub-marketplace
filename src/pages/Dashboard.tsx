@@ -133,7 +133,7 @@ const Dashboard = () => {
 
   return (
     <div className="space-y-6 relative">
-      {/* Floating WhatsApp Button */}
+      {/* WhatsApp Group Link */}
       <Button
         onClick={() => window.open('https://chat.whatsapp.com/LltaVAyG0BvJp5t9gmlqz7?mode=ems_copy_h_t', '_blank')}
         className="fixed bottom-20 right-4 md:right-6 z-50 h-14 w-14 rounded-full shadow-lg bg-green-600 hover:bg-green-700 p-0"
