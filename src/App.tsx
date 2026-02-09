@@ -22,7 +22,7 @@ import Admin from "./pages/Admin";
 import Layout from "./components/Layout";
 import NotFound from "./pages/NotFound";
 import Cart from "./pages/Cart";
-import AISupport from "./components/AISupport";
+
 import UniversalLogs from "./pages/UniversalLogs";
 import ReferralEarn from "./pages/ReferralEarn";
 import SmsVerification from "./pages/SmsVerification";
@@ -177,7 +177,7 @@ function AppContent() {
         {/* 404 Route */}
         <Route path="*" element={<NotFound />} />
       </Routes>
-      <AISupport />
+      
     </BrowserRouter>
   );
 }

@@ -49,7 +49,7 @@ const menuItems = [
   { title: "Referral Earn", url: "/referral-earn", icon: Gift },
   { title: "Transactions", url: "/history", icon: CreditCard },
   { title: "Settings", url: "/settings", icon: Settings },
-  { title: "Support", url: "mailto:info.loghubmarketplace@gmail.com", icon: MessageCircle, external: true },
+  { title: "Support", url: "https://wa.me/+12252801497", icon: MessageCircle, external: true },
   { title: "Boost Account", url: "https://boosterhub.name.ng", icon: ExternalLink, external: true },
 ];
 
