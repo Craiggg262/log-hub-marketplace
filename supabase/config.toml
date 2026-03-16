@@ -43,3 +43,6 @@ verify_jwt = false
 
 [functions.betasub-vtu]
 verify_jwt = false
+
+[functions.loggsplug-api]
+verify_jwt = false
