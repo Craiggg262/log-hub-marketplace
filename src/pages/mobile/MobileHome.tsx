@@ -12,7 +12,7 @@ import { Button } from '@/components/ui/button';
 import { useAuth } from '@/hooks/useAuth';
 import { useToast } from '@/hooks/use-toast';
 import ServerToggle from '@/components/ServerToggle';
-import SocialIcon from '@/components/SocialIcon';
+
  
  const MobileHome = () => {
    const navigate = useNavigate();
