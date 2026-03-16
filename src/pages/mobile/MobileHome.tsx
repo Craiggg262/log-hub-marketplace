@@ -9,7 +9,6 @@ import {
   CreditCard, Gift, ChevronRight, TrendingUp
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
 import { useAuth } from '@/hooks/useAuth';
 import { useToast } from '@/hooks/use-toast';
 import ServerToggle from '@/components/ServerToggle';
