@@ -5,7 +5,7 @@ import { GlassCard } from '@/components/mobile/GlassCard';
 import { PullToRefresh } from '@/components/mobile/PullToRefresh';
 import { QuickActionGrid } from '@/components/mobile/QuickActionGrid';
 import { 
-  Wallet, ShoppingCart, Star, Copy, Check, 
+  Wallet, ShoppingCart, Copy, Check, 
   CreditCard, Gift, ChevronRight, TrendingUp
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
