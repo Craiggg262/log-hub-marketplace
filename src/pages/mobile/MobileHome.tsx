@@ -32,11 +32,9 @@ import SocialIcon from '@/components/SocialIcon';
      }
    };
  
-  const featuredLogs = logs.filter(log => log.in_stock).slice(0, 6);
-
-  const handleRefresh = useCallback(async () => {
-    window.location.reload();
-  }, []);
+   const handleRefresh = useCallback(async () => {
+     window.location.reload();
+   }, []);
 
   return (
     <MobileLayout title="Dashboard">
