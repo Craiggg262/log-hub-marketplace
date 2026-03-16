@@ -11,16 +11,13 @@ import {
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { useAuth } from '@/hooks/useAuth';
-import { useLogs } from '@/hooks/useLogs';
-import { useCart } from '@/hooks/useCart';
 import { useToast } from '@/hooks/use-toast';
+import ServerToggle from '@/components/ServerToggle';
 import SocialIcon from '@/components/SocialIcon';
  
  const MobileHome = () => {
    const navigate = useNavigate();
    const { profile } = useAuth();
-   const { logs, loading } = useLogs();
-   const { addToCart, getTotalItems } = useCart();
    const { toast } = useToast();
    const [accountCopied, setAccountCopied] = useState(false);
  
