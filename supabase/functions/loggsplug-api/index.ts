@@ -7,7 +7,7 @@ const corsHeaders = {
 };
 
 const API_BASE_URL = 'https://loggsplug.online/api/reseller';
-const PRICE_MULTIPLIER = 3; // markup multiplier for reseller prices
+const PRICE_MULTIPLIER = 1.5; // 50% markup on reseller prices
 
 serve(async (req) => {
   if (req.method === 'OPTIONS') {

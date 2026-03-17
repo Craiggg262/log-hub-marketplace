@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -6,7 +6,6 @@ import { Minus, Plus, ShoppingCart, Loader2 } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
-import { useServerSelection } from '@/hooks/useServerSelection';
 import SocialIcon from '@/components/SocialIcon';
 
 interface BuyProductModalProps {
@@ -54,14 +53,13 @@ const BuyProductModal: React.FC<BuyProductModalProps> = ({
     setOrdering(true);
     try {
       if (server === 'king') {
-        // Loggsplug order
+        // Loggsplug API order
         const { data, error } = await supabase.functions.invoke('loggsplug-api', {
           body: { action: 'place_order', productId: product.id, qty: quantity },
         });
         if (error) throw error;
         if (!data?.success) throw new Error(data?.message || 'Order failed');
 
-        // Save to universal_logs_orders
         const { data: insertedOrder, error: orderErr } = await supabase
           .from('universal_logs_orders')
           .insert({
@@ -80,7 +78,6 @@ const BuyProductModal: React.FC<BuyProductModalProps> = ({
 
         if (orderErr) throw orderErr;
 
-        // Deduct wallet
         await supabase.from('wallet_transactions').insert({
           user_id: user.id,
           amount: -total,
@@ -89,7 +86,6 @@ const BuyProductModal: React.FC<BuyProductModalProps> = ({
         });
         await supabase.from('profiles').update({ wallet_balance: walletBalance - total }).eq('user_id', user.id);
 
-        // Process referral
         try {
           const { processReferralEarning } = await import('@/hooks/useReferral');
           await processReferralEarning(user.id, total, undefined, insertedOrder?.id);
@@ -97,71 +93,32 @@ const BuyProductModal: React.FC<BuyProductModalProps> = ({
 
         toast({ title: 'Order Placed!', description: `${product.name} x${quantity} purchased successfully.` });
       } else {
-        // Lite server (no1logs) — use existing ProductDetailsModal flow
-        // For lite server, we need to get product details first to get account IDs
-        const { data: detailsData, error: detErr } = await supabase.functions.invoke('no1logs-api', {
-          body: { action: 'get_product_details', productId: product.id },
-        });
-        if (detErr) throw detErr;
-
-        const accounts = detailsData?.accounts || [];
+        // Lite server — admin-uploaded logs from database
+        const cartItems = [{ log_id: product.id, quantity, price: unitPrice }];
         
-        // Try related products if no accounts
-        let accountIds: number[] = accounts.slice(0, quantity).map((a: any) => a.id);
-        
-        if (accountIds.length === 0 && detailsData?.related_product?.length > 0) {
-          const preferred = detailsData.related_product.find((v: any) => Number(v.in_stock) > 0) || detailsData.related_product[0];
-          if (preferred?.id) {
-            const { data: relData } = await supabase.functions.invoke('no1logs-api', {
-              body: { action: 'get_product_details', productId: preferred.id },
-            });
-            accountIds = (relData?.accounts || []).slice(0, quantity).map((a: any) => a.id);
-          }
-        }
-
-        if (accountIds.length === 0) {
-          throw new Error('No accounts available for this product right now.');
-        }
-
-        const { data: orderData, error: orderErr } = await supabase.functions.invoke('no1logs-api', {
-          body: { action: 'place_order', productDetailsIds: accountIds.join(',') },
+        const { data: orderId, error: orderErr } = await supabase.rpc('create_order_from_cart', {
+          p_user_id: user.id,
+          p_total_amount: total,
+          p_cart_items: cartItems,
         });
+
         if (orderErr) throw orderErr;
-        if (orderData?.error) throw new Error(orderData.error);
 
-        const apiOrderId = orderData?.order?.id ?? orderData?.order_id ?? orderData?.id ?? null;
-
-        const { data: insertedOrder, error: insertErr } = await supabase
-          .from('universal_logs_orders')
-          .insert({
-            user_id: user.id,
-            api_order_id: apiOrderId != null ? String(apiOrderId) : null,
-            product_id: Number(product.id),
-            product_name: product.name,
-            quantity: accountIds.length,
-            price_per_unit: unitPrice,
-            total_amount: total,
-            status: 'completed',
-            order_response: orderData?.order ?? orderData,
-          })
-          .select()
-          .single();
-        if (insertErr) throw insertErr;
-
+        // Deduct wallet
         await supabase.from('wallet_transactions').insert({
           user_id: user.id,
           amount: -total,
           transaction_type: 'purchase',
-          description: `Lite Server: ${product.name} x${accountIds.length}`,
+          description: `Lite Server: ${product.name} x${quantity}`,
         });
         await supabase.from('profiles').update({ wallet_balance: walletBalance - total }).eq('user_id', user.id);
 
         try {
           const { processReferralEarning } = await import('@/hooks/useReferral');
-          await processReferralEarning(user.id, total, undefined, insertedOrder?.id);
+          await processReferralEarning(user.id, total, orderId);
         } catch {}
 
-        toast({ title: 'Order Placed!', description: `${product.name} x${accountIds.length} purchased successfully.` });
+        toast({ title: 'Order Placed!', description: `${product.name} x${quantity} purchased successfully.` });
       }
 
       onOpenChange(false);
@@ -189,7 +146,6 @@ const BuyProductModal: React.FC<BuyProductModalProps> = ({
         </DialogHeader>
 
         <div className="space-y-4">
-          {/* Price & Stock */}
           <div className="flex items-center justify-center gap-3">
             <Badge variant="secondary" className="text-sm px-3 py-1">
               {formatPrice(unitPrice)} / pcs
@@ -201,7 +157,6 @@ const BuyProductModal: React.FC<BuyProductModalProps> = ({
 
           <div className="border-t border-border/50" />
 
-          {/* Description */}
           <div>
             <p className="text-xs text-muted-foreground uppercase font-semibold mb-1">Description</p>
             <p className="text-sm text-foreground">{product.name}</p>
@@ -209,7 +164,6 @@ const BuyProductModal: React.FC<BuyProductModalProps> = ({
 
           <div className="border-t border-border/50" />
 
-          {/* Quantity & Total */}
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm text-muted-foreground mb-2">Quantity</p>
@@ -243,7 +197,6 @@ const BuyProductModal: React.FC<BuyProductModalProps> = ({
 
           <div className="border-t border-border/50" />
 
-          {/* Balance */}
           <div className="flex items-center justify-between">
             <span className="text-sm text-muted-foreground">Your Balance:</span>
             <span className={`font-bold ${walletBalance >= total ? 'text-success' : 'text-destructive'}`}>
@@ -251,7 +204,6 @@ const BuyProductModal: React.FC<BuyProductModalProps> = ({
             </span>
           </div>
 
-          {/* Buy Button */}
           <Button
             onClick={handleBuy}
             disabled={ordering || !user || walletBalance < total || product.inStock === 0}
