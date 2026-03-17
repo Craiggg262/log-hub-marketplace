@@ -103,33 +103,27 @@ const OrderDetails = () => {
   };
 
   const handleDownloadUniversalOrder = (order: UniversalLogsOrder) => {
-    let content = `UNIVERSAL LOGS ORDER DETAILS\n`;
+    let content = `ORDER DETAILS\n`;
     content += `================================\n`;
-    content += `Order ID (Local): ${order.id}\n`;
-    if (order.api_order_id) {
-      content += `Order ID (NO1LOGS): ${order.api_order_id}\n`;
-    }
+    content += `Order ID: ${order.id}\n`;
     content += `Date: ${new Date(order.created_at).toLocaleDateString()}\n`;
     content += `Status: ${order.status}\n`;
     content += `Product: ${order.product_name}\n`;
     content += `Quantity: ${order.quantity}\n`;
-    content += `Price per unit: ₦${order.price_per_unit.toLocaleString('en-NG', { minimumFractionDigits: 2 })}\n`;
     content += `Total: ₦${order.total_amount.toLocaleString('en-NG', { minimumFractionDigits: 2 })}\n\n`;
 
-    const resp = order.order_response;
-    const orderItems = resp?.order_items ?? resp?.order?.order_items;
+    const resp = order.order_response as any;
+    const delivered = resp?.delivered ?? resp?.order_items ?? resp?.order?.order_items;
 
-    if (Array.isArray(orderItems) && orderItems.length > 0) {
+    if (Array.isArray(delivered) && delivered.length > 0) {
       content += `ACCOUNT DETAILS:\n`;
       content += `================================\n`;
-      orderItems.forEach((item: any, idx: number) => {
+      delivered.forEach((item: any, idx: number) => {
         content += `\n--- Account ${idx + 1} ---\n`;
-        if (item?.url) content += `URL: ${item.url}\n`;
-        if (item?.details) content += `${item.details}\n`;
-        if (!item?.details && !item?.url) content += `${JSON.stringify(item, null, 2)}\n`;
+        content += `${item?.details || item?.url || JSON.stringify(item, null, 2)}\n`;
       });
     } else if (resp) {
-      content += JSON.stringify(resp, null, 2);
+      content += typeof resp === 'string' ? resp : JSON.stringify(resp, null, 2);
     }
 
     const blob = new Blob([content], { type: 'text/plain' });
@@ -541,21 +535,22 @@ const OrderDetails = () => {
                                       <h4 className="font-semibold mb-2 text-success">Account Details</h4>
 
                                       {(() => {
-                                        const resp = order.order_response;
-                                        const orderItems = resp?.order_items ?? resp?.order?.order_items;
+                                        const resp = order.order_response as any;
+                                        // Extract delivered items from King server response
+                                        const delivered = resp?.delivered ?? resp?.order_items ?? resp?.order?.order_items;
 
-                                        if (Array.isArray(orderItems) && orderItems.length > 0) {
+                                        if (Array.isArray(delivered) && delivered.length > 0) {
                                           return (
                                             <div className="space-y-3">
-                                              {orderItems.map((item: any, idx: number) => {
-                                                const copyText = item?.details || item?.url || JSON.stringify(item);
+                                              {delivered.map((item: any, idx: number) => {
+                                                const accountText = item?.details || item?.url || JSON.stringify(item);
                                                 return (
                                                   <div key={idx} className="bg-muted/50 rounded-lg p-3">
                                                     <div className="flex items-start gap-2 mb-2">
                                                       <Button
                                                         variant="outline"
                                                         size="sm"
-                                                        onClick={() => handleCopyText(copyText, 'Account details')}
+                                                        onClick={() => handleCopyText(accountText, 'Account details')}
                                                         className="shrink-0"
                                                       >
                                                         <Copy className="h-3 w-3 mr-1" />
@@ -563,13 +558,8 @@ const OrderDetails = () => {
                                                       </Button>
                                                       <span className="font-medium">Account {idx + 1}</span>
                                                     </div>
-
-                                                    {item?.url && (
-                                                      <p className="text-xs text-muted-foreground mb-2 break-all">URL: {item.url}</p>
-                                                    )}
-
                                                     <pre className="text-sm whitespace-pre-wrap break-all bg-background p-3 rounded border overflow-hidden">
-                                                      {item?.details || JSON.stringify(item, null, 2)}
+                                                      {accountText}
                                                     </pre>
                                                   </div>
                                                 );
@@ -578,23 +568,24 @@ const OrderDetails = () => {
                                           );
                                         }
 
+                                        // Fallback: show just the details if it's a simple string
+                                        const fallbackText = typeof resp === 'string' ? resp : JSON.stringify(resp, null, 2);
                                         return (
                                           <div className="bg-muted/50 rounded-lg p-3">
-                                            <div className="flex items-center justify-between mb-2">
-                                              <span className="font-medium">Order Response</span>
+                                            <div className="flex items-start gap-2 mb-2">
                                               <Button
-                                                variant="ghost"
+                                                variant="outline"
                                                 size="sm"
-                                                onClick={() => handleCopyText(
-                                                  JSON.stringify(order.order_response, null, 2),
-                                                  'Order response'
-                                                )}
+                                                onClick={() => handleCopyText(fallbackText, 'Account details')}
+                                                className="shrink-0"
                                               >
-                                                <Copy className="h-3 w-3" />
+                                                <Copy className="h-3 w-3 mr-1" />
+                                                Copy
                                               </Button>
+                                              <span className="font-medium">Account Details</span>
                                             </div>
-                                            <pre className="text-sm whitespace-pre-wrap bg-background p-3 rounded border overflow-x-auto">
-                                              {JSON.stringify(order.order_response, null, 2)}
+                                            <pre className="text-sm whitespace-pre-wrap break-all bg-background p-3 rounded border overflow-hidden">
+                                              {fallbackText}
                                             </pre>
                                           </div>
                                         );
