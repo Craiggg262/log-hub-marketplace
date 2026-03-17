@@ -6,7 +6,7 @@ import { Input } from '@/components/ui/input';
 import { Search, ShoppingCart, Package, Globe, ChevronDown, ChevronUp } from 'lucide-react';
 import { useServerSelection } from '@/hooks/useServerSelection';
 import { useLoggsplug } from '@/hooks/useLoggsplug';
-import { useUniversalLogs } from '@/hooks/useUniversalLogs';
+import { useLogs } from '@/hooks/useLogs';
 import ServerToggle from '@/components/ServerToggle';
 import BuyProductModal from '@/components/BuyProductModal';
 import SocialIcon from '@/components/SocialIcon';
@@ -34,7 +34,7 @@ interface NormalizedProduct {
 const UniversalLogs = () => {
   const { server } = useServerSelection();
   const kingData = useLoggsplug();
-  const liteData = useUniversalLogs();
+  const liteData = useLogs();
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedPlatform, setSelectedPlatform] = useState<string | null>(null);
   const [expandedPlatforms, setExpandedPlatforms] = useState<Set<string>>(new Set());
@@ -51,34 +51,20 @@ const UniversalLogs = () => {
         platform: detectPlatform(p.category + ' ' + p.name),
       }));
     } else {
-      const hiddenCategoryNames = new Set([
-        'Dating Facebook',
-        'Countries Facebook(Belo 50 Friends)',
-        'New Facebook Account Created About 3 months ago',
-        'Random Countries Facebook',
-      ]);
-      const all: NormalizedProduct[] = [];
-      for (const cat of liteData.categories) {
-        if (hiddenCategoryNames.has(cat.name.trim())) continue;
-        for (const p of cat.products) {
-          all.push({
-            id: p.id,
-            name: p.name,
-            price: parseFloat(p.price),
-            inStock: p.in_stock,
-            category: cat.name,
-            platform: detectPlatform(cat.name + ' ' + p.name),
-          });
-        }
-      }
-      return all;
+      return liteData.logs.map((log) => ({
+        id: log.id,
+        name: log.title,
+        price: log.price,
+        inStock: log.stock,
+        category: log.categories?.name || 'Other',
+        platform: detectPlatform((log.categories?.name || '') + ' ' + log.title),
+      }));
     }
-  }, [server, kingData.products, liteData.categories]);
+  }, [server, kingData.products, liteData.logs]);
 
   const loading = server === 'king' ? kingData.loading : liteData.loading;
   const error = server === 'king' ? kingData.error : liteData.error;
 
-  // Group by platform
   const grouped = useMemo(() => {
     const filtered = products.filter((p) => {
       const matchSearch = p.name.toLowerCase().includes(searchTerm.toLowerCase());
@@ -122,7 +108,6 @@ const UniversalLogs = () => {
 
   return (
     <div className="space-y-6">
-      {/* Header */}
       <div className="bg-gradient-to-r from-primary/20 via-accent/10 to-orange-500/20 rounded-xl p-6 border border-border/50">
         <div className="flex items-center gap-3 mb-4">
           <Globe className="h-8 w-8 text-primary" />
@@ -143,7 +128,6 @@ const UniversalLogs = () => {
         </div>
       </div>
 
-      {/* Platform filters */}
       <div className="flex gap-2 flex-wrap">
         <Button variant={!selectedPlatform ? 'default' : 'outline'} size="sm" onClick={() => setSelectedPlatform(null)}>
           All
@@ -162,7 +146,6 @@ const UniversalLogs = () => {
         ))}
       </div>
 
-      {/* Products grouped by platform */}
       {error && <p className="text-destructive text-center">{error}</p>}
       
       {grouped.length === 0 ? (

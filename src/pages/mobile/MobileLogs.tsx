@@ -6,13 +6,12 @@ import { Badge } from '@/components/ui/badge';
 import { Search, ShoppingCart } from 'lucide-react';
 import { useServerSelection } from '@/hooks/useServerSelection';
 import { useLoggsplug } from '@/hooks/useLoggsplug';
-import { useUniversalLogs } from '@/hooks/useUniversalLogs';
+import { useLogs } from '@/hooks/useLogs';
 import ServerToggle from '@/components/ServerToggle';
 import BuyProductModal from '@/components/BuyProductModal';
 import SocialIcon from '@/components/SocialIcon';
 import { cn } from '@/lib/utils';
 
-// Detect platform from product/category name
 function detectPlatform(name: string): string {
   const lower = name.toLowerCase();
   if (lower.includes('facebook') || lower.includes('fb')) return 'Facebook';
@@ -41,12 +40,11 @@ interface NormalizedProduct {
 const MobileLogs = () => {
   const { server } = useServerSelection();
   const kingData = useLoggsplug();
-  const liteData = useUniversalLogs();
+  const liteData = useLogs();
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedPlatform, setSelectedPlatform] = useState<string | null>(null);
   const [buyProduct, setBuyProduct] = useState<NormalizedProduct | null>(null);
 
-  // Normalize products from both servers
   const products: NormalizedProduct[] = useMemo(() => {
     if (server === 'king') {
       return kingData.products.map((p) => ({
@@ -58,39 +56,24 @@ const MobileLogs = () => {
         platform: detectPlatform(p.category + ' ' + p.name),
       }));
     } else {
-      const hiddenCategoryNames = new Set([
-        'Dating Facebook',
-        'Countries Facebook(Belo 50 Friends)',
-        'New Facebook Account Created About 3 months ago',
-        'Random Countries Facebook',
-      ]);
-      const all: NormalizedProduct[] = [];
-      for (const cat of liteData.categories) {
-        if (hiddenCategoryNames.has(cat.name.trim())) continue;
-        for (const p of cat.products) {
-          all.push({
-            id: p.id,
-            name: p.name,
-            price: parseFloat(p.price),
-            inStock: p.in_stock,
-            category: cat.name,
-            platform: detectPlatform(cat.name + ' ' + p.name),
-          });
-        }
-      }
-      return all;
+      return liteData.logs.map((log) => ({
+        id: log.id,
+        name: log.title,
+        price: log.price,
+        inStock: log.stock,
+        category: log.categories?.name || 'Other',
+        platform: detectPlatform((log.categories?.name || '') + ' ' + log.title),
+      }));
     }
-  }, [server, kingData.products, liteData.categories]);
+  }, [server, kingData.products, liteData.logs]);
 
   const loading = server === 'king' ? kingData.loading : liteData.loading;
 
-  // Get unique platforms
   const platforms = useMemo(() => {
     const set = new Set(products.map((p) => p.platform));
     return Array.from(set).sort();
   }, [products]);
 
-  // Filter products
   const filteredProducts = useMemo(() => {
     return products.filter((p) => {
       const matchesSearch = p.name.toLowerCase().includes(searchTerm.toLowerCase());
@@ -104,10 +87,8 @@ const MobileLogs = () => {
   return (
     <MobileLayout title="Buy Logs">
       <div className="p-4 space-y-4">
-        {/* Server Toggle */}
         <ServerToggle />
 
-        {/* Search */}
         <div className="relative">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
           <Input
@@ -118,7 +99,6 @@ const MobileLogs = () => {
           />
         </div>
 
-        {/* Platform Filters */}
         <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-hide">
           <button
             onClick={() => setSelectedPlatform(null)}
@@ -148,7 +128,6 @@ const MobileLogs = () => {
           ))}
         </div>
 
-        {/* Products */}
         {loading ? (
           <div className="flex justify-center py-12">
             <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-primary" />
@@ -158,9 +137,7 @@ const MobileLogs = () => {
             <div className="p-12 text-center">
               <ShoppingCart className="h-16 w-16 mx-auto mb-4 text-muted-foreground/30" />
               <h3 className="font-semibold mb-2">No logs found</h3>
-              <p className="text-sm text-muted-foreground">
-                Try adjusting your search or filters
-              </p>
+              <p className="text-sm text-muted-foreground">Try adjusting your search or filters</p>
             </div>
           </GlassCard>
         ) : (
@@ -196,7 +173,6 @@ const MobileLogs = () => {
         )}
       </div>
 
-      {/* Buy Modal */}
       {buyProduct && (
         <BuyProductModal
           open={!!buyProduct}
