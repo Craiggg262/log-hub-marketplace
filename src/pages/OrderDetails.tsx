@@ -103,33 +103,27 @@ const OrderDetails = () => {
   };
 
   const handleDownloadUniversalOrder = (order: UniversalLogsOrder) => {
-    let content = `UNIVERSAL LOGS ORDER DETAILS\n`;
+    let content = `ORDER DETAILS\n`;
     content += `================================\n`;
-    content += `Order ID (Local): ${order.id}\n`;
-    if (order.api_order_id) {
-      content += `Order ID (NO1LOGS): ${order.api_order_id}\n`;
-    }
+    content += `Order ID: ${order.id}\n`;
     content += `Date: ${new Date(order.created_at).toLocaleDateString()}\n`;
     content += `Status: ${order.status}\n`;
     content += `Product: ${order.product_name}\n`;
     content += `Quantity: ${order.quantity}\n`;
-    content += `Price per unit: ₦${order.price_per_unit.toLocaleString('en-NG', { minimumFractionDigits: 2 })}\n`;
     content += `Total: ₦${order.total_amount.toLocaleString('en-NG', { minimumFractionDigits: 2 })}\n\n`;
 
-    const resp = order.order_response;
-    const orderItems = resp?.order_items ?? resp?.order?.order_items;
+    const resp = order.order_response as any;
+    const delivered = resp?.delivered ?? resp?.order_items ?? resp?.order?.order_items;
 
-    if (Array.isArray(orderItems) && orderItems.length > 0) {
+    if (Array.isArray(delivered) && delivered.length > 0) {
       content += `ACCOUNT DETAILS:\n`;
       content += `================================\n`;
-      orderItems.forEach((item: any, idx: number) => {
+      delivered.forEach((item: any, idx: number) => {
         content += `\n--- Account ${idx + 1} ---\n`;
-        if (item?.url) content += `URL: ${item.url}\n`;
-        if (item?.details) content += `${item.details}\n`;
-        if (!item?.details && !item?.url) content += `${JSON.stringify(item, null, 2)}\n`;
+        content += `${item?.details || item?.url || JSON.stringify(item, null, 2)}\n`;
       });
     } else if (resp) {
-      content += JSON.stringify(resp, null, 2);
+      content += typeof resp === 'string' ? resp : JSON.stringify(resp, null, 2);
     }
 
     const blob = new Blob([content], { type: 'text/plain' });
