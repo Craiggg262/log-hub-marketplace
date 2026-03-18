@@ -1039,9 +1039,14 @@ const Admin = () => {
               <CardContent>
                 <div className="space-y-4">
                   {profiles.map((profile) => (
-                    <div key={profile.id} className="flex items-center justify-between p-4 border rounded-lg">
+                    <div key={profile.id} className={`flex items-center justify-between p-4 border rounded-lg ${profile.is_banned ? 'border-destructive/50 bg-destructive/5' : ''}`}>
                       <div className="flex-1">
-                        <h4 className="font-medium">{profile.full_name || 'Unnamed User'}</h4>
+                        <div className="flex items-center gap-2">
+                          <h4 className="font-medium">{profile.full_name || 'Unnamed User'}</h4>
+                          {profile.is_banned && (
+                            <Badge variant="destructive" className="text-xs">Banned</Badge>
+                          )}
+                        </div>
                         <p className="text-sm text-muted-foreground">{profile.email}</p>
                         <p className="text-xs text-muted-foreground font-mono bg-muted/50 px-2 py-1 rounded inline-block my-1">
                           UID: {profile.user_id}
@@ -1050,9 +1055,23 @@ const Admin = () => {
                           Joined: {new Date(profile.created_at).toLocaleDateString()}
                         </p>
                       </div>
-                      <div className="text-right">
-                        <p className="text-lg font-bold">{formatPrice(profile.wallet_balance)}</p>
-                        <p className="text-xs text-muted-foreground">Wallet Balance</p>
+                      <div className="flex items-center gap-3">
+                        <div className="text-right">
+                          <p className="text-lg font-bold">{formatPrice(profile.wallet_balance)}</p>
+                          <p className="text-xs text-muted-foreground">Wallet Balance</p>
+                        </div>
+                        <Button
+                          variant={profile.is_banned ? "outline" : "destructive"}
+                          size="sm"
+                          onClick={() => handleToggleBan(profile)}
+                          className="gap-1"
+                        >
+                          {profile.is_banned ? (
+                            <><ShieldCheck className="h-4 w-4" /> Unban</>
+                          ) : (
+                            <><Ban className="h-4 w-4" /> Ban</>
+                          )}
+                        </Button>
                       </div>
                     </div>
                   ))}
