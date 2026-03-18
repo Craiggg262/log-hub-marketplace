@@ -125,7 +125,7 @@ const BuyProductModal: React.FC<BuyProductModalProps> = ({
           transaction_type: 'purchase',
           description: `Lite Server: ${product.name} x${quantity}`,
         });
-        await supabase.from('profiles').update({ wallet_balance: walletBalance - total }).eq('user_id', user.id);
+        await supabase.from('profiles').update({ wallet_balance: liveBalance - total }).eq('user_id', user.id);
 
         try {
           const { processReferralEarning } = await import('@/hooks/useReferral');
