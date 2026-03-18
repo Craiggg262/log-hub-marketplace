@@ -543,6 +543,35 @@ const Admin = () => {
     return logItems[logId]?.filter(item => item.is_available).length || 0;
   };
 
+  const handleToggleBan = async (profile: Profile) => {
+    const newBanned = !profile.is_banned;
+    const action = newBanned ? 'ban' : 'unban';
+    
+    if (!confirm(`Are you sure you want to ${action} ${profile.email}?`)) return;
+
+    try {
+      const { error } = await supabase
+        .from('profiles')
+        .update({ is_banned: newBanned })
+        .eq('user_id', profile.user_id);
+
+      if (error) throw error;
+
+      toast({
+        title: `User ${action}ned`,
+        description: `${profile.email} has been ${action}ned successfully.`,
+      });
+      
+      await fetchData();
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: `Failed to ${action} user`,
+        variant: "destructive",
+      });
+    }
+  };
+
   const handleConfirmWithdrawal = async (requestId: string, userId: string, amount: number, type: string) => {
     try {
       // Update withdrawal status
