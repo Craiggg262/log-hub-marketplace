@@ -120,6 +120,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         console.error('Error fetching profile:', error);
       }
       
+      if (data?.is_banned) {
+        console.warn('User is banned, signing out');
+        await supabase.auth.signOut();
+        setSession(null);
+        setUser(null);
+        setProfile(null);
+        return;
+      }
+
       setProfile(data);
     } catch (error) {
       console.error('Profile fetch error:', error);

@@ -5,7 +5,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/hooks/use-toast';
-import { Shield, Plus, Users, Edit, Trash2, TrendingUp, Database, Eye, Settings, CheckCircle, XCircle, Clock, Banknote, Wallet } from 'lucide-react';
+import { Shield, Plus, Users, Edit, Trash2, TrendingUp, Database, Eye, Settings, CheckCircle, XCircle, Clock, Banknote, Wallet, Ban, ShieldCheck } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -21,6 +21,7 @@ interface Profile {
   full_name: string | null;
   wallet_balance: number;
   created_at: string;
+  is_banned?: boolean;
 }
 
 interface LogData {
@@ -542,6 +543,35 @@ const Admin = () => {
     return logItems[logId]?.filter(item => item.is_available).length || 0;
   };
 
+  const handleToggleBan = async (profile: Profile) => {
+    const newBanned = !profile.is_banned;
+    const action = newBanned ? 'ban' : 'unban';
+    
+    if (!confirm(`Are you sure you want to ${action} ${profile.email}?`)) return;
+
+    try {
+      const { error } = await supabase
+        .from('profiles')
+        .update({ is_banned: newBanned })
+        .eq('user_id', profile.user_id);
+
+      if (error) throw error;
+
+      toast({
+        title: `User ${action}ned`,
+        description: `${profile.email} has been ${action}ned successfully.`,
+      });
+      
+      await fetchData();
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: `Failed to ${action} user`,
+        variant: "destructive",
+      });
+    }
+  };
+
   const handleConfirmWithdrawal = async (requestId: string, userId: string, amount: number, type: string) => {
     try {
       // Update withdrawal status
@@ -1038,9 +1068,14 @@ const Admin = () => {
               <CardContent>
                 <div className="space-y-4">
                   {profiles.map((profile) => (
-                    <div key={profile.id} className="flex items-center justify-between p-4 border rounded-lg">
+                    <div key={profile.id} className={`flex items-center justify-between p-4 border rounded-lg ${profile.is_banned ? 'border-destructive/50 bg-destructive/5' : ''}`}>
                       <div className="flex-1">
-                        <h4 className="font-medium">{profile.full_name || 'Unnamed User'}</h4>
+                        <div className="flex items-center gap-2">
+                          <h4 className="font-medium">{profile.full_name || 'Unnamed User'}</h4>
+                          {profile.is_banned && (
+                            <Badge variant="destructive" className="text-xs">Banned</Badge>
+                          )}
+                        </div>
                         <p className="text-sm text-muted-foreground">{profile.email}</p>
                         <p className="text-xs text-muted-foreground font-mono bg-muted/50 px-2 py-1 rounded inline-block my-1">
                           UID: {profile.user_id}
@@ -1049,9 +1084,23 @@ const Admin = () => {
                           Joined: {new Date(profile.created_at).toLocaleDateString()}
                         </p>
                       </div>
-                      <div className="text-right">
-                        <p className="text-lg font-bold">{formatPrice(profile.wallet_balance)}</p>
-                        <p className="text-xs text-muted-foreground">Wallet Balance</p>
+                      <div className="flex items-center gap-3">
+                        <div className="text-right">
+                          <p className="text-lg font-bold">{formatPrice(profile.wallet_balance)}</p>
+                          <p className="text-xs text-muted-foreground">Wallet Balance</p>
+                        </div>
+                        <Button
+                          variant={profile.is_banned ? "outline" : "destructive"}
+                          size="sm"
+                          onClick={() => handleToggleBan(profile)}
+                          className="gap-1"
+                        >
+                          {profile.is_banned ? (
+                            <><ShieldCheck className="h-4 w-4" /> Unban</>
+                          ) : (
+                            <><Ban className="h-4 w-4" /> Ban</>
+                          )}
+                        </Button>
                       </div>
                     </div>
                   ))}

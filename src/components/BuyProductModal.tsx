@@ -51,12 +51,17 @@ const BuyProductModal: React.FC<BuyProductModalProps> = ({
       // Re-fetch LIVE balance from DB to prevent race conditions
       const { data: freshProfile, error: profileErr } = await supabase
         .from('profiles')
-        .select('wallet_balance')
+        .select('wallet_balance, is_banned')
         .eq('user_id', user.id)
         .single();
 
       if (profileErr || !freshProfile) {
         toast({ title: 'Error', description: 'Could not verify balance. Try again.', variant: 'destructive' });
+        return;
+      }
+
+      if (freshProfile.is_banned) {
+        toast({ title: 'Account Suspended', description: 'Your account has been suspended. Contact support.', variant: 'destructive' });
         return;
       }
 
