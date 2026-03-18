@@ -44,14 +44,28 @@ const BuyProductModal: React.FC<BuyProductModalProps> = ({
   const formatPrice = (p: number) => `₦${p.toLocaleString('en-NG', { minimumFractionDigits: 0 })}`;
 
   const handleBuy = async () => {
-    if (!user) return;
-    if (walletBalance < total) {
-      toast({ title: 'Insufficient Balance', description: 'Please fund your wallet first.', variant: 'destructive' });
-      return;
-    }
+    if (!user || ordering) return;
 
     setOrdering(true);
     try {
+      // Re-fetch LIVE balance from DB to prevent race conditions
+      const { data: freshProfile, error: profileErr } = await supabase
+        .from('profiles')
+        .select('wallet_balance')
+        .eq('user_id', user.id)
+        .single();
+
+      if (profileErr || !freshProfile) {
+        toast({ title: 'Error', description: 'Could not verify balance. Try again.', variant: 'destructive' });
+        return;
+      }
+
+      const liveBalance = freshProfile.wallet_balance;
+      if (liveBalance < total) {
+        toast({ title: 'Insufficient Balance', description: 'Please fund your wallet first.', variant: 'destructive' });
+        return;
+      }
+
       if (server === 'king') {
         // Loggsplug API order
         const { data, error } = await supabase.functions.invoke('loggsplug-api', {
