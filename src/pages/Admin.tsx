@@ -21,6 +21,7 @@ interface Profile {
   full_name: string | null;
   wallet_balance: number;
   created_at: string;
+  is_banned?: boolean;
 }
 
 interface LogData {
