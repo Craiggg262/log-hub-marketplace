@@ -87,6 +87,7 @@ const Admin = () => {
   const [categories, setCategories] = useState<any[]>([]);
   const [selectedLogForItems, setSelectedLogForItems] = useState<string | null>(null);
   const [withdrawalRequests, setWithdrawalRequests] = useState<WithdrawalRequest[]>([]);
+  const [userSearch, setUserSearch] = useState('');
   const { toast } = useToast();
 
   // Check authentication and admin status on mount
