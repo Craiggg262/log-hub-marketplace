@@ -87,6 +87,7 @@ const Admin = () => {
   const [categories, setCategories] = useState<any[]>([]);
   const [selectedLogForItems, setSelectedLogForItems] = useState<string | null>(null);
   const [withdrawalRequests, setWithdrawalRequests] = useState<WithdrawalRequest[]>([]);
+  const [userSearch, setUserSearch] = useState('');
   const { toast } = useToast();
 
   // Check authentication and admin status on mount
@@ -1066,8 +1067,25 @@ const Admin = () => {
                 <CardDescription>View and manage registered users</CardDescription>
               </CardHeader>
               <CardContent>
+                <div className="mb-4">
+                  <Input
+                    placeholder="Search by name or email..."
+                    value={userSearch}
+                    onChange={(e) => setUserSearch(e.target.value)}
+                    className="max-w-md"
+                  />
+                </div>
                 <div className="space-y-4">
-                  {profiles.map((profile) => (
+                  {profiles
+                    .filter((p) => {
+                      if (!userSearch.trim()) return true;
+                      const q = userSearch.toLowerCase();
+                      return (
+                        p.email.toLowerCase().includes(q) ||
+                        (p.full_name || '').toLowerCase().includes(q)
+                      );
+                    })
+                    .map((profile) => (
                     <div key={profile.id} className={`flex items-center justify-between p-4 border rounded-lg ${profile.is_banned ? 'border-destructive/50 bg-destructive/5' : ''}`}>
                       <div className="flex-1">
                         <div className="flex items-center gap-2">
