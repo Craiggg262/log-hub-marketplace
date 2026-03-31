@@ -10,7 +10,7 @@ const MTELSMS_API_KEY = Deno.env.get('MTELSMS_API_KEY');
 const MTELSMS_BASE_URL = 'https://mtelsms.com/stubs/handler_api.php';
 
 // Pricing constants
-const MARKUP_MULTIPLIER = 2.8; // 180% markup = 2.8x original price
+const MARKUP_MULTIPLIER = 2; // 100% markup = 2x original price
 const USD_TO_NAIRA_RATE = 1600;
 
 serve(async (req) => {
