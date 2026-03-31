@@ -184,13 +184,34 @@ const Admin = () => {
       });
       setLogItems(groupedLogItems);
 
-      // Calculate stats
-      const { data: ordersData } = await supabase
-        .from('orders')
-        .select('total_amount, status');
+      // Calculate stats from ALL order tables using count + sum queries
+      const [
+        { count: liteOrderCount },
+        { data: liteRevenueData },
+        { count: kingOrderCount },
+        { data: kingRevenueData },
+        { count: vtuOrderCount },
+        { data: vtuRevenueData },
+        { count: smsOrderCount },
+        { data: smsRevenueData },
+      ] = await Promise.all([
+        supabase.from('orders').select('*', { count: 'exact', head: true }),
+        supabase.from('orders').select('total_amount').eq('status', 'completed'),
+        supabase.from('universal_logs_orders').select('*', { count: 'exact', head: true }),
+        supabase.from('universal_logs_orders').select('total_amount').eq('status', 'completed'),
+        supabase.from('vtu_orders').select('*', { count: 'exact', head: true }),
+        supabase.from('vtu_orders').select('amount').eq('status', 'completed'),
+        supabase.from('sms_verification_orders').select('*', { count: 'exact', head: true }),
+        supabase.from('sms_verification_orders').select('charged_price').neq('status', 'pending'),
+      ]);
 
-      const completedOrders = ordersData?.filter(order => order.status === 'completed') || [];
-      const totalRevenue = completedOrders.reduce((sum, order) => sum + order.total_amount, 0);
+      const liteRevenue = (liteRevenueData ?? []).reduce((s, o) => s + Number(o.total_amount || 0), 0);
+      const kingRevenue = (kingRevenueData ?? []).reduce((s, o) => s + Number(o.total_amount || 0), 0);
+      const vtuRevenue = (vtuRevenueData ?? []).reduce((s, o) => s + Number(o.amount || 0), 0);
+      const smsRevenue = (smsRevenueData ?? []).reduce((s, o) => s + Number(o.charged_price || 0), 0);
+
+      const totalRevenue = liteRevenue + kingRevenue + vtuRevenue + smsRevenue;
+      const totalOrdersCount = (liteOrderCount ?? 0) + (kingOrderCount ?? 0) + (vtuOrderCount ?? 0) + (smsOrderCount ?? 0);
 
       // Fetch withdrawal requests
       const { data: withdrawalsData } = await supabase
