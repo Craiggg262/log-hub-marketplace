@@ -225,7 +225,7 @@ const Admin = () => {
         totalUsers: profilesData?.length || 0,
         totalLogs: logsData?.length || 0,
         totalRevenue,
-        totalOrders: ordersData?.length || 0
+        totalOrders: totalOrdersCount
       });
 
     } catch (error) {
