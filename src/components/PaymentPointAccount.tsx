@@ -75,23 +75,34 @@ const PaymentPointAccount: React.FC = () => {
         }
       });
 
-      if (error) throw error;
+      // Surface friendly upstream error if the function returned a non-2xx.
+      if (error) {
+        let friendlyMsg = error.message || 'Unable to generate account.';
+        try {
+          const ctx = (error as any).context;
+          if (ctx && typeof ctx.json === 'function') {
+            const body = await ctx.json();
+            if (body?.error) friendlyMsg = body.error;
+          }
+        } catch (_) { /* ignore */ }
+        throw new Error(friendlyMsg);
+      }
 
-      if (data.success && data.data) {
+      if (data?.success && data.data) {
         setVirtualAccount(data.data);
         toast({
           title: "Account Generated!",
           description: "Your personal account number has been created successfully.",
         });
       } else {
-        throw new Error(data.error || 'Failed to generate account');
+        throw new Error(data?.error || 'Failed to generate account');
       }
 
     } catch (error) {
       console.error('Error generating virtual account:', error);
       toast({
-        title: "Error",
-        description: error instanceof Error ? error.message : "Unable to generate account. Please try again.",
+        title: "Couldn't generate account right now",
+        description: error instanceof Error ? error.message : "Unable to generate account. Please try again or use Manual Payment.",
         variant: "destructive",
       });
     } finally {
