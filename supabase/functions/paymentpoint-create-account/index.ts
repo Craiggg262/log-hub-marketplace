@@ -83,50 +83,68 @@ serve(async (req) => {
       )
     }
 
-    const paymentPointData = {
-      email: email,
-      name: name,
-      phoneNumber: cleanPhone,
-      bankCode: ['20946'], // PaymentPoint bank code
-      businessId: businessId
+    // Try multiple bank codes in order. PaymentPoint occasionally has issues
+    // provisioning accounts with a specific partner bank, so we fall back.
+    const bankCodesToTry = ['20946', '000018', '000017', '100033']
+
+    let bankAccount: any = null
+    let lastResponseData: any = null
+    let lastStatus = 200
+
+    for (const bankCode of bankCodesToTry) {
+      const paymentPointData = {
+        email: email,
+        name: name,
+        phoneNumber: cleanPhone,
+        bankCode: [bankCode],
+        businessId: businessId
+      }
+
+      console.log(`Calling PaymentPoint API with bankCode ${bankCode}`)
+
+      const response = await fetch('https://api.paymentpoint.co/api/v1/createVirtualAccount', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${secretKey}`,
+          'Content-Type': 'application/json',
+          'api-key': apiKey
+        },
+        body: JSON.stringify(paymentPointData)
+      })
+
+      const responseData = await response.json()
+      lastResponseData = responseData
+      lastStatus = response.status
+      console.log(`PaymentPoint API response (bankCode ${bankCode}):`, JSON.stringify(responseData))
+
+      if (response.ok && responseData.bankAccounts?.length > 0 && responseData.bankAccounts[0]?.accountNumber) {
+        bankAccount = responseData.bankAccounts[0]
+        break
+      }
+
+      // If the bank code itself is invalid, skip retrying with the same one
+      const errMsg = (responseData?.message || '').toLowerCase()
+      if (errMsg.includes('invalid bank code')) {
+        continue
+      }
     }
 
-    console.log('Calling PaymentPoint API with data:', JSON.stringify(paymentPointData))
-
-    const response = await fetch('https://api.paymentpoint.co/api/v1/createVirtualAccount', {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${secretKey}`,
-        'Content-Type': 'application/json',
-        'api-key': apiKey
-      },
-      body: JSON.stringify(paymentPointData)
-    })
-
-    const responseData = await response.json()
-    console.log('PaymentPoint API response:', JSON.stringify(responseData))
-
-    if (!response.ok) {
-      console.error('PaymentPoint API error:', responseData)
+    if (!bankAccount) {
+      console.error('PaymentPoint failed to provision an account on every bank code:', lastResponseData)
+      const upstreamError = lastResponseData?.errors?.[0] || lastResponseData?.message || 'Bank account provisioning failed'
       return new Response(
-        JSON.stringify({ error: 'Failed to create virtual account', details: responseData }),
-        { status: response.status, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        JSON.stringify({
+          error: 'Our payment provider (PaymentPoint) is temporarily unable to create new bank accounts. Please try again in a few minutes, or use Manual Payment via WhatsApp to fund your wallet now.',
+          providerError: upstreamError,
+          details: lastResponseData
+        }),
+        { status: 503, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       )
     }
 
-    // Extract account details from response - PaymentPoint returns data in bankAccounts array
-    const bankAccount = responseData.bankAccounts?.[0]
-    const accountNumber = bankAccount?.accountNumber
-    const bankName = bankAccount?.bankName || 'PaymentPoint'
-    const accountName = bankAccount?.accountName || name
-
-    if (!accountNumber) {
-      console.error('No account number in response:', responseData)
-      return new Response(
-        JSON.stringify({ error: 'Invalid response from payment service', details: responseData }),
-        { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      )
-    }
+    const accountNumber = bankAccount.accountNumber
+    const bankName = bankAccount.bankName || 'PaymentPoint'
+    const accountName = bankAccount.accountName || name
 
     // Update user profile with virtual account details and phone
     const { error: updateError } = await supabase
