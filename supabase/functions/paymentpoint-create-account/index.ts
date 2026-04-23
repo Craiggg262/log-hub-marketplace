@@ -83,24 +83,25 @@ serve(async (req) => {
       )
     }
 
-    // Try multiple bank codes in order. PaymentPoint occasionally has issues
-    // provisioning accounts with a specific partner bank, so we fall back.
-    const bankCodesToTry = ['20946', '000018', '000017', '100033']
+    // PaymentPoint only honors bank code 20946 (Palmpay) for this business,
+    // but it occasionally fails to provision the reserved account on the first
+    // try. Retry the same call a few times with a short delay before giving up.
+    const BANK_CODE = '20946'
+    const MAX_ATTEMPTS = 5
 
     let bankAccount: any = null
     let lastResponseData: any = null
-    let lastStatus = 200
 
-    for (const bankCode of bankCodesToTry) {
-      const paymentPointData = {
-        email: email,
-        name: name,
-        phoneNumber: cleanPhone,
-        bankCode: [bankCode],
-        businessId: businessId
-      }
+    const paymentPointData = {
+      email: email,
+      name: name,
+      phoneNumber: cleanPhone,
+      bankCode: [BANK_CODE],
+      businessId: businessId
+    }
 
-      console.log(`Calling PaymentPoint API with bankCode ${bankCode}`)
+    for (let attempt = 1; attempt <= MAX_ATTEMPTS; attempt++) {
+      console.log(`Calling PaymentPoint API (attempt ${attempt}/${MAX_ATTEMPTS}) with bankCode ${BANK_CODE}`)
 
       const response = await fetch('https://api.paymentpoint.co/api/v1/createVirtualAccount', {
         method: 'POST',
@@ -114,18 +115,26 @@ serve(async (req) => {
 
       const responseData = await response.json()
       lastResponseData = responseData
-      lastStatus = response.status
-      console.log(`PaymentPoint API response (bankCode ${bankCode}):`, JSON.stringify(responseData))
+      console.log(`PaymentPoint API response (attempt ${attempt}):`, JSON.stringify(responseData))
 
       if (response.ok && responseData.bankAccounts?.length > 0 && responseData.bankAccounts[0]?.accountNumber) {
         bankAccount = responseData.bankAccounts[0]
         break
       }
 
-      // If the bank code itself is invalid, skip retrying with the same one
+      // If the customer already exists upstream, PaymentPoint may return the
+      // existing account info on a subsequent call — keep retrying.
+      // For validation errors (bad phone, etc.), stop immediately.
       const errMsg = (responseData?.message || '').toLowerCase()
-      if (errMsg.includes('invalid bank code')) {
-        continue
+      if (errMsg.includes('phone number') || errMsg.includes('email') || errMsg.includes('invalid bank code')) {
+        console.error('Non-retriable validation error from PaymentPoint:', responseData)
+        break
+      }
+
+      // Wait before next attempt (exponential-ish backoff: 0.8s, 1.5s, 2.5s, 4s)
+      if (attempt < MAX_ATTEMPTS) {
+        const delayMs = 600 + attempt * 700
+        await new Promise((r) => setTimeout(r, delayMs))
       }
     }
 
