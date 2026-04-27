@@ -97,11 +97,18 @@ serve(async (req) => {
 
     // Apply price multiplier for product listings
     if (action === 'get_products' && data?.success && Array.isArray(data.data)) {
-      data.data = data.data.map((product: any) => ({
-        ...product,
-        display_price: ((product.reseller_price || product.base_price || 0) * PRICE_MULTIPLIER).toFixed(2),
-        original_reseller_price: product.reseller_price,
-      }));
+      // Hidden products (case-insensitive substring match on name/category)
+      const HIDDEN_KEYWORDS = ['a to z amira', 'amira update', 'amira'];
+      data.data = data.data
+        .filter((product: any) => {
+          const haystack = `${product?.name ?? ''} ${product?.category ?? ''}`.toLowerCase();
+          return !HIDDEN_KEYWORDS.some((kw) => haystack.includes(kw));
+        })
+        .map((product: any) => ({
+          ...product,
+          display_price: ((product.reseller_price || product.base_price || 0) * PRICE_MULTIPLIER).toFixed(2),
+          original_reseller_price: product.reseller_price,
+        }));
     }
 
     // For orders, multiply the charged amount for display
