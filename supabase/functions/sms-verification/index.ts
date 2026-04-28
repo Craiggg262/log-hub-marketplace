@@ -84,8 +84,12 @@ serve(async (req) => {
           headers: { ...corsHeaders, 'Content-Type': 'application/json' }
         });
       }
-      // API may return single object or array
-      const items = Array.isArray(json) ? json : [json];
+      // API returns { status, prices: [...] } or array or single object
+      const items = Array.isArray(json?.prices)
+        ? json.prices
+        : Array.isArray(json)
+          ? json
+          : [json];
       const data = items
         .filter((s: any) => s && s.api_name)
         .map((s: any) => {
@@ -114,7 +118,7 @@ serve(async (req) => {
           headers: { ...corsHeaders, 'Content-Type': 'application/json' }
         });
       }
-      const items = Array.isArray(json) ? json : [json];
+      const items = Array.isArray(json?.prices) ? json.prices : Array.isArray(json) ? json : [json];
       const match = items.find((s: any) => s.api_name === service_id);
       if (!match) {
         return new Response(JSON.stringify({ status: 'error', message: 'Service not found' }), {
@@ -139,7 +143,7 @@ serve(async (req) => {
     if (action === 'getNumber' && service_id) {
       // Check user balance using API price
       const priceRes = await getatext('/prices-info', { method: 'GET' });
-      const items = Array.isArray(priceRes.json) ? priceRes.json : [priceRes.json];
+      const items = Array.isArray(priceRes.json?.prices) ? priceRes.json.prices : Array.isArray(priceRes.json) ? priceRes.json : [priceRes.json];
       const match = items.find((s: any) => s.api_name === service_id);
       if (!match) {
         return new Response(JSON.stringify({ status: 'error', error: 'Service not found' }), {
