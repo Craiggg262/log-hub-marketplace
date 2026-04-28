@@ -84,8 +84,12 @@ serve(async (req) => {
           headers: { ...corsHeaders, 'Content-Type': 'application/json' }
         });
       }
-      // API may return single object or array
-      const items = Array.isArray(json) ? json : [json];
+      // API returns { status, prices: [...] } or array or single object
+      const items = Array.isArray(json?.prices)
+        ? json.prices
+        : Array.isArray(json)
+          ? json
+          : [json];
       const data = items
         .filter((s: any) => s && s.api_name)
         .map((s: any) => {
