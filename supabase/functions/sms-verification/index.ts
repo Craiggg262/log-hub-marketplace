@@ -143,7 +143,7 @@ serve(async (req) => {
     if (action === 'getNumber' && service_id) {
       // Check user balance using API price
       const priceRes = await getatext('/prices-info', { method: 'GET' });
-      const items = Array.isArray(priceRes.json) ? priceRes.json : [priceRes.json];
+      const items = Array.isArray(priceRes.json?.prices) ? priceRes.json.prices : Array.isArray(priceRes.json) ? priceRes.json : [priceRes.json];
       const match = items.find((s: any) => s.api_name === service_id);
       if (!match) {
         return new Response(JSON.stringify({ status: 'error', error: 'Service not found' }), {
