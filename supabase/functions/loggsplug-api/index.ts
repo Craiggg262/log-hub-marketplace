@@ -98,11 +98,17 @@ serve(async (req) => {
     // Apply price multiplier for product listings
     if (action === 'get_products' && data?.success && Array.isArray(data.data)) {
       // Hidden products (case-insensitive substring match on name/category)
-      const HIDDEN_KEYWORDS = ['a to z amira', 'amira update', 'amira', 'x/twitter', 'x / twitter', 'twitter', ' x ', 'x/ twitter', 'x /twitter'];
+      const HIDDEN_KEYWORDS = ['a to z amira', 'amira update', 'amira'];
+      const HIDDEN_CATEGORIES = ['x/twitter', 'x / twitter', 'x/ twitter', 'x /twitter', 'twitter', 'x'];
       data.data = data.data
         .filter((product: any) => {
           const haystack = `${product?.name ?? ''} ${product?.category ?? ''}`.toLowerCase();
-          return !HIDDEN_KEYWORDS.some((kw) => haystack.includes(kw));
+          if (HIDDEN_KEYWORDS.some((kw) => haystack.includes(kw))) return false;
+          const category = String(product?.category ?? '').toLowerCase().trim();
+          if (HIDDEN_CATEGORIES.includes(category)) return false;
+          const name = String(product?.name ?? '').toLowerCase();
+          if (name.includes('x/twitter') || name.includes('twitter')) return false;
+          return true;
         })
         .map((product: any) => ({
           ...product,
