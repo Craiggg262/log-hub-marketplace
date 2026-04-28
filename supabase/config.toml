@@ -46,3 +46,6 @@ verify_jwt = false
 
 [functions.loggsplug-api]
 verify_jwt = false
+
+[functions.getatext-webhook]
+verify_jwt = false
