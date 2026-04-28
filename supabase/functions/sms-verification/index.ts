@@ -118,7 +118,7 @@ serve(async (req) => {
           headers: { ...corsHeaders, 'Content-Type': 'application/json' }
         });
       }
-      const items = Array.isArray(json) ? json : [json];
+      const items = Array.isArray(json?.prices) ? json.prices : Array.isArray(json) ? json : [json];
       const match = items.find((s: any) => s.api_name === service_id);
       if (!match) {
         return new Response(JSON.stringify({ status: 'error', message: 'Service not found' }), {
