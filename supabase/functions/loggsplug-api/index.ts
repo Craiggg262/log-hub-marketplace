@@ -98,7 +98,7 @@ serve(async (req) => {
     // Apply price multiplier for product listings
     if (action === 'get_products' && data?.success && Array.isArray(data.data)) {
       // Hidden products (case-insensitive substring match on name/category)
-      const HIDDEN_KEYWORDS = ['a to z amira', 'amira update', 'amira'];
+      const HIDDEN_KEYWORDS = ['a to z amira', 'amira update', 'amira', 'x/twitter', 'x / twitter', 'twitter', ' x ', 'x/ twitter', 'x /twitter'];
       data.data = data.data
         .filter((product: any) => {
           const haystack = `${product?.name ?? ''} ${product?.category ?? ''}`.toLowerCase();
