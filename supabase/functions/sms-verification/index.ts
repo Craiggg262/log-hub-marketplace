@@ -6,15 +6,39 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
-const MTELSMS_API_KEY = Deno.env.get('MTELSMS_API_KEY');
-const MTELSMS_BASE_URL = 'https://mtelsms.com/stubs/handler_api.php';
+const GETATEXT_API_KEY = Deno.env.get('GETATEXT_API_KEY');
+const GETATEXT_BASE_URL = 'https://getatext.com/api/v1';
 
 // Pricing constants
-const MARKUP_MULTIPLIER = 2; // 100% markup = 2x original price
+const MARKUP_MULTIPLIER = 2; // 2x the API price
 const USD_TO_NAIRA_RATE = 1600;
 
+// Default rental window in seconds for active rental tracking on the client.
+// Getatext returns end_time but no explicit "time_remaining"; default to 20 min.
+const DEFAULT_RENTAL_SECONDS = 20 * 60;
+
+function nairaPrice(usd: number) {
+  return parseFloat((usd * MARKUP_MULTIPLIER * USD_TO_NAIRA_RATE).toFixed(2));
+}
+
+function nairaDisplay(amount: number) {
+  return `₦${amount.toLocaleString('en-NG', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+}
+
+async function getatext(path: string, init?: RequestInit) {
+  const headers: Record<string, string> = {
+    'Auth': GETATEXT_API_KEY ?? '',
+    'Content-Type': 'application/json',
+    ...(init?.headers as Record<string, string> | undefined),
+  };
+  const res = await fetch(`${GETATEXT_BASE_URL}${path}`, { ...init, headers });
+  const text = await res.text();
+  let json: any = {};
+  try { json = text ? JSON.parse(text) : {}; } catch { json = { raw: text }; }
+  return { ok: res.ok, status: res.status, json };
+}
+
 serve(async (req) => {
-  // Handle CORS preflight
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
   }
@@ -22,9 +46,9 @@ serve(async (req) => {
   try {
     const authHeader = req.headers.get('Authorization');
     if (!authHeader?.startsWith('Bearer ')) {
-      return new Response(JSON.stringify({ error: 'Unauthorized' }), { 
-        status: 401, 
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
+      return new Response(JSON.stringify({ error: 'Unauthorized' }), {
+        status: 401,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
       });
     }
 
@@ -36,319 +60,351 @@ serve(async (req) => {
 
     const { data: { user }, error: userError } = await supabase.auth.getUser();
     if (userError || !user) {
-      return new Response(JSON.stringify({ error: 'Unauthorized' }), { 
-        status: 401, 
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
+      return new Response(JSON.stringify({ error: 'Unauthorized' }), {
+        status: 401,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
       });
     }
 
     const userId = user.id;
     const { action, service_id, max_price, id } = await req.json();
 
-    console.log(`SMS Verification request: action=${action}, userId=${userId}`);
+    console.log(`SMS Verification (Getatext): action=${action}, userId=${userId}`);
 
-    let apiUrl = `${MTELSMS_BASE_URL}?api_key=${MTELSMS_API_KEY}&action=${action}`;
+    const supabaseAdmin = createClient(
+      Deno.env.get('SUPABASE_URL')!,
+      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
+    );
 
-    // Add action-specific parameters
-    if (action === 'getNumber' && service_id) {
-      apiUrl += `&service_id=${service_id}&max_price=${max_price || 5.00}&wholesale_status=false`;
-    } else if (['getStatus', 'getCode', 'cancelNumber'].includes(action) && id) {
-      apiUrl += `&id=${id}`;
-    } else if (action === 'getPrice' && service_id) {
-      apiUrl += `&service_id=${service_id}`;
-    }
-
-    console.log(`Calling MTELSMS API: ${action}`);
-
-    const response = await fetch(apiUrl);
-    const data = await response.json();
-
-    console.log(`MTELSMS response:`, JSON.stringify(data));
-
-    // For allService action, apply markup and convert to Naira
-    if (action === 'allService' && data.status === 'success' && data.data) {
-      data.data = data.data.map((service: any) => {
-        const originalPrice = parseFloat(service.price);
-        const markedUpPrice = originalPrice * MARKUP_MULTIPLIER;
-        const nairaPrice = markedUpPrice * USD_TO_NAIRA_RATE;
-        
-        return {
-          ...service,
-          original_usd_price: service.price,
-          price: nairaPrice.toFixed(2), // Price in Naira
-          price_display: `₦${nairaPrice.toLocaleString('en-NG', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`,
-        };
+    // ====== List all services with prices ======
+    if (action === 'allService') {
+      const { ok, json } = await getatext('/prices-info', { method: 'GET' });
+      if (!ok) {
+        return new Response(JSON.stringify({ status: 'error', message: json?.errors || 'Failed to fetch services' }), {
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+        });
+      }
+      // API may return single object or array
+      const items = Array.isArray(json) ? json : [json];
+      const data = items
+        .filter((s: any) => s && s.api_name)
+        .map((s: any) => {
+          const usd = parseFloat(s.price);
+          const naira = nairaPrice(usd);
+          return {
+            service_id: s.api_name,
+            name: s.service_name || s.api_name,
+            price: naira.toFixed(2),
+            price_display: nairaDisplay(naira),
+            original_usd_price: String(usd),
+            validity_time: String(s.ttl ?? ''),
+            stock: s.stock ?? 0,
+          };
+        });
+      return new Response(JSON.stringify({ status: 'success', data }), {
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
       });
     }
 
-    // For getPrice action, apply markup and convert to Naira
-    if (action === 'getPrice' && data.status === 'success' && data.data) {
-      const originalPrice = parseFloat(data.data.price);
-      const markedUpPrice = originalPrice * MARKUP_MULTIPLIER;
-      const nairaPrice = markedUpPrice * USD_TO_NAIRA_RATE;
-      
-      data.data = {
-        ...data.data,
-        original_usd_price: data.data.price,
-        price: nairaPrice.toFixed(2),
-        price_display: `₦${nairaPrice.toLocaleString('en-NG', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`,
-      };
+    // ====== Get price for one service ======
+    if (action === 'getPrice' && service_id) {
+      const { ok, json } = await getatext('/prices-info', { method: 'GET' });
+      if (!ok) {
+        return new Response(JSON.stringify({ status: 'error', message: 'Failed' }), {
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+        });
+      }
+      const items = Array.isArray(json) ? json : [json];
+      const match = items.find((s: any) => s.api_name === service_id);
+      if (!match) {
+        return new Response(JSON.stringify({ status: 'error', message: 'Service not found' }), {
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+        });
+      }
+      const usd = parseFloat(match.price);
+      const naira = nairaPrice(usd);
+      return new Response(JSON.stringify({
+        status: 'success',
+        data: {
+          service_id: match.api_name,
+          name: match.service_name,
+          original_usd_price: String(usd),
+          price: naira.toFixed(2),
+          price_display: nairaDisplay(naira),
+        }
+      }), { headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
     }
 
-    // For getNumber action, deduct from wallet and create order record
-    if (action === 'getNumber' && data.status === 'success' && data.data?.service_price) {
-      const apiPrice = parseFloat(data.data.service_price);
-      const markedUpPrice = apiPrice * MARKUP_MULTIPLIER;
-      const nairaPrice = markedUpPrice * USD_TO_NAIRA_RATE;
-      
-      // Get current wallet balance
+    // ====== Rent a number ======
+    if (action === 'getNumber' && service_id) {
+      // Check user balance using API price
+      const priceRes = await getatext('/prices-info', { method: 'GET' });
+      const items = Array.isArray(priceRes.json) ? priceRes.json : [priceRes.json];
+      const match = items.find((s: any) => s.api_name === service_id);
+      if (!match) {
+        return new Response(JSON.stringify({ status: 'error', error: 'Service not found' }), {
+          status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+        });
+      }
+      const apiUsd = parseFloat(match.price);
+      const charged = nairaPrice(apiUsd);
+
       const { data: profile, error: profileError } = await supabase
         .from('profiles')
         .select('wallet_balance')
         .eq('user_id', userId)
         .single();
-
-      if (profileError) {
-        console.error('Error fetching profile:', profileError);
-        return new Response(JSON.stringify({ error: 'Failed to fetch wallet balance' }), { 
-          status: 500, 
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
+      if (profileError || !profile) {
+        return new Response(JSON.stringify({ error: 'Failed to fetch wallet balance' }), {
+          status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' }
         });
       }
-
-      if (profile.wallet_balance < nairaPrice) {
-        // Cancel the number since user can't afford it
-        await fetch(`${MTELSMS_BASE_URL}?api_key=${MTELSMS_API_KEY}&action=cancelNumber&id=${data.data.id}`);
-        return new Response(JSON.stringify({ 
+      if (profile.wallet_balance < charged) {
+        return new Response(JSON.stringify({
           error: 'Insufficient wallet balance',
-          required: nairaPrice,
+          required: charged,
           available: profile.wallet_balance
-        }), { 
-          status: 400, 
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
+        }), { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+      }
+
+      // Rent
+      const rentBody: Record<string, unknown> = { service: service_id };
+      if (max_price) rentBody.max_price = parseFloat(String(max_price)) * 2; // give headroom
+      const rent = await getatext('/rent-a-number', {
+        method: 'POST',
+        body: JSON.stringify(rentBody),
+      });
+
+      if (!rent.ok || rent.json?.status !== 'success') {
+        const errMsg = rent.json?.errors || rent.json?.message || 'Failed to rent number';
+        return new Response(JSON.stringify({ status: 'error', error: errMsg }), {
+          status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' }
         });
       }
 
-      // Deduct from wallet using service role
-      const supabaseAdmin = createClient(
-        Deno.env.get('SUPABASE_URL')!,
-        Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
-      );
+      const rental = rent.json;
+      const rentalId = String(rental.id);
+      const number = String(rental.number || 'waiting');
+      const serviceName = rental.service_name || match.service_name || service_id;
 
-      const newBalance = profile.wallet_balance - nairaPrice;
+      // Deduct wallet
+      const newBalance = profile.wallet_balance - charged;
       const { error: updateError } = await supabaseAdmin
         .from('profiles')
         .update({ wallet_balance: newBalance })
         .eq('user_id', userId);
-
       if (updateError) {
-        console.error('Error updating wallet:', updateError);
-        // Cancel the number if we couldn't deduct
-        await fetch(`${MTELSMS_BASE_URL}?api_key=${MTELSMS_API_KEY}&action=cancelNumber&id=${data.data.id}`);
-        return new Response(JSON.stringify({ error: 'Failed to deduct from wallet' }), { 
-          status: 500, 
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
+        // Try to cancel the rental at provider since we can't deduct
+        await getatext('/cancel-rental', { method: 'POST', body: JSON.stringify({ id: rental.id }) });
+        return new Response(JSON.stringify({ error: 'Failed to deduct from wallet' }), {
+          status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' }
         });
       }
 
-      // Record transaction
       await supabaseAdmin.from('wallet_transactions').insert({
         user_id: userId,
-        amount: -nairaPrice,
+        amount: -charged,
         transaction_type: 'sms_verification',
-        description: `SMS Verification - ${data.data.service_name}`
+        description: `SMS Verification - ${serviceName}`,
       });
 
-      // Calculate expiry time
-      const expiresAt = new Date(Date.now() + (data.data.time_remaining * 1000));
+      // Compute time remaining from end_time if present
+      let timeRemaining = DEFAULT_RENTAL_SECONDS;
+      if (rental.end_time) {
+        const end = new Date(rental.end_time.replace(' ', 'T') + 'Z').getTime();
+        const diff = Math.floor((end - Date.now()) / 1000);
+        if (diff > 0 && diff < 60 * 60 * 24) timeRemaining = diff;
+      }
+      const expiresAt = new Date(Date.now() + timeRemaining * 1000);
 
-      // Create order record
       await supabaseAdmin.from('sms_verification_orders').insert({
         user_id: userId,
-        rental_id: data.data.id,
-        service_id: service_id,
-        service_name: data.data.service_name,
-        phone_number: data.data.number !== 'waiting' ? data.data.number : null,
-        api_price: apiPrice,
-        charged_price: nairaPrice,
-        status: data.data.number === 'waiting' ? 'waiting_number' : 'waiting_code',
-        expires_at: expiresAt.toISOString()
+        rental_id: rentalId,
+        service_id,
+        service_name: serviceName,
+        phone_number: number !== 'waiting' ? number : null,
+        api_price: apiUsd,
+        charged_price: charged,
+        status: number === 'waiting' ? 'waiting_number' : 'waiting_code',
+        expires_at: expiresAt.toISOString(),
       });
 
-      console.log(`Deducted ₦${nairaPrice.toFixed(2)} from user ${userId} wallet for SMS verification`);
+      const responseData = {
+        id: rentalId,
+        number,
+        service_name: serviceName,
+        time_remaining: timeRemaining,
+        charged_price: charged,
+        charged_price_display: nairaDisplay(charged),
+        new_balance: newBalance,
+      };
 
-      // Add display price to response
-      data.data.charged_price = nairaPrice;
-      data.data.charged_price_display = `₦${nairaPrice.toLocaleString('en-NG', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
-      data.data.new_balance = newBalance;
-    }
-
-    // For getStatus action, update order with number if received
-    if (action === 'getStatus' && data.status === 'success' && data.data && id) {
-      const supabaseAdmin = createClient(
-        Deno.env.get('SUPABASE_URL')!,
-        Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
-      );
-
-      if (data.data.number !== 'waiting') {
-        await supabaseAdmin
-          .from('sms_verification_orders')
-          .update({ 
-            phone_number: data.data.number,
-            status: 'waiting_code'
-          })
-          .eq('rental_id', id)
-          .eq('user_id', userId);
-      }
-    }
-
-    // For getCode action, update order with code if received
-    if (action === 'getCode' && data.status === 'success' && data.data && id) {
-      const supabaseAdmin = createClient(
-        Deno.env.get('SUPABASE_URL')!,
-        Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
-      );
-
-      if (data.data.code && data.data.code !== 'waiting') {
-        await supabaseAdmin
-          .from('sms_verification_orders')
-          .update({ 
-            verification_code: data.data.code,
-            status: 'completed'
-          })
-          .eq('rental_id', id)
-          .eq('user_id', userId);
-      }
-    }
-
-    // For cancelNumber with refund, credit wallet back
-    if (action === 'cancelNumber' && data.status === 'success' && id) {
-      const supabaseAdmin = createClient(
-        Deno.env.get('SUPABASE_URL')!,
-        Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
-      );
-
-      // Get the order to know how much to refund
-      const { data: order } = await supabaseAdmin
-        .from('sms_verification_orders')
-        .select('charged_price, refunded, status')
-        .eq('rental_id', id)
-        .eq('user_id', userId)
-        .single();
-
-      if (order && !order.refunded && order.status !== 'completed') {
-        // Refund the amount
-        const { data: profile } = await supabaseAdmin
-          .from('profiles')
-          .select('wallet_balance')
-          .eq('user_id', userId)
-          .single();
-
-        if (profile) {
-          await supabaseAdmin
-            .from('profiles')
-            .update({ wallet_balance: profile.wallet_balance + order.charged_price })
-            .eq('user_id', userId);
-
-          // Record refund transaction
-          await supabaseAdmin.from('wallet_transactions').insert({
-            user_id: userId,
-            amount: order.charged_price,
-            transaction_type: 'refund',
-            description: `SMS Verification Refund - Cancelled`
-          });
-
-          // Update order as refunded
-          await supabaseAdmin
-            .from('sms_verification_orders')
-            .update({ 
-              status: 'cancelled',
-              refunded: true 
-            })
-            .eq('rental_id', id)
-            .eq('user_id', userId);
-
-          data.refunded_amount = order.charged_price;
-          data.refunded_amount_display = `₦${order.charged_price.toLocaleString('en-NG', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
-        }
-      }
-    }
-
-    // Handle expired rentals - refund action
-    if (action === 'refundExpired' && id) {
-      const supabaseAdmin = createClient(
-        Deno.env.get('SUPABASE_URL')!,
-        Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
-      );
-
-      // Get the order to know how much to refund
-      const { data: order } = await supabaseAdmin
-        .from('sms_verification_orders')
-        .select('*')
-        .eq('rental_id', id)
-        .eq('user_id', userId)
-        .single();
-
-      if (order && !order.refunded && order.status !== 'completed') {
-        // Refund the amount
-        const { data: profile } = await supabaseAdmin
-          .from('profiles')
-          .select('wallet_balance')
-          .eq('user_id', userId)
-          .single();
-
-        if (profile) {
-          await supabaseAdmin
-            .from('profiles')
-            .update({ wallet_balance: profile.wallet_balance + order.charged_price })
-            .eq('user_id', userId);
-
-          // Record refund transaction
-          await supabaseAdmin.from('wallet_transactions').insert({
-            user_id: userId,
-            amount: order.charged_price,
-            transaction_type: 'refund',
-            description: `SMS Verification Refund - Expired without code`
-          });
-
-          // Update order as refunded
-          await supabaseAdmin
-            .from('sms_verification_orders')
-            .update({ 
-              status: 'expired',
-              refunded: true 
-            })
-            .eq('rental_id', id)
-            .eq('user_id', userId);
-
-          return new Response(JSON.stringify({ 
-            status: 'success',
-            message: 'Refund processed successfully',
-            refunded_amount: order.charged_price,
-            refunded_amount_display: `₦${order.charged_price.toLocaleString('en-NG', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
-          }), {
-            headers: { ...corsHeaders, 'Content-Type': 'application/json' }
-          });
-        }
-      }
-
-      return new Response(JSON.stringify({ 
-        status: 'error',
-        message: 'Order not eligible for refund'
-      }), {
+      return new Response(JSON.stringify({ status: 'success', data: responseData }), {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' }
       });
     }
 
-    return new Response(JSON.stringify(data), {
-      headers: { ...corsHeaders, 'Content-Type': 'application/json' }
-    });
+    // ====== Poll status (number assignment / code) ======
+    if ((action === 'getStatus' || action === 'getCode') && id) {
+      const { ok, json } = await getatext('/rental-status', {
+        method: 'POST',
+        body: JSON.stringify({ id: Number(id) || id }),
+      });
+      if (!ok) {
+        return new Response(JSON.stringify({ status: 'error', message: json?.errors || 'Failed' }), {
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+        });
+      }
 
-  } catch (error) {
+      const number = json.number ? String(json.number) : 'waiting';
+      const code = json.code ? String(json.code) : null;
+
+      // Persist updates
+      if (number && number !== 'waiting') {
+        await supabaseAdmin
+          .from('sms_verification_orders')
+          .update({
+            phone_number: number,
+            status: code ? 'completed' : 'waiting_code',
+            ...(code ? { verification_code: code } : {}),
+          })
+          .eq('rental_id', String(id))
+          .eq('user_id', userId);
+      } else if (code) {
+        await supabaseAdmin
+          .from('sms_verification_orders')
+          .update({ verification_code: code, status: 'completed' })
+          .eq('rental_id', String(id))
+          .eq('user_id', userId);
+      }
+
+      return new Response(JSON.stringify({
+        status: 'success',
+        data: {
+          id: String(id),
+          number,
+          code: code ?? 'waiting',
+          service_name: json.service_name,
+        }
+      }), { headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+    }
+
+    // ====== Cancel rental + refund ======
+    if (action === 'cancelNumber' && id) {
+      const { ok, json } = await getatext('/cancel-rental', {
+        method: 'POST',
+        body: JSON.stringify({ id: Number(id) || id }),
+      });
+
+      const cancelled = ok && (json?.status === 'cancelled' || json?.status === 'success');
+
+      if (cancelled) {
+        const { data: order } = await supabaseAdmin
+          .from('sms_verification_orders')
+          .select('charged_price, refunded, status')
+          .eq('rental_id', String(id))
+          .eq('user_id', userId)
+          .single();
+
+        if (order && !order.refunded && order.status !== 'completed') {
+          const { data: profile } = await supabaseAdmin
+            .from('profiles')
+            .select('wallet_balance')
+            .eq('user_id', userId)
+            .single();
+          if (profile) {
+            await supabaseAdmin
+              .from('profiles')
+              .update({ wallet_balance: profile.wallet_balance + order.charged_price })
+              .eq('user_id', userId);
+            await supabaseAdmin.from('wallet_transactions').insert({
+              user_id: userId,
+              amount: order.charged_price,
+              transaction_type: 'refund',
+              description: 'SMS Verification Refund - Cancelled',
+            });
+            await supabaseAdmin
+              .from('sms_verification_orders')
+              .update({ status: 'cancelled', refunded: true })
+              .eq('rental_id', String(id))
+              .eq('user_id', userId);
+
+            return new Response(JSON.stringify({
+              status: 'success',
+              refunded_amount: order.charged_price,
+              refunded_amount_display: nairaDisplay(order.charged_price),
+            }), { headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+          }
+        }
+
+        return new Response(JSON.stringify({ status: 'success' }), {
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+        });
+      }
+
+      return new Response(JSON.stringify({ status: 'error', message: json?.errors || 'Cancel failed' }), {
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+      });
+    }
+
+    // ====== Refund expired ======
+    if (action === 'refundExpired' && id) {
+      const { data: order } = await supabaseAdmin
+        .from('sms_verification_orders')
+        .select('*')
+        .eq('rental_id', String(id))
+        .eq('user_id', userId)
+        .single();
+
+      if (order && !order.refunded && order.status !== 'completed') {
+        // Try to cancel upstream too (best-effort)
+        await getatext('/cancel-rental', {
+          method: 'POST',
+          body: JSON.stringify({ id: Number(id) || id }),
+        }).catch(() => null);
+
+        const { data: profile } = await supabaseAdmin
+          .from('profiles')
+          .select('wallet_balance')
+          .eq('user_id', userId)
+          .single();
+        if (profile) {
+          await supabaseAdmin
+            .from('profiles')
+            .update({ wallet_balance: profile.wallet_balance + order.charged_price })
+            .eq('user_id', userId);
+          await supabaseAdmin.from('wallet_transactions').insert({
+            user_id: userId,
+            amount: order.charged_price,
+            transaction_type: 'refund',
+            description: 'SMS Verification Refund - Expired without code',
+          });
+          await supabaseAdmin
+            .from('sms_verification_orders')
+            .update({ status: 'expired', refunded: true })
+            .eq('rental_id', String(id))
+            .eq('user_id', userId);
+
+          return new Response(JSON.stringify({
+            status: 'success',
+            refunded_amount: order.charged_price,
+            refunded_amount_display: nairaDisplay(order.charged_price),
+          }), { headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+        }
+      }
+
+      return new Response(JSON.stringify({ status: 'error', message: 'Order not eligible for refund' }), {
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+      });
+    }
+
+    return new Response(JSON.stringify({ status: 'error', message: 'Unknown action' }), {
+      status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+    });
+  } catch (error: any) {
     console.error('SMS Verification error:', error);
     return new Response(JSON.stringify({ error: error.message }), {
-      status: 500,
-      headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+      status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' }
     });
   }
 });
