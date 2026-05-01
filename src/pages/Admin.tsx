@@ -184,34 +184,13 @@ const Admin = () => {
       });
       setLogItems(groupedLogItems);
 
-      // Calculate stats from ALL order tables using count + sum queries
-      const [
-        { count: liteOrderCount },
-        { data: liteRevenueData },
-        { count: kingOrderCount },
-        { data: kingRevenueData },
-        { count: vtuOrderCount },
-        { data: vtuRevenueData },
-        { count: smsOrderCount },
-        { data: smsRevenueData },
-      ] = await Promise.all([
-        supabase.from('orders').select('*', { count: 'exact', head: true }),
-        supabase.from('orders').select('total_amount').eq('status', 'completed'),
-        supabase.from('universal_logs_orders').select('*', { count: 'exact', head: true }),
-        supabase.from('universal_logs_orders').select('total_amount').eq('status', 'completed'),
-        supabase.from('vtu_orders').select('*', { count: 'exact', head: true }),
-        supabase.from('vtu_orders').select('amount').eq('status', 'completed'),
-        supabase.from('sms_verification_orders').select('*', { count: 'exact', head: true }),
-        supabase.from('sms_verification_orders').select('charged_price').neq('status', 'pending'),
-      ]);
+      // Calculate accurate stats via DB aggregation (bypasses 1000-row query limit)
+      const { data: revenueStats, error: revenueErr } = await supabase.rpc('get_admin_revenue_stats');
+      if (revenueErr) console.error('Revenue stats error:', revenueErr);
 
-      const liteRevenue = (liteRevenueData ?? []).reduce((s, o) => s + Number(o.total_amount || 0), 0);
-      const kingRevenue = (kingRevenueData ?? []).reduce((s, o) => s + Number(o.total_amount || 0), 0);
-      const vtuRevenue = (vtuRevenueData ?? []).reduce((s, o) => s + Number(o.amount || 0), 0);
-      const smsRevenue = (smsRevenueData ?? []).reduce((s, o) => s + Number(o.charged_price || 0), 0);
-
-      const totalRevenue = liteRevenue + kingRevenue + vtuRevenue + smsRevenue;
-      const totalOrdersCount = (liteOrderCount ?? 0) + (kingOrderCount ?? 0) + (vtuOrderCount ?? 0) + (smsOrderCount ?? 0);
+      const stats = (revenueStats ?? {}) as Record<string, number>;
+      const totalRevenue = Number(stats.total_revenue || 0);
+      const totalOrdersCount = Number(stats.total_orders || 0);
 
       // Fetch withdrawal requests
       const { data: withdrawalsData } = await supabase
