@@ -261,7 +261,28 @@ serve(async (req) => {
       }
 
       const number = json.number ? String(json.number) : 'waiting';
-      const code = json.code ? String(json.code) : null;
+
+      // Robust code extraction: API may return code in different shapes
+      let code: string | null = null;
+      if (json.code) code = String(json.code);
+      else if (json.sms) code = String(json.sms);
+      else if (Array.isArray(json.messages) && json.messages.length > 0) {
+        const last = json.messages[json.messages.length - 1];
+        code = last?.code ? String(last.code) : (last?.text ? String(last.text) : null);
+      } else if (Array.isArray(json.sms_messages) && json.sms_messages.length > 0) {
+        const last = json.sms_messages[json.sms_messages.length - 1];
+        code = last?.code ? String(last.code) : (last?.text ? String(last.text) : null);
+      }
+      // Also check if there's an explicit completed status with the code in db already
+      if (!code) {
+        const { data: existing } = await supabaseAdmin
+          .from('sms_verification_orders')
+          .select('verification_code')
+          .eq('rental_id', String(id))
+          .eq('user_id', userId)
+          .single();
+        if (existing?.verification_code) code = existing.verification_code;
+      }
 
       // Persist updates
       if (number && number !== 'waiting') {

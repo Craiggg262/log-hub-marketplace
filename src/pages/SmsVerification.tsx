@@ -74,7 +74,73 @@ export default function SmsVerification() {
   useEffect(() => {
     fetchServices();
     fetchOrderHistory();
+    rehydrateActiveRentals();
   }, []);
+
+  // Realtime: instantly receive code updates pushed by the Getatext webhook
+  useEffect(() => {
+    if (!profile?.user_id) return;
+    const channel = supabase
+      .channel('sms-orders-realtime')
+      .on(
+        'postgres_changes',
+        {
+          event: 'UPDATE',
+          schema: 'public',
+          table: 'sms_verification_orders',
+          filter: `user_id=eq.${profile.user_id}`,
+        },
+        (payload: any) => {
+          const updated = payload.new;
+          if (!updated) return;
+          setActiveRentals(prev => prev.map(r => {
+            if (r.id !== String(updated.rental_id)) return r;
+            const next = { ...r };
+            if (updated.phone_number && r.number !== updated.phone_number) {
+              next.number = updated.phone_number;
+            }
+            if (updated.verification_code && !r.code) {
+              next.code = updated.verification_code;
+              next.status = 'code_received';
+              toast({
+                title: "Code Received!",
+                description: `Your verification code is: ${updated.verification_code}`,
+              });
+            }
+            return next;
+          }));
+          fetchOrderHistory();
+        }
+      )
+      .subscribe();
+
+    return () => { supabase.removeChannel(channel); };
+  }, [profile?.user_id]);
+
+  const rehydrateActiveRentals = async () => {
+    try {
+      const { data } = await supabase
+        .from('sms_verification_orders')
+        .select('*')
+        .in('status', ['waiting_number', 'waiting_code'])
+        .gt('expires_at', new Date().toISOString())
+        .order('created_at', { ascending: false });
+      if (!data || data.length === 0) return;
+      setActiveRentals(data.map((o: any) => ({
+        id: String(o.rental_id),
+        number: o.phone_number || 'waiting',
+        service_name: o.service_name,
+        price: Number(o.charged_price),
+        price_display: `₦${Number(o.charged_price).toLocaleString('en-NG', { minimumFractionDigits: 2 })}`,
+        code: o.verification_code,
+        time_remaining: Math.max(0, Math.floor((new Date(o.expires_at).getTime() - Date.now()) / 1000)),
+        expires_at: new Date(o.expires_at).getTime(),
+        status: o.verification_code ? 'code_received' as const : (o.phone_number ? 'waiting_code' as const : 'waiting_number' as const),
+      })));
+    } catch (e) {
+      console.error('rehydrate error', e);
+    }
+  };
 
   useEffect(() => {
     if (searchQuery.trim()) {
@@ -114,7 +180,7 @@ export default function SmsVerification() {
       if ((rental.status === 'waiting_code' || rental.status === 'waiting_number') && rental.time_remaining > 0) {
         const interval = setInterval(() => {
           checkRentalStatus(rental.id);
-        }, 5000);
+        }, 3000);
         intervals.push(interval);
       }
     });
