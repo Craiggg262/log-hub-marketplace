@@ -620,6 +620,7 @@ export type Database = {
         Args: { p_cart_items: Json; p_total_amount: number; p_user_id: string }
         Returns: string
       }
+      get_admin_revenue_stats: { Args: never; Returns: Json }
       get_available_log_items_count: {
         Args: { log_uuid: string }
         Returns: number
