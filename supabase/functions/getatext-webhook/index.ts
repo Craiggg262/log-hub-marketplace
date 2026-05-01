@@ -16,10 +16,18 @@ serve(async (req) => {
     console.log('Getatext webhook received:', JSON.stringify(payload));
 
     const rentalId = payload?.id ? String(payload.id) : null;
-    const code = payload?.code ? String(payload.code) : null;
+    let code: string | null = null;
+    if (payload?.code) code = String(payload.code);
+    else if (payload?.sms) code = String(payload.sms);
+    else if (payload?.text) code = String(payload.text);
+    else if (Array.isArray(payload?.messages) && payload.messages.length > 0) {
+      const last = payload.messages[payload.messages.length - 1];
+      code = last?.code ? String(last.code) : (last?.text ? String(last.text) : null);
+    }
     const number = payload?.number ? String(payload.number) : null;
 
     if (!rentalId || !code) {
+      console.log('Webhook missing id/code, payload was:', JSON.stringify(payload));
       return new Response(JSON.stringify({ ok: false, error: 'Missing id or code' }), {
         status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' }
       });
