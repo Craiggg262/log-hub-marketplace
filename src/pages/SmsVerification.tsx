@@ -180,7 +180,7 @@ export default function SmsVerification() {
       if ((rental.status === 'waiting_code' || rental.status === 'waiting_number') && rental.time_remaining > 0) {
         const interval = setInterval(() => {
           checkRentalStatus(rental.id);
-        }, 5000);
+        }, 3000);
         intervals.push(interval);
       }
     });
