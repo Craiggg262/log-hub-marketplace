@@ -213,7 +213,7 @@ const Admin = () => {
       setWithdrawalRequests(withdrawalsData || []);
 
       setStats({
-        totalUsers: profilesData?.length || 0,
+        totalUsers: totalProfiles,
         totalLogs: logsData?.length || 0,
         totalRevenue,
         totalOrders: totalOrdersCount
