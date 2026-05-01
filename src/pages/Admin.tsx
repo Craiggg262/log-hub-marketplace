@@ -188,9 +188,9 @@ const Admin = () => {
       const { data: revenueStats, error: revenueErr } = await supabase.rpc('get_admin_revenue_stats');
       if (revenueErr) console.error('Revenue stats error:', revenueErr);
 
-      const stats = (revenueStats ?? {}) as Record<string, number>;
-      const totalRevenue = Number(stats.total_revenue || 0);
-      const totalOrdersCount = Number(stats.total_orders || 0);
+      const rev = (revenueStats ?? {}) as Record<string, number>;
+      const totalRevenue = Number(rev.total_revenue || 0);
+      const totalOrdersCount = Number(rev.total_orders || 0);
 
       // Fetch withdrawal requests
       const { data: withdrawalsData } = await supabase
