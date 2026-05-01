@@ -137,16 +137,28 @@ const Admin = () => {
       console.log('Admin session:', session);
       console.log('Current user:', session?.user?.id);
 
-      // Fetch profiles
-      const { data: profilesData, error: profilesError } = await supabase
+      // Fetch profiles in batches of 1000 to bypass row limit
+      const { count: profilesCount } = await supabase
         .from('profiles')
-        .select('*')
-        .order('created_at', { ascending: false });
+        .select('*', { count: 'exact', head: true });
 
-      console.log('Profiles data:', profilesData);
-      console.log('Profiles error:', profilesError);
+      const totalProfiles = profilesCount ?? 0;
+      const pageSize = 1000;
+      const pages = Math.max(1, Math.ceil(totalProfiles / pageSize));
+      const allProfiles: any[] = [];
+      for (let i = 0; i < pages; i++) {
+        const from = i * pageSize;
+        const to = from + pageSize - 1;
+        const { data: pageData, error: pageErr } = await supabase
+          .from('profiles')
+          .select('*')
+          .order('created_at', { ascending: false })
+          .range(from, to);
+        if (pageErr) { console.error('Profiles page error:', pageErr); break; }
+        if (pageData) allProfiles.push(...pageData);
+      }
 
-      setProfiles(profilesData || []);
+      setProfiles(allProfiles);
 
       // Fetch logs
       const { data: logsData } = await supabase
@@ -201,7 +213,7 @@ const Admin = () => {
       setWithdrawalRequests(withdrawalsData || []);
 
       setStats({
-        totalUsers: profilesData?.length || 0,
+        totalUsers: totalProfiles,
         totalLogs: logsData?.length || 0,
         totalRevenue,
         totalOrders: totalOrdersCount
