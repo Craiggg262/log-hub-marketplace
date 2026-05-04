@@ -49,3 +49,6 @@ verify_jwt = false
 
 [functions.getatext-webhook]
 verify_jwt = false
+
+[functions.reseller-api]
+verify_jwt = false

@@ -18,6 +18,7 @@ import {
   Gift,
   LayoutGrid,
   Phone,
+  Code2,
 } from "lucide-react";
 import {
   Sheet,
@@ -47,6 +48,7 @@ const menuItems = [
   { title: "Wallet", url: "/wallet", icon: Wallet },
   { title: "Fund Wallet", url: "/fund-wallet", icon: Plus },
   { title: "Referral Earn", url: "/referral-earn", icon: Gift },
+  { title: "Resellers API", url: "/resellers", icon: Code2 },
   { title: "Transactions", url: "/history", icon: CreditCard },
   { title: "Settings", url: "/settings", icon: Settings },
   { title: "Support", url: "https://wa.me/+12252801497", icon: MessageCircle, external: true },

@@ -27,6 +27,8 @@ import Cart from "./pages/Cart";
 import UniversalLogs from "./pages/UniversalLogs";
 import ReferralEarn from "./pages/ReferralEarn";
 import SmsVerification from "./pages/SmsVerification";
+import Resellers from "./pages/Resellers";
+import { CommunityPopup } from "./components/CommunityPopup";
  
 // Mobile App Pages
 import MobileHome from "./pages/mobile/MobileHome";
@@ -149,6 +151,8 @@ function AppContent() {
         <Route path="/settings" element={<ProtectedRoute><Settings /></ProtectedRoute>} />
         <Route path="/cart" element={<ProtectedRoute><Cart /></ProtectedRoute>} />
         <Route path="/referral-earn" element={<ProtectedRoute><ReferralEarn /></ProtectedRoute>} />
+        <Route path="/resellers" element={<ProtectedRoute><Resellers /></ProtectedRoute>} />
+        <Route path="/app/resellers" element={<MobileProtectedRoute><Resellers /></MobileProtectedRoute>} />
         
         {/* Mobile App Routes */}
         <Route path="/install" element={<MobileInstall />} />
@@ -178,7 +182,7 @@ function AppContent() {
         {/* 404 Route */}
         <Route path="*" element={<NotFound />} />
       </Routes>
-      
+      <CommunityPopup />
     </BrowserRouter>
   );
 }
