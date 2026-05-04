@@ -30,7 +30,8 @@
    };
  
    const menuItems: MenuItem[] = [
-     { icon: Gift, label: 'Referral & Earn', path: '/app/referrals' },
+      { icon: Gift, label: 'Referral & Earn', path: '/app/referrals' },
+      { icon: Code2, label: 'Resellers API', path: '/app/resellers' },
      { icon: Settings, label: 'Settings', path: '/app/settings' },
      { icon: Shield, label: 'Privacy Policy', path: '/app/privacy' },
      { icon: HelpCircle, label: 'Help & Support', action: () => window.open('https://wa.me/+12252801497', '_blank'), external: true },
