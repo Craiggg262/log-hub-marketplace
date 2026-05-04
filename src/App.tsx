@@ -182,7 +182,7 @@ function AppContent() {
         {/* 404 Route */}
         <Route path="*" element={<NotFound />} />
       </Routes>
-      
+      <CommunityPopup />
     </BrowserRouter>
   );
 }
