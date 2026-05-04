@@ -6,7 +6,7 @@
  import { 
    User, Mail, Phone, Gift, Settings, 
    LogOut, ChevronRight, Shield, HelpCircle,
-   ExternalLink
+    ExternalLink, Code2
  } from 'lucide-react';
  import { useAuth } from '@/hooks/useAuth';
  import { cn } from '@/lib/utils';
