@@ -27,6 +27,8 @@ import Cart from "./pages/Cart";
 import UniversalLogs from "./pages/UniversalLogs";
 import ReferralEarn from "./pages/ReferralEarn";
 import SmsVerification from "./pages/SmsVerification";
+import Resellers from "./pages/Resellers";
+import { CommunityPopup } from "./components/CommunityPopup";
  
 // Mobile App Pages
 import MobileHome from "./pages/mobile/MobileHome";
