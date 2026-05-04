@@ -151,6 +151,8 @@ function AppContent() {
         <Route path="/settings" element={<ProtectedRoute><Settings /></ProtectedRoute>} />
         <Route path="/cart" element={<ProtectedRoute><Cart /></ProtectedRoute>} />
         <Route path="/referral-earn" element={<ProtectedRoute><ReferralEarn /></ProtectedRoute>} />
+        <Route path="/resellers" element={<ProtectedRoute><Resellers /></ProtectedRoute>} />
+        <Route path="/app/resellers" element={<MobileProtectedRoute><Resellers /></MobileProtectedRoute>} />
         
         {/* Mobile App Routes */}
         <Route path="/install" element={<MobileInstall />} />
