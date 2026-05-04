@@ -18,6 +18,7 @@ import {
   Gift,
   LayoutGrid,
   Phone,
+  Code2,
 } from "lucide-react";
 import {
   Sheet,
