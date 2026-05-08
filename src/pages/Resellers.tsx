@@ -7,10 +7,56 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
 import { useToast } from '@/hooks/use-toast';
-import { Copy, Eye, EyeOff, Key, Plus, Power, Trash2 } from 'lucide-react';
+import { Copy, Download, Eye, EyeOff, Key, Plus, Power, Trash2 } from 'lucide-react';
 
 const PROJECT_ID = (import.meta as any).env.VITE_SUPABASE_PROJECT_ID || 'ewaarsfeolhcfzenahqj';
 const BASE_URL = `https://${PROJECT_ID}.supabase.co/functions/v1/reseller-api`;
+
+const buildDocsMarkdown = (base: string) => `# Log Hub Marketplace — Resellers API
+
+Base URL: ${base}
+
+All requests require the \`x-api-key\` header with your personal API key.
+Generate keys at https://loghubmarketplace.site (Resellers page).
+
+## Wallet
+GET /balance
+  -> { success, data: { wallet_balance, currency: "NGN" } }
+
+## SMS Verification
+GET  /sms/services                       -> list services + prices (NGN)
+POST /sms/buy      { service_id }        -> rents number, charges wallet
+POST /sms/status   { order_id }          -> { phone_number, code, status }
+POST /sms/cancel   { order_id }          -> cancels + auto-refunds
+
+## Logs (King + Lite servers combined)
+GET  /logs/products
+  -> [{ product_id: "king_<id>" | "lite_<id>", server, name, category, stock, price, currency }]
+
+POST /logs/buy     { product_id, qty }   -> auto-routes by prefix
+  -> { order_id, server, product_name, quantity, unit_price, total_charged, credentials }
+
+## Errors
+401 Missing / invalid x-api-key
+402 Insufficient balance
+404 Product / service not found
+502 Upstream provider failure
+
+## Support
+Telegram: https://t.me/bitinvest02
+`;
+
+const downloadDocs = (base: string) => {
+  const blob = new Blob([buildDocsMarkdown(base)], { type: 'text/markdown' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = 'loghub-reseller-api-docs.md';
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+};
 
 interface ApiKey {
   id: string;
@@ -159,14 +205,22 @@ const Resellers: React.FC = () => {
       {/* Docs */}
       <Card>
         <CardHeader>
-          <CardTitle>API Documentation</CardTitle>
-          <CardDescription>All requests require the <code>x-api-key</code> header. Base URL:</CardDescription>
+          <div className="flex items-start justify-between gap-2 flex-wrap">
+            <div>
+              <CardTitle>API Documentation</CardTitle>
+              <CardDescription>All requests require the <code>x-api-key</code> header. Base URL:</CardDescription>
+            </div>
+            <Button variant="outline" size="sm" onClick={() => downloadDocs(BASE_URL)}>
+              <Download className="h-4 w-4 mr-1" /> Download Docs
+            </Button>
+          </div>
         </CardHeader>
         <CardContent className="space-y-6 text-sm">
           <div className="bg-muted/50 rounded p-3 font-mono text-xs break-all flex items-center gap-2">
             <span className="flex-1">{BASE_URL}</span>
             <Button size="icon" variant="ghost" onClick={() => copy(BASE_URL)}><Copy className="h-4 w-4" /></Button>
           </div>
+
 
           <Section title="Check Wallet Balance" method="GET" path="/balance" base={BASE_URL} copy={copy}
             example={`curl -X GET "${BASE_URL}/balance" \\
@@ -204,20 +258,21 @@ const Resellers: React.FC = () => {
   -d '{"order_id":"12345"}'`}
             response={`{ "success": true, "data": { "order_id": "12345", "status": "cancelled" } }`} />
 
-          <Section title="List Universal Logs Products" method="GET" path="/logs/products" base={BASE_URL} copy={copy}
+          <Section title="List Logs Products (King + Lite combined)" method="GET" path="/logs/products" base={BASE_URL} copy={copy}
             example={`curl -X GET "${BASE_URL}/logs/products" \\
   -H "x-api-key: YOUR_API_KEY"`}
             response={`{ "success": true, "data": [
-  { "product_id": 12, "name": "Facebook USA", "category": "Facebook", "stock": 50, "price": 1500 }
+  { "product_id": "king_12", "server": "king", "name": "Facebook USA", "category": "Facebook", "stock": 50, "price": 1500, "currency": "NGN" },
+  { "product_id": "lite_45", "server": "lite", "name": "Instagram USA", "category": "Instagram", "stock": 12, "price": 1200, "currency": "NGN" }
 ]}`} />
 
-          <Section title="Buy Logs" method="POST" path="/logs/buy" base={BASE_URL} copy={copy}
+          <Section title="Buy Logs (auto-routes to King or Lite by product_id prefix)" method="POST" path="/logs/buy" base={BASE_URL} copy={copy}
             example={`curl -X POST "${BASE_URL}/logs/buy" \\
   -H "x-api-key: YOUR_API_KEY" \\
   -H "Content-Type: application/json" \\
-  -d '{"product_id":12, "qty":1}'`}
+  -d '{"product_id":"king_12", "qty":1}'`}
             response={`{ "success": true, "data": {
-  "order_id": "...", "product_name": "Facebook USA", "quantity": 1,
+  "order_id": "...", "server": "king", "product_name": "Facebook USA", "quantity": 1,
   "unit_price": 1500, "total_charged": 1500, "credentials": { ... } } }`} />
 
           <div className="border-t border-border pt-4 space-y-2">
@@ -231,8 +286,9 @@ const Resellers: React.FC = () => {
 
           <div className="border-t border-border pt-4 text-xs text-muted-foreground">
             For support contact us on{' '}
-            <a className="text-primary underline" href="https://wa.me/+12252801497" target="_blank" rel="noreferrer">WhatsApp</a>.
+            <a className="text-primary underline" href="https://t.me/bitinvest02" target="_blank" rel="noreferrer">Telegram</a>.
           </div>
+
         </CardContent>
       </Card>
     </div>

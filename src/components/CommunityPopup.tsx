@@ -69,7 +69,7 @@ export const CommunityPopup: React.FC = () => {
           </a>
 
           <a
-            href="https://wa.me/+12252801497"
+            href="https://t.me/bitinvest02"
             target="_blank"
             rel="noopener noreferrer"
             className="flex items-start gap-3 p-3 rounded-lg border border-border hover:border-primary/50 hover:bg-accent/50 transition"

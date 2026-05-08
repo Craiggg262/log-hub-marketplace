@@ -17,10 +17,13 @@ const GETATEXT_API_KEY = Deno.env.get('GETATEXT_API_KEY');
 const GETATEXT_BASE_URL = 'https://getatext.com/api/v1';
 const LOGGSPLUG_API_KEY = Deno.env.get('LOGGSPLUG_API_KEY');
 const LOGGSPLUG_BASE_URL = 'https://loggsplug.online/api/reseller';
+const NO1LOGS_API_KEY = Deno.env.get('NO1LOGS_API_KEY');
+const NO1LOGS_BASE_URL = 'https://www.no1logs.com/api/v1';
 
 const SMS_MARKUP = 2;
 const USD_TO_NAIRA = 1600;
 const LOGS_MARKUP = 1.5;
+const LITE_PRICE_MULTIPLIER = 5010; // matches no1logs-api markup
 
 const nairaPrice = (usd: number) =>
   parseFloat((usd * SMS_MARKUP * USD_TO_NAIRA).toFixed(2));
@@ -49,6 +52,19 @@ async function loggsplug(path: string, init?: RequestInit) {
       'X-Api-Key': LOGGSPLUG_API_KEY ?? '',
       ...(init?.headers as Record<string, string> | undefined),
     },
+  });
+  const text = await res.text();
+  let data: any = {};
+  try { data = text ? JSON.parse(text) : {}; } catch { data = { raw: text }; }
+  return { ok: res.ok, status: res.status, data };
+}
+
+async function no1logs(path: string, init?: RequestInit) {
+  const sep = path.includes('?') ? '&' : '?';
+  const url = `${NO1LOGS_BASE_URL}${path}${sep}api_token=${NO1LOGS_API_KEY ?? ''}`;
+  const res = await fetch(url, {
+    ...init,
+    headers: { 'Accept': 'application/json', ...(init?.headers as any) },
   });
   const text = await res.text();
   let data: any = {};
@@ -266,14 +282,17 @@ serve(async (req) => {
       return json({ success: true, data: { order_id: String(id), status: 'cancelled' } });
     }
 
-    // ============ LOGS: list products ============
+    // ============ LOGS: list products (King + Lite combined) ============
     if (route === 'logs/products') {
-      const { ok, data } = await loggsplug('/products', { method: 'GET' });
-      if (!ok) return json({ error: 'Failed to fetch products' }, 502);
-      const products = Array.isArray(data?.data) ? data.data : [];
       const HIDDEN_KEYWORDS = ['a to z amira', 'amira update', 'amira'];
       const HIDDEN_CATEGORIES = ['x/twitter', 'x / twitter', 'twitter', 'x'];
-      const filtered = products
+
+      const [kingRes, liteRes] = await Promise.all([
+        loggsplug('/products', { method: 'GET' }),
+        no1logs('/products', { method: 'GET' }),
+      ]);
+
+      const kingItems = (Array.isArray(kingRes.data?.data) ? kingRes.data.data : [])
         .filter((p: any) => {
           const hay = `${p?.name ?? ''} ${p?.category ?? ''}`.toLowerCase();
           if (HIDDEN_KEYWORDS.some((k) => hay.includes(k))) return false;
@@ -282,77 +301,166 @@ serve(async (req) => {
           return true;
         })
         .map((p: any) => ({
-          product_id: p.id,
+          product_id: `king_${p.id}`,
+          server: 'king',
           name: p.name,
           category: p.category,
           stock: p.stock,
           price: parseFloat(((p.reseller_price || p.base_price || 0) * LOGS_MARKUP).toFixed(2)),
           currency: 'NGN',
         }));
-      return json({ success: true, data: filtered });
+
+      const liteCats = Array.isArray(liteRes.data) ? liteRes.data
+        : Array.isArray(liteRes.data?.categories) ? liteRes.data.categories
+        : [];
+      const liteItems: any[] = [];
+      for (const cat of liteCats) {
+        const catName = cat?.name || 'Other';
+        const prods = Array.isArray(cat?.products) ? cat.products : [];
+        for (const p of prods) {
+          const hay = `${p?.name ?? ''} ${catName}`.toLowerCase();
+          if (HIDDEN_KEYWORDS.some((k) => hay.includes(k))) continue;
+          if (HIDDEN_CATEGORIES.includes(String(catName).toLowerCase().trim())) continue;
+          const usd = parseFloat(String(p.price ?? 0));
+          const priceNgn = Number.isFinite(usd) ? parseFloat((usd * LITE_PRICE_MULTIPLIER).toFixed(2)) : 0;
+          liteItems.push({
+            product_id: `lite_${p.id}`,
+            server: 'lite',
+            name: p.name,
+            category: catName,
+            stock: p.in_stock ?? 0,
+            price: priceNgn,
+            currency: 'NGN',
+          });
+        }
+      }
+
+      return json({ success: true, data: [...kingItems, ...liteItems] });
     }
 
-    // ============ LOGS: buy ============
+    // ============ LOGS: buy (auto-detects King / Lite from product_id prefix) ============
     if (route === 'logs/buy') {
-      const productId = body.product_id;
+      const rawId = String(body.product_id ?? '');
       const qty = parseInt(String(body.qty ?? body.quantity ?? 1), 10);
-      if (!productId || !qty || qty < 1) return json({ error: 'product_id and qty required' }, 400);
+      if (!rawId || !qty || qty < 1) return json({ error: 'product_id and qty required' }, 400);
 
-      // Check price first
-      const prodRes = await loggsplug('/products', { method: 'GET' });
-      const product = (prodRes.data?.data || []).find((p: any) => String(p.id) === String(productId));
-      if (!product) return json({ error: 'Product not found' }, 404);
-      const unitPrice = parseFloat(((product.reseller_price || product.base_price || 0) * LOGS_MARKUP).toFixed(2));
-      const total = parseFloat((unitPrice * qty).toFixed(2));
+      let server: 'king' | 'lite' = 'king';
+      if (body.server === 'lite' || rawId.startsWith('lite_')) server = 'lite';
+      if (body.server === 'king' || rawId.startsWith('king_')) server = 'king';
+      const productId = rawId.replace(/^(king_|lite_)/, '');
 
       const { data: profile } = await admin.from('profiles').select('wallet_balance').eq('user_id', userId).maybeSingle();
       if (!profile) return json({ error: 'Profile not found' }, 404);
+
+      if (server === 'king') {
+        const prodRes = await loggsplug('/products', { method: 'GET' });
+        const product = (prodRes.data?.data || []).find((p: any) => String(p.id) === String(productId));
+        if (!product) return json({ error: 'Product not found' }, 404);
+        const unitPrice = parseFloat(((product.reseller_price || product.base_price || 0) * LOGS_MARKUP).toFixed(2));
+        const total = parseFloat((unitPrice * qty).toFixed(2));
+        if (Number(profile.wallet_balance) < total) {
+          return json({ error: 'Insufficient balance', required: total, available: profile.wallet_balance }, 402);
+        }
+
+        const order = await loggsplug('/order', {
+          method: 'POST',
+          body: JSON.stringify({ product_id: productId, qty }),
+        });
+        if (!order.ok || !order.data?.success) {
+          return json({ error: order.data?.message || 'Order failed', details: order.data }, 502);
+        }
+
+        await admin.from('profiles').update({
+          wallet_balance: Number(profile.wallet_balance) - total,
+        }).eq('user_id', userId);
+        await admin.from('wallet_transactions').insert({
+          user_id: userId, amount: -total, transaction_type: 'logs_purchase',
+          description: `[API/King] ${product.name} x${qty}`,
+        });
+        const { data: orderRow } = await admin.from('universal_logs_orders').insert({
+          user_id: userId, product_id: product.id, product_name: product.name,
+          quantity: qty, price_per_unit: unitPrice, total_amount: total,
+          status: 'completed', api_order_id: String(order.data?.order_id ?? ''),
+          order_response: order.data,
+        }).select('id').maybeSingle();
+
+        return json({
+          success: true,
+          data: {
+            order_id: orderRow?.id ?? null,
+            api_order_id: order.data?.order_id ?? null,
+            server: 'king',
+            product_name: product.name, quantity: qty,
+            unit_price: unitPrice, total_charged: total,
+            credentials: order.data?.credentials ?? order.data?.data ?? null,
+            raw: order.data,
+          },
+        });
+      }
+
+      // ---------- LITE SERVER ----------
+      const detailsRes = await no1logs(`/product/details/${productId}`, { method: 'GET' });
+      if (!detailsRes.ok) return json({ error: 'Lite product not found' }, 404);
+      const dd = detailsRes.data;
+      const productName = dd?.name || dd?.product?.name || `Lite #${productId}`;
+      const usd = parseFloat(String(dd?.price ?? dd?.product?.price ?? 0));
+      const unitPrice = Number.isFinite(usd) ? parseFloat((usd * LITE_PRICE_MULTIPLIER).toFixed(2)) : 0;
+
+      const detailList: any[] = Array.isArray(dd?.product_details) ? dd.product_details
+        : Array.isArray(dd?.details) ? dd.details
+        : Array.isArray(dd?.data) ? dd.data : [];
+      const available = detailList.filter((d: any) => d?.is_available !== false && d?.sold !== true);
+      if (available.length < qty) return json({ error: 'Insufficient stock on Lite server', available: available.length }, 400);
+
+      const total = parseFloat((unitPrice * qty).toFixed(2));
       if (Number(profile.wallet_balance) < total) {
         return json({ error: 'Insufficient balance', required: total, available: profile.wallet_balance }, 402);
       }
 
-      const order = await loggsplug('/order', {
+      const ids = available.slice(0, qty).map((d: any) => d.id).join(',');
+      const params = new URLSearchParams();
+      params.set('product_details_ids', ids);
+      const firstId = String(available[0].id);
+      params.set('id', firstId);
+      params.set('product_details_id', firstId);
+
+      const orderRes = await fetch(`${NO1LOGS_BASE_URL}/order/new?api_token=${NO1LOGS_API_KEY ?? ''}`, {
         method: 'POST',
-        body: JSON.stringify({ product_id: productId, qty }),
+        headers: { 'Accept': 'application/json', 'Content-Type': 'application/x-www-form-urlencoded' },
+        body: params.toString(),
       });
-      if (!order.ok || !order.data?.success) {
-        return json({ error: order.data?.message || 'Order failed', details: order.data }, 502);
+      const orderText = await orderRes.text();
+      let orderJson: any = {};
+      try { orderJson = orderText ? JSON.parse(orderText) : {}; } catch { orderJson = { raw: orderText }; }
+      if (!orderRes.ok) {
+        return json({ error: 'Lite order failed', details: orderJson }, 502);
       }
 
       await admin.from('profiles').update({
         wallet_balance: Number(profile.wallet_balance) - total,
       }).eq('user_id', userId);
-
       await admin.from('wallet_transactions').insert({
-        user_id: userId,
-        amount: -total,
-        transaction_type: 'logs_purchase',
-        description: `[API] Logs - ${product.name} x${qty}`,
+        user_id: userId, amount: -total, transaction_type: 'logs_purchase',
+        description: `[API/Lite] ${productName} x${qty}`,
       });
-
       const { data: orderRow } = await admin.from('universal_logs_orders').insert({
-        user_id: userId,
-        product_id: product.id,
-        product_name: product.name,
-        quantity: qty,
-        price_per_unit: unitPrice,
-        total_amount: total,
+        user_id: userId, product_id: parseInt(productId, 10) || 0, product_name: productName,
+        quantity: qty, price_per_unit: unitPrice, total_amount: total,
         status: 'completed',
-        api_order_id: String(order.data?.order_id ?? ''),
-        order_response: order.data,
+        api_order_id: String(orderJson?.order_id ?? orderJson?.id ?? ''),
+        order_response: orderJson,
       }).select('id').maybeSingle();
 
       return json({
         success: true,
         data: {
           order_id: orderRow?.id ?? null,
-          api_order_id: order.data?.order_id ?? null,
-          product_name: product.name,
-          quantity: qty,
-          unit_price: unitPrice,
-          total_charged: total,
-          credentials: order.data?.credentials ?? order.data?.data ?? null,
-          raw: order.data,
+          api_order_id: orderJson?.order_id ?? orderJson?.id ?? null,
+          server: 'lite',
+          product_name: productName, quantity: qty,
+          unit_price: unitPrice, total_charged: total,
+          credentials: orderJson?.credentials ?? orderJson?.data ?? orderJson?.accounts ?? null,
+          raw: orderJson,
         },
       });
     }
