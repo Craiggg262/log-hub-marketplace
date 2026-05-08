@@ -204,20 +204,21 @@ const Resellers: React.FC = () => {
   -d '{"order_id":"12345"}'`}
             response={`{ "success": true, "data": { "order_id": "12345", "status": "cancelled" } }`} />
 
-          <Section title="List Universal Logs Products" method="GET" path="/logs/products" base={BASE_URL} copy={copy}
+          <Section title="List Logs Products (King + Lite combined)" method="GET" path="/logs/products" base={BASE_URL} copy={copy}
             example={`curl -X GET "${BASE_URL}/logs/products" \\
   -H "x-api-key: YOUR_API_KEY"`}
             response={`{ "success": true, "data": [
-  { "product_id": 12, "name": "Facebook USA", "category": "Facebook", "stock": 50, "price": 1500 }
+  { "product_id": "king_12", "server": "king", "name": "Facebook USA", "category": "Facebook", "stock": 50, "price": 1500, "currency": "NGN" },
+  { "product_id": "lite_45", "server": "lite", "name": "Instagram USA", "category": "Instagram", "stock": 12, "price": 1200, "currency": "NGN" }
 ]}`} />
 
-          <Section title="Buy Logs" method="POST" path="/logs/buy" base={BASE_URL} copy={copy}
+          <Section title="Buy Logs (auto-routes to King or Lite by product_id prefix)" method="POST" path="/logs/buy" base={BASE_URL} copy={copy}
             example={`curl -X POST "${BASE_URL}/logs/buy" \\
   -H "x-api-key: YOUR_API_KEY" \\
   -H "Content-Type: application/json" \\
-  -d '{"product_id":12, "qty":1}'`}
+  -d '{"product_id":"king_12", "qty":1}'`}
             response={`{ "success": true, "data": {
-  "order_id": "...", "product_name": "Facebook USA", "quantity": 1,
+  "order_id": "...", "server": "king", "product_name": "Facebook USA", "quantity": 1,
   "unit_price": 1500, "total_charged": 1500, "credentials": { ... } } }`} />
 
           <div className="border-t border-border pt-4 space-y-2">
@@ -231,8 +232,9 @@ const Resellers: React.FC = () => {
 
           <div className="border-t border-border pt-4 text-xs text-muted-foreground">
             For support contact us on{' '}
-            <a className="text-primary underline" href="https://t.me/bitinvest02" target="_blank" rel="noreferrer">WhatsApp</a>.
+            <a className="text-primary underline" href="https://t.me/bitinvest02" target="_blank" rel="noreferrer">Telegram</a>.
           </div>
+
         </CardContent>
       </Card>
     </div>
