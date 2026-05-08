@@ -59,6 +59,19 @@ async function loggsplug(path: string, init?: RequestInit) {
   return { ok: res.ok, status: res.status, data };
 }
 
+async function no1logs(path: string, init?: RequestInit) {
+  const sep = path.includes('?') ? '&' : '?';
+  const url = `${NO1LOGS_BASE_URL}${path}${sep}api_token=${NO1LOGS_API_KEY ?? ''}`;
+  const res = await fetch(url, {
+    ...init,
+    headers: { 'Accept': 'application/json', ...(init?.headers as any) },
+  });
+  const text = await res.text();
+  let data: any = {};
+  try { data = text ? JSON.parse(text) : {}; } catch { data = { raw: text }; }
+  return { ok: res.ok, status: res.status, data };
+}
+
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
