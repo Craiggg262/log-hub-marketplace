@@ -12,6 +12,52 @@ import { Copy, Download, Eye, EyeOff, Key, Plus, Power, Trash2 } from 'lucide-re
 const PROJECT_ID = (import.meta as any).env.VITE_SUPABASE_PROJECT_ID || 'ewaarsfeolhcfzenahqj';
 const BASE_URL = `https://${PROJECT_ID}.supabase.co/functions/v1/reseller-api`;
 
+const buildDocsMarkdown = (base: string) => `# Log Hub Marketplace — Resellers API
+
+Base URL: ${base}
+
+All requests require the \`x-api-key\` header with your personal API key.
+Generate keys at https://loghubmarketplace.site (Resellers page).
+
+## Wallet
+GET /balance
+  -> { success, data: { wallet_balance, currency: "NGN" } }
+
+## SMS Verification
+GET  /sms/services                       -> list services + prices (NGN)
+POST /sms/buy      { service_id }        -> rents number, charges wallet
+POST /sms/status   { order_id }          -> { phone_number, code, status }
+POST /sms/cancel   { order_id }          -> cancels + auto-refunds
+
+## Logs (King + Lite servers combined)
+GET  /logs/products
+  -> [{ product_id: "king_<id>" | "lite_<id>", server, name, category, stock, price, currency }]
+
+POST /logs/buy     { product_id, qty }   -> auto-routes by prefix
+  -> { order_id, server, product_name, quantity, unit_price, total_charged, credentials }
+
+## Errors
+401 Missing / invalid x-api-key
+402 Insufficient balance
+404 Product / service not found
+502 Upstream provider failure
+
+## Support
+Telegram: https://t.me/bitinvest02
+`;
+
+const downloadDocs = (base: string) => {
+  const blob = new Blob([buildDocsMarkdown(base)], { type: 'text/markdown' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = 'loghub-reseller-api-docs.md';
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+};
+
 interface ApiKey {
   id: string;
   name: string;
