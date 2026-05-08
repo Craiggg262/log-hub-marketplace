@@ -17,10 +17,13 @@ const GETATEXT_API_KEY = Deno.env.get('GETATEXT_API_KEY');
 const GETATEXT_BASE_URL = 'https://getatext.com/api/v1';
 const LOGGSPLUG_API_KEY = Deno.env.get('LOGGSPLUG_API_KEY');
 const LOGGSPLUG_BASE_URL = 'https://loggsplug.online/api/reseller';
+const NO1LOGS_API_KEY = Deno.env.get('NO1LOGS_API_KEY');
+const NO1LOGS_BASE_URL = 'https://www.no1logs.com/api/v1';
 
 const SMS_MARKUP = 2;
 const USD_TO_NAIRA = 1600;
 const LOGS_MARKUP = 1.5;
+const LITE_PRICE_MULTIPLIER = 5010; // matches no1logs-api markup
 
 const nairaPrice = (usd: number) =>
   parseFloat((usd * SMS_MARKUP * USD_TO_NAIRA).toFixed(2));
