@@ -159,14 +159,22 @@ const Resellers: React.FC = () => {
       {/* Docs */}
       <Card>
         <CardHeader>
-          <CardTitle>API Documentation</CardTitle>
-          <CardDescription>All requests require the <code>x-api-key</code> header. Base URL:</CardDescription>
+          <div className="flex items-start justify-between gap-2 flex-wrap">
+            <div>
+              <CardTitle>API Documentation</CardTitle>
+              <CardDescription>All requests require the <code>x-api-key</code> header. Base URL:</CardDescription>
+            </div>
+            <Button variant="outline" size="sm" onClick={() => downloadDocs(BASE_URL)}>
+              <Download className="h-4 w-4 mr-1" /> Download Docs
+            </Button>
+          </div>
         </CardHeader>
         <CardContent className="space-y-6 text-sm">
           <div className="bg-muted/50 rounded p-3 font-mono text-xs break-all flex items-center gap-2">
             <span className="flex-1">{BASE_URL}</span>
             <Button size="icon" variant="ghost" onClick={() => copy(BASE_URL)}><Copy className="h-4 w-4" /></Button>
           </div>
+
 
           <Section title="Check Wallet Balance" method="GET" path="/balance" base={BASE_URL} copy={copy}
             example={`curl -X GET "${BASE_URL}/balance" \\
