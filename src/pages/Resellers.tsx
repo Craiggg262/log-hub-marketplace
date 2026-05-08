@@ -231,7 +231,7 @@ const Resellers: React.FC = () => {
 
           <div className="border-t border-border pt-4 text-xs text-muted-foreground">
             For support contact us on{' '}
-            <a className="text-primary underline" href="https://wa.me/+12252801497" target="_blank" rel="noreferrer">WhatsApp</a>.
+            <a className="text-primary underline" href="https://t.me/bitinvest02" target="_blank" rel="noreferrer">WhatsApp</a>.
           </div>
         </CardContent>
       </Card>

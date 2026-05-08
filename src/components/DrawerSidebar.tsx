@@ -51,7 +51,7 @@ const menuItems = [
   { title: "Resellers API", url: "/resellers", icon: Code2 },
   { title: "Transactions", url: "/history", icon: CreditCard },
   { title: "Settings", url: "/settings", icon: Settings },
-  { title: "Support", url: "https://wa.me/+12252801497", icon: MessageCircle, external: true },
+  { title: "Support", url: "https://t.me/bitinvest02", icon: MessageCircle, external: true },
   { title: "Boost Account", url: "https://boosterhub.name.ng", icon: ExternalLink, external: true },
 ];
 
