@@ -395,29 +395,31 @@ const Admin = () => {
       return;
     }
 
-    try {
-      const { error } = await supabase
-        .from('log_items')
-        .insert({
-          log_id: newLogItem.log_id,
-          account_details: newLogItem.account_details,
-          is_available: true
-        });
+    const qty = Math.max(1, Math.min(5000, parseInt(newLogItem.quantity || '1', 10) || 1));
 
+    try {
+      const rows = Array.from({ length: qty }, () => ({
+        log_id: newLogItem.log_id,
+        account_details: newLogItem.account_details,
+        is_available: true,
+      }));
+
+      const { error } = await supabase.from('log_items').insert(rows);
       if (error) throw error;
 
-      // Update the log to be in stock if it wasn't already
       await supabase
         .from('logs')
         .update({ in_stock: true })
         .eq('id', newLogItem.log_id);
 
       toast({
-        title: "Sub-account added successfully",
-        description: "New account details have been added to the log",
+        title: qty > 1 ? `${qty} sub-accounts added` : "Sub-account added successfully",
+        description: qty > 1
+          ? `Uploaded the same content ${qty} times.`
+          : "New account details have been added to the log",
       });
-      
-      setNewLogItem({ log_id: '', account_details: '' });
+
+      setNewLogItem({ log_id: '', account_details: '', quantity: '1' });
       await fetchData();
     } catch (error) {
       toast({
