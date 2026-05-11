@@ -252,7 +252,7 @@ serve(async (req) => {
         success: true,
         data: {
           order_id: String(id),
-          phone_number: r.number || null,
+          phone_number: r.number ? formatUsNumber(r.number) : null,
           code: r.code || r.sms_code || null,
           full_sms: r.full_sms || null,
           status: r.status || (r.code ? 'completed' : 'waiting'),
