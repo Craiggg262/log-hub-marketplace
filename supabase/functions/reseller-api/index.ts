@@ -28,6 +28,18 @@ const LITE_PRICE_MULTIPLIER = 5010; // matches no1logs-api markup
 const nairaPrice = (usd: number) =>
   parseFloat((usd * SMS_MARKUP * USD_TO_NAIRA).toFixed(2));
 
+// All numbers are US — ensure they always start with +1
+function formatUsNumber(raw: unknown): string {
+  if (raw === null || raw === undefined) return 'waiting';
+  const s = String(raw).trim();
+  if (!s || s === 'waiting') return 'waiting';
+  if (s.startsWith('+')) return s;
+  const digits = s.replace(/\D/g, '');
+  if (!digits) return 'waiting';
+  if (digits.startsWith('1')) return `+${digits}`;
+  return `+1${digits}`;
+}
+
 async function getatext(path: string, init?: RequestInit) {
   const res = await fetch(`${GETATEXT_BASE_URL}${path}`, {
     ...init,
@@ -179,7 +191,7 @@ serve(async (req) => {
 
       const rental = rent.data;
       const rentalId = String(rental.id);
-      const number = String(rental.number || 'waiting');
+      const number = formatUsNumber(rental.number);
       const serviceName = rental.service_name || match.service_name || service_id;
 
       await admin.from('profiles').update({
@@ -240,7 +252,7 @@ serve(async (req) => {
         success: true,
         data: {
           order_id: String(id),
-          phone_number: r.number || null,
+          phone_number: r.number ? formatUsNumber(r.number) : null,
           code: r.code || r.sms_code || null,
           full_sms: r.full_sms || null,
           status: r.status || (r.code ? 'completed' : 'waiting'),
