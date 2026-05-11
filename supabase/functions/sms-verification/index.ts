@@ -25,6 +25,18 @@ function nairaDisplay(amount: number) {
   return `₦${amount.toLocaleString('en-NG', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 }
 
+// All numbers are US — ensure they always start with +1
+function formatUsNumber(raw: string | null | undefined): string {
+  if (!raw) return 'waiting';
+  const s = String(raw).trim();
+  if (!s || s === 'waiting') return 'waiting';
+  if (s.startsWith('+')) return s;
+  const digits = s.replace(/\D/g, '');
+  if (!digits) return 'waiting';
+  if (digits.startsWith('1')) return `+${digits}`;
+  return `+1${digits}`;
+}
+
 async function getatext(path: string, init?: RequestInit) {
   const headers: Record<string, string> = {
     'Auth': GETATEXT_API_KEY ?? '',
