@@ -78,9 +78,10 @@ const OrderDetails = () => {
       if (item.order_log_items && item.order_log_items.length > 0) {
         content += `ACCOUNT DETAILS:\n`;
         item.order_log_items.forEach((orderLogItem, accountIndex) => {
-          if (orderLogItem && orderLogItem.log_items && orderLogItem.log_items.account_details) {
+          const details = orderLogItem?.log_items?.account_details ?? orderLogItem?.account_details_snapshot;
+          if (details) {
             content += `Account ${accountIndex + 1}:\n`;
-            content += `${orderLogItem.log_items.account_details}\n\n`;
+            content += `${details}\n\n`;
           }
         });
       }
@@ -343,7 +344,7 @@ const OrderDetails = () => {
                                     <div className="space-y-3">
                                       <h4 className="font-medium text-success">Account Details:</h4>
                                       {item.order_log_items.map((orderLogItem, accountIndex) => {
-                                        const accountDetails = orderLogItem?.log_items?.account_details;
+                                        const accountDetails = orderLogItem?.log_items?.account_details ?? orderLogItem?.account_details_snapshot;
                                         
                                         if (!accountDetails) {
                                           return (
@@ -372,9 +373,11 @@ const OrderDetails = () => {
                                             <pre className="text-sm whitespace-pre-wrap break-all bg-background p-3 rounded border overflow-hidden">
                                               {accountDetails}
                                             </pre>
-                                            <p className="text-xs text-muted-foreground mt-2">
-                                              Added: {new Date(orderLogItem.log_items.created_at).toLocaleDateString()}
-                                            </p>
+                                            {orderLogItem.log_items?.created_at && (
+                                              <p className="text-xs text-muted-foreground mt-2">
+                                                Added: {new Date(orderLogItem.log_items.created_at).toLocaleDateString()}
+                                              </p>
+                                            )}
                                           </div>
                                         );
                                       })}

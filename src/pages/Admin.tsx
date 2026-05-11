@@ -83,7 +83,7 @@ const Admin = () => {
   });
   const [editingLog, setEditingLog] = useState<LogData | null>(null);
   const [fundUser, setFundUser] = useState({ userId: '', amount: '' });
-  const [newLogItem, setNewLogItem] = useState({ log_id: '', account_details: '' });
+  const [newLogItem, setNewLogItem] = useState({ log_id: '', account_details: '', quantity: '1' });
   const [categories, setCategories] = useState<any[]>([]);
   const [selectedLogForItems, setSelectedLogForItems] = useState<string | null>(null);
   const [withdrawalRequests, setWithdrawalRequests] = useState<WithdrawalRequest[]>([]);
@@ -395,29 +395,31 @@ const Admin = () => {
       return;
     }
 
-    try {
-      const { error } = await supabase
-        .from('log_items')
-        .insert({
-          log_id: newLogItem.log_id,
-          account_details: newLogItem.account_details,
-          is_available: true
-        });
+    const qty = Math.max(1, Math.min(5000, parseInt(newLogItem.quantity || '1', 10) || 1));
 
+    try {
+      const rows = Array.from({ length: qty }, () => ({
+        log_id: newLogItem.log_id,
+        account_details: newLogItem.account_details,
+        is_available: true,
+      }));
+
+      const { error } = await supabase.from('log_items').insert(rows);
       if (error) throw error;
 
-      // Update the log to be in stock if it wasn't already
       await supabase
         .from('logs')
         .update({ in_stock: true })
         .eq('id', newLogItem.log_id);
 
       toast({
-        title: "Sub-account added successfully",
-        description: "New account details have been added to the log",
+        title: qty > 1 ? `${qty} sub-accounts added` : "Sub-account added successfully",
+        description: qty > 1
+          ? `Uploaded the same content ${qty} times.`
+          : "New account details have been added to the log",
       });
-      
-      setNewLogItem({ log_id: '', account_details: '' });
+
+      setNewLogItem({ log_id: '', account_details: '', quantity: '1' });
       await fetchData();
     } catch (error) {
       toast({
@@ -954,14 +956,32 @@ const Admin = () => {
                       id="accountDetails"
                       value={newLogItem.account_details}
                       onChange={(e) => setNewLogItem({...newLogItem, account_details: e.target.value})}
-                      placeholder="Username: example@email.com&#10;Password: password123&#10;Additional info: Premium account, expires 2024-12-31"
+                      placeholder="Username: example@email.com&#10;Password: password123&#10;Or paste a single link e.g. https://2fa.live"
                       required
                       rows={4}
                     />
                   </div>
 
+                  <div className="space-y-2">
+                    <Label htmlFor="bulkQty">Quantity (bulk upload)</Label>
+                    <Input
+                      id="bulkQty"
+                      type="number"
+                      min={1}
+                      max={5000}
+                      value={newLogItem.quantity}
+                      onChange={(e) => setNewLogItem({ ...newLogItem, quantity: e.target.value })}
+                      placeholder="e.g. 500"
+                    />
+                    <p className="text-xs text-muted-foreground">
+                      Uploads the same content above this many times. Use 1 for a single account.
+                    </p>
+                  </div>
+
                   <Button type="submit" className="w-full">
-                    Add Sub-Account
+                    {parseInt(newLogItem.quantity || '1', 10) > 1
+                      ? `Bulk Upload ${parseInt(newLogItem.quantity, 10)} Copies`
+                      : 'Add Sub-Account'}
                   </Button>
                 </form>
               </CardContent>
