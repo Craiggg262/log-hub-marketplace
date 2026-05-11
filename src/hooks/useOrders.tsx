@@ -24,11 +24,12 @@ export interface Order {
     };
     order_log_items: {
       id: string;
+      account_details_snapshot: string | null;
       log_items: {
         id: string;
         account_details: string;
         created_at: string;
-      };
+      } | null;
     }[];
   }[];
 }
