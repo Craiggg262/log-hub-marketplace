@@ -200,7 +200,7 @@ serve(async (req) => {
 
       const rental = rent.json;
       const rentalId = String(rental.id);
-      const number = String(rental.number || 'waiting');
+      const number = formatUsNumber(rental.number);
       const serviceName = rental.service_name || match.service_name || service_id;
 
       // Deduct wallet
