@@ -78,9 +78,10 @@ const OrderDetails = () => {
       if (item.order_log_items && item.order_log_items.length > 0) {
         content += `ACCOUNT DETAILS:\n`;
         item.order_log_items.forEach((orderLogItem, accountIndex) => {
-          if (orderLogItem && orderLogItem.log_items && orderLogItem.log_items.account_details) {
+          const details = orderLogItem?.log_items?.account_details ?? orderLogItem?.account_details_snapshot;
+          if (details) {
             content += `Account ${accountIndex + 1}:\n`;
-            content += `${orderLogItem.log_items.account_details}\n\n`;
+            content += `${details}\n\n`;
           }
         });
       }
