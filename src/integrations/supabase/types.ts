@@ -232,18 +232,21 @@ export type Database = {
       }
       order_log_items: {
         Row: {
+          account_details_snapshot: string | null
           created_at: string
           id: string
           log_item_id: string
           order_item_id: string
         }
         Insert: {
+          account_details_snapshot?: string | null
           created_at?: string
           id?: string
           log_item_id: string
           order_item_id: string
         }
         Update: {
+          account_details_snapshot?: string | null
           created_at?: string
           id?: string
           log_item_id?: string
