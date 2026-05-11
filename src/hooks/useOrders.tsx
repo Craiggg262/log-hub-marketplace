@@ -63,6 +63,7 @@ export function useOrders() {
             ),
             order_log_items (
               id,
+              account_details_snapshot,
               log_items (
                 id,
                 account_details,
