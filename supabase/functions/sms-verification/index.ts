@@ -272,7 +272,7 @@ serve(async (req) => {
         });
       }
 
-      const number = json.number ? String(json.number) : 'waiting';
+      const number = json.number ? formatUsNumber(json.number) : 'waiting';
 
       // Robust code extraction: API may return code in different shapes
       let code: string | null = null;
