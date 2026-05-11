@@ -83,7 +83,7 @@ const Admin = () => {
   });
   const [editingLog, setEditingLog] = useState<LogData | null>(null);
   const [fundUser, setFundUser] = useState({ userId: '', amount: '' });
-  const [newLogItem, setNewLogItem] = useState({ log_id: '', account_details: '' });
+  const [newLogItem, setNewLogItem] = useState({ log_id: '', account_details: '', quantity: '1' });
   const [categories, setCategories] = useState<any[]>([]);
   const [selectedLogForItems, setSelectedLogForItems] = useState<string | null>(null);
   const [withdrawalRequests, setWithdrawalRequests] = useState<WithdrawalRequest[]>([]);
