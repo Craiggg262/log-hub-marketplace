@@ -103,6 +103,7 @@ const Admin = () => {
   useEffect(() => {
     if (isAuthenticated && isAdmin) {
       fetchData();
+      fetchBroadcasts();
     }
   }, [isAuthenticated, isAdmin]);
 
@@ -854,12 +855,14 @@ const Admin = () => {
         </div>
 
         <Tabs defaultValue="logs" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-6">
+          <TabsList className="grid w-full grid-cols-8">
             <TabsTrigger value="logs">Logs</TabsTrigger>
             <TabsTrigger value="sub-accounts">Sub-Accounts</TabsTrigger>
             <TabsTrigger value="users">Users</TabsTrigger>
             <TabsTrigger value="balances">Balances</TabsTrigger>
             <TabsTrigger value="withdrawals">Withdrawals</TabsTrigger>
+            <TabsTrigger value="orders">Orders</TabsTrigger>
+            <TabsTrigger value="broadcasts">Broadcasts</TabsTrigger>
             <TabsTrigger value="settings">Settings</TabsTrigger>
           </TabsList>
 
@@ -913,18 +916,22 @@ const Admin = () => {
                   {!editingLog && (
                     <div className="space-y-2">
                       <Label htmlFor="category">Category</Label>
-                      <Select value={newLog.category_id} onValueChange={(value) => setNewLog({...newLog, category_id: value})}>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Select category" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {categories.map((category) => (
-                            <SelectItem key={category.id} value={category.id}>
-                              {category.name}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
+                      <Input
+                        id="category"
+                        list="admin-category-list"
+                        value={newLog.category_name}
+                        onChange={(e) => setNewLog({ ...newLog, category_name: e.target.value })}
+                        placeholder="Type any category (e.g., Facebook, Crypto, Custom Bundle)"
+                        required
+                      />
+                      <datalist id="admin-category-list">
+                        {categories.map((c) => (
+                          <option key={c.id} value={c.name} />
+                        ))}
+                      </datalist>
+                      <p className="text-xs text-muted-foreground">
+                        Pick an existing category or type a new one — it'll be created automatically.
+                      </p>
                     </div>
                   )}
 
