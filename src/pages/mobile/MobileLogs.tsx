@@ -141,33 +141,52 @@ const MobileLogs = () => {
             </div>
           </GlassCard>
         ) : (
-          <div className="space-y-3">
-            {filteredProducts.map((product) => (
-              <GlassCard
-                key={`${server}-${product.id}`}
-                variant="interactive"
-                onClick={() => setBuyProduct(product)}
-              >
-                <div className="p-4 flex items-center gap-4">
-                  <div className="w-12 h-12 rounded-xl bg-card/80 flex items-center justify-center flex-shrink-0">
-                    <SocialIcon platform={product.platform} size={28} />
+          <div className="space-y-6">
+            {Object.entries(
+              filteredProducts.reduce((acc, p) => {
+                const key = p.category || 'Other';
+                (acc[key] = acc[key] || []).push(p);
+                return acc;
+              }, {} as Record<string, NormalizedProduct[]>)
+            )
+              .sort(([a], [b]) => a.localeCompare(b))
+              .map(([category, items]) => (
+              <div key={category} className="space-y-3">
+                <div className="flex items-center justify-between px-1">
+                  <div className="flex items-center gap-2">
+                    <SocialIcon platform={category} size={20} />
+                    <h2 className="font-bold text-base">{category}</h2>
                   </div>
-                  <div className="flex-1 min-w-0">
-                    <h3 className="font-semibold text-sm line-clamp-2">{product.name}</h3>
-                    <div className="flex items-center gap-2 mt-1">
-                      <Badge variant="secondary" className="text-[10px] px-1.5 py-0">
-                        {formatPrice(product.price)}
-                      </Badge>
-                      <Badge variant="outline" className="text-[10px] px-1.5 py-0 border-border/50">
-                        {product.inStock} pcs
-                      </Badge>
-                    </div>
-                  </div>
-                  <button className="w-11 h-11 rounded-full gradient-primary flex items-center justify-center flex-shrink-0">
-                    <ShoppingCart className="h-5 w-5 text-primary-foreground" />
-                  </button>
+                  <Badge variant="outline" className="text-[10px] border-border/50">{items.length}</Badge>
                 </div>
-              </GlassCard>
+                {items.map((product) => (
+                  <GlassCard
+                    key={`${server}-${product.id}`}
+                    variant="interactive"
+                    onClick={() => setBuyProduct(product)}
+                  >
+                    <div className="p-4 flex items-center gap-4">
+                      <div className="w-12 h-12 rounded-xl bg-card/80 flex items-center justify-center flex-shrink-0">
+                        <SocialIcon platform={product.platform} size={28} />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <h3 className="font-semibold text-sm line-clamp-2">{product.name}</h3>
+                        <div className="flex items-center gap-2 mt-1">
+                          <Badge variant="secondary" className="text-[10px] px-1.5 py-0">
+                            {formatPrice(product.price)}
+                          </Badge>
+                          <Badge variant="outline" className="text-[10px] px-1.5 py-0 border-border/50">
+                            {product.inStock} pcs
+                          </Badge>
+                        </div>
+                      </div>
+                      <button className="w-11 h-11 rounded-full gradient-primary flex items-center justify-center flex-shrink-0">
+                        <ShoppingCart className="h-5 w-5 text-primary-foreground" />
+                      </button>
+                    </div>
+                  </GlassCard>
+                ))}
+              </div>
             ))}
           </div>
         )}

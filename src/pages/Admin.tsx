@@ -79,7 +79,7 @@ const Admin = () => {
     title: '',
     description: '',
     price: '',
-    category_id: ''
+    category_name: ''
   });
   const [editingLog, setEditingLog] = useState<LogData | null>(null);
   const [fundUser, setFundUser] = useState({ userId: '', amount: '' });
@@ -88,6 +88,11 @@ const Admin = () => {
   const [selectedLogForItems, setSelectedLogForItems] = useState<string | null>(null);
   const [withdrawalRequests, setWithdrawalRequests] = useState<WithdrawalRequest[]>([]);
   const [userSearch, setUserSearch] = useState('');
+  const [broadcasts, setBroadcasts] = useState<any[]>([]);
+  const [newBroadcast, setNewBroadcast] = useState({ title: '', message: '' });
+  const [orderSearchId, setOrderSearchId] = useState('');
+  const [orderSearchResult, setOrderSearchResult] = useState<any | null>(null);
+  const [orderSearchLoading, setOrderSearchLoading] = useState(false);
   const { toast } = useToast();
 
   // Check authentication and admin status on mount
@@ -98,6 +103,7 @@ const Admin = () => {
   useEffect(() => {
     if (isAuthenticated && isAdmin) {
       fetchData();
+      fetchBroadcasts();
     }
   }, [isAuthenticated, isAdmin]);
 
@@ -285,25 +291,40 @@ const Admin = () => {
 
   const handleAddLog = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!newLog.title || !newLog.description || !newLog.price || !newLog.category_id) {
+    if (!newLog.title || !newLog.description || !newLog.price || !newLog.category_name.trim()) {
       toast({
         title: "Missing fields",
-        description: "Please fill in all fields",
+        description: "Please fill in all fields including category",
         variant: "destructive",
       });
       return;
     }
 
     try {
+      // Find or create category by name (case-insensitive)
+      const trimmedName = newLog.category_name.trim();
+      let category = categories.find(
+        (c) => (c.name || '').toLowerCase() === trimmedName.toLowerCase()
+      );
+      if (!category) {
+        const { data: created, error: catErr } = await supabase
+          .from('categories')
+          .insert({ name: trimmedName, icon: 'tag', color: '#3B82F6' })
+          .select()
+          .single();
+        if (catErr) throw catErr;
+        category = created;
+      }
+
       const { error } = await supabase
         .from('logs')
         .insert({
           title: newLog.title,
           description: newLog.description,
           price: parseFloat(newLog.price),
-          stock: 0, // Always 0 since we use log_items now
-          category_id: newLog.category_id,
-          in_stock: false, // Will be true when log_items are added
+          stock: 0,
+          category_id: category.id,
+          in_stock: false,
           image: `https://ui-avatars.com/api/?name=${encodeURIComponent(newLog.title)}&background=3b82f6&color=fff`
         });
 
@@ -314,14 +335,90 @@ const Admin = () => {
         description: `${newLog.title} has been added to the marketplace`,
       });
       
-      setNewLog({ title: '', description: '', price: '', category_id: '' });
+      setNewLog({ title: '', description: '', price: '', category_name: '' });
       await fetchData();
     } catch (error) {
       toast({
         title: "Error",
-        description: "Failed to add log",
+        description: error instanceof Error ? error.message : "Failed to add log",
         variant: "destructive",
       });
+    }
+  };
+
+  // Broadcasts
+  const fetchBroadcasts = async () => {
+    const { data } = await supabase
+      .from('broadcast_notifications')
+      .select('*')
+      .order('created_at', { ascending: false });
+    setBroadcasts(data || []);
+  };
+
+  const handleAddBroadcast = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newBroadcast.title.trim() || !newBroadcast.message.trim()) {
+      toast({ title: 'Missing fields', description: 'Title and message required', variant: 'destructive' });
+      return;
+    }
+    const { error } = await supabase
+      .from('broadcast_notifications')
+      .insert({ title: newBroadcast.title.trim(), message: newBroadcast.message.trim(), is_active: true });
+    if (error) {
+      toast({ title: 'Error', description: error.message, variant: 'destructive' });
+      return;
+    }
+    toast({ title: 'Broadcast sent', description: 'All users will see it on next login.' });
+    setNewBroadcast({ title: '', message: '' });
+    fetchBroadcasts();
+  };
+
+  const handleToggleBroadcast = async (id: string, is_active: boolean) => {
+    await supabase.from('broadcast_notifications').update({ is_active: !is_active }).eq('id', id);
+    fetchBroadcasts();
+  };
+
+  const handleDeleteBroadcast = async (id: string) => {
+    if (!confirm('Delete this broadcast?')) return;
+    await supabase.from('broadcast_notifications').delete().eq('id', id);
+    fetchBroadcasts();
+  };
+
+  // Order lookup
+  const handleOrderSearch = async (e: React.FormEvent) => {
+    e.preventDefault();
+    const q = orderSearchId.trim();
+    if (!q) return;
+    setOrderSearchLoading(true);
+    setOrderSearchResult(null);
+    try {
+      // Try lite (orders) first
+      const { data: lite } = await supabase
+        .from('orders')
+        .select(`*, profiles:user_id (email, full_name), order_items (id, quantity, price_per_item, logs (title), order_log_items (id, account_details_snapshot, log_items (account_details)))`)
+        .or(`id.eq.${q.includes('-') ? q : '00000000-0000-0000-0000-000000000000'},id.ilike.${q}%`)
+        .limit(1)
+        .maybeSingle();
+      if (lite) {
+        setOrderSearchResult({ type: 'lite', order: lite });
+        return;
+      }
+      // Universal logs
+      const { data: uni } = await supabase
+        .from('universal_logs_orders')
+        .select(`*, profiles:user_id (email, full_name)`)
+        .ilike('id', `${q}%`)
+        .limit(1)
+        .maybeSingle();
+      if (uni) {
+        setOrderSearchResult({ type: 'universal', order: uni });
+        return;
+      }
+      toast({ title: 'No order found', description: `No order matches "${q}"`, variant: 'destructive' });
+    } catch (err) {
+      toast({ title: 'Error', description: err instanceof Error ? err.message : 'Search failed', variant: 'destructive' });
+    } finally {
+      setOrderSearchLoading(false);
     }
   };
 
@@ -758,12 +855,14 @@ const Admin = () => {
         </div>
 
         <Tabs defaultValue="logs" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-6">
+          <TabsList className="grid w-full grid-cols-8">
             <TabsTrigger value="logs">Logs</TabsTrigger>
             <TabsTrigger value="sub-accounts">Sub-Accounts</TabsTrigger>
             <TabsTrigger value="users">Users</TabsTrigger>
             <TabsTrigger value="balances">Balances</TabsTrigger>
             <TabsTrigger value="withdrawals">Withdrawals</TabsTrigger>
+            <TabsTrigger value="orders">Orders</TabsTrigger>
+            <TabsTrigger value="broadcasts">Broadcasts</TabsTrigger>
             <TabsTrigger value="settings">Settings</TabsTrigger>
           </TabsList>
 
@@ -817,18 +916,22 @@ const Admin = () => {
                   {!editingLog && (
                     <div className="space-y-2">
                       <Label htmlFor="category">Category</Label>
-                      <Select value={newLog.category_id} onValueChange={(value) => setNewLog({...newLog, category_id: value})}>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Select category" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {categories.map((category) => (
-                            <SelectItem key={category.id} value={category.id}>
-                              {category.name}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
+                      <Input
+                        id="category"
+                        list="admin-category-list"
+                        value={newLog.category_name}
+                        onChange={(e) => setNewLog({ ...newLog, category_name: e.target.value })}
+                        placeholder="Type any category (e.g., Facebook, Crypto, Custom Bundle)"
+                        required
+                      />
+                      <datalist id="admin-category-list">
+                        {categories.map((c) => (
+                          <option key={c.id} value={c.name} />
+                        ))}
+                      </datalist>
+                      <p className="text-xs text-muted-foreground">
+                        Pick an existing category or type a new one — it'll be created automatically.
+                      </p>
                     </div>
                   )}
 
@@ -1161,6 +1264,169 @@ const Admin = () => {
 
           <TabsContent value="balances">
             <AdminBalanceManagement profiles={profiles} onRefresh={fetchData} />
+          </TabsContent>
+
+          <TabsContent value="orders" className="space-y-6">
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Eye className="h-5 w-5" /> Lookup Order
+                </CardTitle>
+                <CardDescription>Paste an Order ID (or its first 8 characters) to see what the user bought.</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <form onSubmit={handleOrderSearch} className="flex gap-2 mb-4">
+                  <Input
+                    placeholder="e.g. 44be2d0c"
+                    value={orderSearchId}
+                    onChange={(e) => setOrderSearchId(e.target.value)}
+                  />
+                  <Button type="submit" disabled={orderSearchLoading}>
+                    {orderSearchLoading ? 'Searching…' : 'Search'}
+                  </Button>
+                </form>
+
+                {orderSearchResult && orderSearchResult.type === 'lite' && (
+                  <div className="space-y-3 border rounded-lg p-4">
+                    <div className="flex flex-wrap items-center gap-2">
+                      <Badge variant="outline" className="font-mono">#{orderSearchResult.order.id.slice(0, 8)}</Badge>
+                      <Badge>{orderSearchResult.order.status}</Badge>
+                      <span className="text-sm text-muted-foreground">
+                        {new Date(orderSearchResult.order.created_at).toLocaleString()}
+                      </span>
+                    </div>
+                    <p className="text-sm">
+                      <span className="text-muted-foreground">User:</span>{' '}
+                      {orderSearchResult.order.profiles?.full_name || '—'} ({orderSearchResult.order.profiles?.email})
+                    </p>
+                    <p className="text-sm">
+                      <span className="text-muted-foreground">Total:</span>{' '}
+                      <strong>{formatPrice(Number(orderSearchResult.order.total_amount))}</strong>
+                    </p>
+                    <div className="space-y-3 pt-2">
+                      {orderSearchResult.order.order_items?.map((it: any) => (
+                        <div key={it.id} className="bg-muted/40 rounded p-3">
+                          <p className="font-medium">{it.logs?.title}</p>
+                          <p className="text-xs text-muted-foreground mb-2">
+                            Qty: {it.quantity} • {formatPrice(Number(it.price_per_item))} each
+                          </p>
+                          {it.order_log_items?.map((oli: any, i: number) => {
+                            const details = oli.log_items?.account_details ?? oli.account_details_snapshot;
+                            return (
+                              <pre key={oli.id} className="text-xs whitespace-pre-wrap break-all bg-background p-2 rounded border mt-1">
+                                Account {i + 1}: {details || '(missing)'}
+                              </pre>
+                            );
+                          })}
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {orderSearchResult && orderSearchResult.type === 'universal' && (
+                  <div className="space-y-3 border rounded-lg p-4">
+                    <div className="flex flex-wrap items-center gap-2">
+                      <Badge variant="outline" className="font-mono">#{orderSearchResult.order.id.slice(0, 8)}</Badge>
+                      <Badge>{orderSearchResult.order.status}</Badge>
+                      <Badge variant="secondary">Universal Logs</Badge>
+                      <span className="text-sm text-muted-foreground">
+                        {new Date(orderSearchResult.order.created_at).toLocaleString()}
+                      </span>
+                    </div>
+                    <p className="text-sm">
+                      <span className="text-muted-foreground">User:</span>{' '}
+                      {orderSearchResult.order.profiles?.full_name || '—'} ({orderSearchResult.order.profiles?.email})
+                    </p>
+                    <p className="text-sm">
+                      <span className="text-muted-foreground">Product:</span>{' '}
+                      <strong>{orderSearchResult.order.product_name}</strong> × {orderSearchResult.order.quantity}
+                    </p>
+                    <p className="text-sm">
+                      <span className="text-muted-foreground">Total:</span>{' '}
+                      <strong>{formatPrice(Number(orderSearchResult.order.total_amount))}</strong>
+                    </p>
+                    <pre className="text-xs whitespace-pre-wrap break-all bg-background p-2 rounded border max-h-80 overflow-auto">
+                      {JSON.stringify(orderSearchResult.order.order_response, null, 2)}
+                    </pre>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          <TabsContent value="broadcasts" className="space-y-6">
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Plus className="h-5 w-5" /> Send Broadcast Notification
+                </CardTitle>
+                <CardDescription>
+                  Posts a popup to every user the next time they log in. Each user only sees it once.
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <form onSubmit={handleAddBroadcast} className="space-y-4">
+                  <div className="space-y-2">
+                    <Label>Title</Label>
+                    <Input
+                      value={newBroadcast.title}
+                      onChange={(e) => setNewBroadcast({ ...newBroadcast, title: e.target.value })}
+                      placeholder="Site Update"
+                      required
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label>Message</Label>
+                    <Textarea
+                      value={newBroadcast.message}
+                      onChange={(e) => setNewBroadcast({ ...newBroadcast, message: e.target.value })}
+                      placeholder="We're rolling out new features..."
+                      rows={4}
+                      required
+                    />
+                  </div>
+                  <Button type="submit" className="w-full">Publish Broadcast</Button>
+                </form>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader>
+                <CardTitle>All Broadcasts</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-3">
+                  {broadcasts.length === 0 && <p className="text-sm text-muted-foreground">No broadcasts yet.</p>}
+                  {broadcasts.map((b) => (
+                    <div key={b.id} className="border rounded-lg p-3">
+                      <div className="flex items-start justify-between gap-2">
+                        <div className="flex-1">
+                          <div className="flex items-center gap-2 mb-1">
+                            <h4 className="font-medium">{b.title}</h4>
+                            <Badge variant={b.is_active ? 'default' : 'secondary'}>
+                              {b.is_active ? 'Active' : 'Inactive'}
+                            </Badge>
+                          </div>
+                          <p className="text-sm text-muted-foreground whitespace-pre-wrap">{b.message}</p>
+                          <p className="text-xs text-muted-foreground mt-2">
+                            {new Date(b.created_at).toLocaleString()}
+                          </p>
+                        </div>
+                        <div className="flex gap-2">
+                          <Button size="sm" variant="outline" onClick={() => handleToggleBroadcast(b.id, b.is_active)}>
+                            {b.is_active ? 'Deactivate' : 'Activate'}
+                          </Button>
+                          <Button size="sm" variant="outline" className="text-destructive" onClick={() => handleDeleteBroadcast(b.id)}>
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
           </TabsContent>
 
           <TabsContent value="settings">
