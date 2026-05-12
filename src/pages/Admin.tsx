@@ -79,7 +79,7 @@ const Admin = () => {
     title: '',
     description: '',
     price: '',
-    category_id: ''
+    category_name: ''
   });
   const [editingLog, setEditingLog] = useState<LogData | null>(null);
   const [fundUser, setFundUser] = useState({ userId: '', amount: '' });
@@ -88,6 +88,11 @@ const Admin = () => {
   const [selectedLogForItems, setSelectedLogForItems] = useState<string | null>(null);
   const [withdrawalRequests, setWithdrawalRequests] = useState<WithdrawalRequest[]>([]);
   const [userSearch, setUserSearch] = useState('');
+  const [broadcasts, setBroadcasts] = useState<any[]>([]);
+  const [newBroadcast, setNewBroadcast] = useState({ title: '', message: '' });
+  const [orderSearchId, setOrderSearchId] = useState('');
+  const [orderSearchResult, setOrderSearchResult] = useState<any | null>(null);
+  const [orderSearchLoading, setOrderSearchLoading] = useState(false);
   const { toast } = useToast();
 
   // Check authentication and admin status on mount
@@ -285,25 +290,40 @@ const Admin = () => {
 
   const handleAddLog = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!newLog.title || !newLog.description || !newLog.price || !newLog.category_id) {
+    if (!newLog.title || !newLog.description || !newLog.price || !newLog.category_name.trim()) {
       toast({
         title: "Missing fields",
-        description: "Please fill in all fields",
+        description: "Please fill in all fields including category",
         variant: "destructive",
       });
       return;
     }
 
     try {
+      // Find or create category by name (case-insensitive)
+      const trimmedName = newLog.category_name.trim();
+      let category = categories.find(
+        (c) => (c.name || '').toLowerCase() === trimmedName.toLowerCase()
+      );
+      if (!category) {
+        const { data: created, error: catErr } = await supabase
+          .from('categories')
+          .insert({ name: trimmedName, icon: 'tag', color: '#3B82F6' })
+          .select()
+          .single();
+        if (catErr) throw catErr;
+        category = created;
+      }
+
       const { error } = await supabase
         .from('logs')
         .insert({
           title: newLog.title,
           description: newLog.description,
           price: parseFloat(newLog.price),
-          stock: 0, // Always 0 since we use log_items now
-          category_id: newLog.category_id,
-          in_stock: false, // Will be true when log_items are added
+          stock: 0,
+          category_id: category.id,
+          in_stock: false,
           image: `https://ui-avatars.com/api/?name=${encodeURIComponent(newLog.title)}&background=3b82f6&color=fff`
         });
 
@@ -314,14 +334,90 @@ const Admin = () => {
         description: `${newLog.title} has been added to the marketplace`,
       });
       
-      setNewLog({ title: '', description: '', price: '', category_id: '' });
+      setNewLog({ title: '', description: '', price: '', category_name: '' });
       await fetchData();
     } catch (error) {
       toast({
         title: "Error",
-        description: "Failed to add log",
+        description: error instanceof Error ? error.message : "Failed to add log",
         variant: "destructive",
       });
+    }
+  };
+
+  // Broadcasts
+  const fetchBroadcasts = async () => {
+    const { data } = await supabase
+      .from('broadcast_notifications')
+      .select('*')
+      .order('created_at', { ascending: false });
+    setBroadcasts(data || []);
+  };
+
+  const handleAddBroadcast = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newBroadcast.title.trim() || !newBroadcast.message.trim()) {
+      toast({ title: 'Missing fields', description: 'Title and message required', variant: 'destructive' });
+      return;
+    }
+    const { error } = await supabase
+      .from('broadcast_notifications')
+      .insert({ title: newBroadcast.title.trim(), message: newBroadcast.message.trim(), is_active: true });
+    if (error) {
+      toast({ title: 'Error', description: error.message, variant: 'destructive' });
+      return;
+    }
+    toast({ title: 'Broadcast sent', description: 'All users will see it on next login.' });
+    setNewBroadcast({ title: '', message: '' });
+    fetchBroadcasts();
+  };
+
+  const handleToggleBroadcast = async (id: string, is_active: boolean) => {
+    await supabase.from('broadcast_notifications').update({ is_active: !is_active }).eq('id', id);
+    fetchBroadcasts();
+  };
+
+  const handleDeleteBroadcast = async (id: string) => {
+    if (!confirm('Delete this broadcast?')) return;
+    await supabase.from('broadcast_notifications').delete().eq('id', id);
+    fetchBroadcasts();
+  };
+
+  // Order lookup
+  const handleOrderSearch = async (e: React.FormEvent) => {
+    e.preventDefault();
+    const q = orderSearchId.trim();
+    if (!q) return;
+    setOrderSearchLoading(true);
+    setOrderSearchResult(null);
+    try {
+      // Try lite (orders) first
+      const { data: lite } = await supabase
+        .from('orders')
+        .select(`*, profiles:user_id (email, full_name), order_items (id, quantity, price_per_item, logs (title), order_log_items (id, account_details_snapshot, log_items (account_details)))`)
+        .or(`id.eq.${q.includes('-') ? q : '00000000-0000-0000-0000-000000000000'},id.ilike.${q}%`)
+        .limit(1)
+        .maybeSingle();
+      if (lite) {
+        setOrderSearchResult({ type: 'lite', order: lite });
+        return;
+      }
+      // Universal logs
+      const { data: uni } = await supabase
+        .from('universal_logs_orders')
+        .select(`*, profiles:user_id (email, full_name)`)
+        .ilike('id', `${q}%`)
+        .limit(1)
+        .maybeSingle();
+      if (uni) {
+        setOrderSearchResult({ type: 'universal', order: uni });
+        return;
+      }
+      toast({ title: 'No order found', description: `No order matches "${q}"`, variant: 'destructive' });
+    } catch (err) {
+      toast({ title: 'Error', description: err instanceof Error ? err.message : 'Search failed', variant: 'destructive' });
+    } finally {
+      setOrderSearchLoading(false);
     }
   };
 
