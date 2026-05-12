@@ -1266,7 +1266,169 @@ const Admin = () => {
             <AdminBalanceManagement profiles={profiles} onRefresh={fetchData} />
           </TabsContent>
 
-          <TabsContent value="settings">
+          <TabsContent value="orders" className="space-y-6">
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Eye className="h-5 w-5" /> Lookup Order
+                </CardTitle>
+                <CardDescription>Paste an Order ID (or its first 8 characters) to see what the user bought.</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <form onSubmit={handleOrderSearch} className="flex gap-2 mb-4">
+                  <Input
+                    placeholder="e.g. 44be2d0c"
+                    value={orderSearchId}
+                    onChange={(e) => setOrderSearchId(e.target.value)}
+                  />
+                  <Button type="submit" disabled={orderSearchLoading}>
+                    {orderSearchLoading ? 'Searching…' : 'Search'}
+                  </Button>
+                </form>
+
+                {orderSearchResult && orderSearchResult.type === 'lite' && (
+                  <div className="space-y-3 border rounded-lg p-4">
+                    <div className="flex flex-wrap items-center gap-2">
+                      <Badge variant="outline" className="font-mono">#{orderSearchResult.order.id.slice(0, 8)}</Badge>
+                      <Badge>{orderSearchResult.order.status}</Badge>
+                      <span className="text-sm text-muted-foreground">
+                        {new Date(orderSearchResult.order.created_at).toLocaleString()}
+                      </span>
+                    </div>
+                    <p className="text-sm">
+                      <span className="text-muted-foreground">User:</span>{' '}
+                      {orderSearchResult.order.profiles?.full_name || '—'} ({orderSearchResult.order.profiles?.email})
+                    </p>
+                    <p className="text-sm">
+                      <span className="text-muted-foreground">Total:</span>{' '}
+                      <strong>{formatPrice(Number(orderSearchResult.order.total_amount))}</strong>
+                    </p>
+                    <div className="space-y-3 pt-2">
+                      {orderSearchResult.order.order_items?.map((it: any) => (
+                        <div key={it.id} className="bg-muted/40 rounded p-3">
+                          <p className="font-medium">{it.logs?.title}</p>
+                          <p className="text-xs text-muted-foreground mb-2">
+                            Qty: {it.quantity} • {formatPrice(Number(it.price_per_item))} each
+                          </p>
+                          {it.order_log_items?.map((oli: any, i: number) => {
+                            const details = oli.log_items?.account_details ?? oli.account_details_snapshot;
+                            return (
+                              <pre key={oli.id} className="text-xs whitespace-pre-wrap break-all bg-background p-2 rounded border mt-1">
+                                Account {i + 1}: {details || '(missing)'}
+                              </pre>
+                            );
+                          })}
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {orderSearchResult && orderSearchResult.type === 'universal' && (
+                  <div className="space-y-3 border rounded-lg p-4">
+                    <div className="flex flex-wrap items-center gap-2">
+                      <Badge variant="outline" className="font-mono">#{orderSearchResult.order.id.slice(0, 8)}</Badge>
+                      <Badge>{orderSearchResult.order.status}</Badge>
+                      <Badge variant="secondary">Universal Logs</Badge>
+                      <span className="text-sm text-muted-foreground">
+                        {new Date(orderSearchResult.order.created_at).toLocaleString()}
+                      </span>
+                    </div>
+                    <p className="text-sm">
+                      <span className="text-muted-foreground">User:</span>{' '}
+                      {orderSearchResult.order.profiles?.full_name || '—'} ({orderSearchResult.order.profiles?.email})
+                    </p>
+                    <p className="text-sm">
+                      <span className="text-muted-foreground">Product:</span>{' '}
+                      <strong>{orderSearchResult.order.product_name}</strong> × {orderSearchResult.order.quantity}
+                    </p>
+                    <p className="text-sm">
+                      <span className="text-muted-foreground">Total:</span>{' '}
+                      <strong>{formatPrice(Number(orderSearchResult.order.total_amount))}</strong>
+                    </p>
+                    <pre className="text-xs whitespace-pre-wrap break-all bg-background p-2 rounded border max-h-80 overflow-auto">
+                      {JSON.stringify(orderSearchResult.order.order_response, null, 2)}
+                    </pre>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          <TabsContent value="broadcasts" className="space-y-6">
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Plus className="h-5 w-5" /> Send Broadcast Notification
+                </CardTitle>
+                <CardDescription>
+                  Posts a popup to every user the next time they log in. Each user only sees it once.
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <form onSubmit={handleAddBroadcast} className="space-y-4">
+                  <div className="space-y-2">
+                    <Label>Title</Label>
+                    <Input
+                      value={newBroadcast.title}
+                      onChange={(e) => setNewBroadcast({ ...newBroadcast, title: e.target.value })}
+                      placeholder="Site Update"
+                      required
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label>Message</Label>
+                    <Textarea
+                      value={newBroadcast.message}
+                      onChange={(e) => setNewBroadcast({ ...newBroadcast, message: e.target.value })}
+                      placeholder="We're rolling out new features..."
+                      rows={4}
+                      required
+                    />
+                  </div>
+                  <Button type="submit" className="w-full">Publish Broadcast</Button>
+                </form>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader>
+                <CardTitle>All Broadcasts</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-3">
+                  {broadcasts.length === 0 && <p className="text-sm text-muted-foreground">No broadcasts yet.</p>}
+                  {broadcasts.map((b) => (
+                    <div key={b.id} className="border rounded-lg p-3">
+                      <div className="flex items-start justify-between gap-2">
+                        <div className="flex-1">
+                          <div className="flex items-center gap-2 mb-1">
+                            <h4 className="font-medium">{b.title}</h4>
+                            <Badge variant={b.is_active ? 'default' : 'secondary'}>
+                              {b.is_active ? 'Active' : 'Inactive'}
+                            </Badge>
+                          </div>
+                          <p className="text-sm text-muted-foreground whitespace-pre-wrap">{b.message}</p>
+                          <p className="text-xs text-muted-foreground mt-2">
+                            {new Date(b.created_at).toLocaleString()}
+                          </p>
+                        </div>
+                        <div className="flex gap-2">
+                          <Button size="sm" variant="outline" onClick={() => handleToggleBroadcast(b.id, b.is_active)}>
+                            {b.is_active ? 'Deactivate' : 'Activate'}
+                          </Button>
+                          <Button size="sm" variant="outline" className="text-destructive" onClick={() => handleDeleteBroadcast(b.id)}>
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
+
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
