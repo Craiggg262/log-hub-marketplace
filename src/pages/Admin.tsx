@@ -1429,6 +1429,7 @@ const Admin = () => {
             </Card>
           </TabsContent>
 
+          <TabsContent value="settings">
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
