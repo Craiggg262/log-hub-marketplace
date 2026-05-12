@@ -29,6 +29,7 @@ import ReferralEarn from "./pages/ReferralEarn";
 import SmsVerification from "./pages/SmsVerification";
 import Resellers from "./pages/Resellers";
 import { CommunityPopup } from "./components/CommunityPopup";
+import BroadcastNotification from "./components/BroadcastNotification";
  
 // Mobile App Pages
 import MobileHome from "./pages/mobile/MobileHome";
@@ -183,6 +184,7 @@ function AppContent() {
         <Route path="*" element={<NotFound />} />
       </Routes>
       <CommunityPopup />
+      <BroadcastNotification />
     </BrowserRouter>
   );
 }
