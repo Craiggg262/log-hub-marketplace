@@ -44,6 +44,51 @@ export type Database = {
         }
         Relationships: []
       }
+      broadcast_notifications: {
+        Row: {
+          created_at: string
+          id: string
+          is_active: boolean
+          message: string
+          title: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          message: string
+          title: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          message?: string
+          title?: string
+        }
+        Relationships: []
+      }
+      broadcast_views: {
+        Row: {
+          broadcast_id: string
+          id: string
+          user_id: string
+          viewed_at: string
+        }
+        Insert: {
+          broadcast_id: string
+          id?: string
+          user_id: string
+          viewed_at?: string
+        }
+        Update: {
+          broadcast_id?: string
+          id?: string
+          user_id?: string
+          viewed_at?: string
+        }
+        Relationships: []
+      }
       cart_items: {
         Row: {
           created_at: string
