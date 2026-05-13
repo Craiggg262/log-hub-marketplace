@@ -155,17 +155,26 @@ const MobileLogs = () => {
                 return acc;
               }, {} as Record<string, NormalizedProduct[]>)
             )
-              .sort(([a], [b]) => a.localeCompare(b))
-              .map(([category, items]) => (
+              .sort(([, a], [, b]) => {
+                const sa = a[0]?.categorySort ?? 999;
+                const sb = b[0]?.categorySort ?? 999;
+                if (sa !== sb) return sa - sb;
+                return (a[0]?.category || '').localeCompare(b[0]?.category || '');
+              })
+              .map(([category, items]) => {
+                const sortedItems = [...items].sort(
+                  (a, b) => (a.itemSort - b.itemSort) || a.name.localeCompare(b.name)
+                );
+                return (
               <div key={category} className="space-y-3">
                 <div className="flex items-center justify-between px-1">
                   <div className="flex items-center gap-2">
                     <SocialIcon platform={category} size={20} />
                     <h2 className="font-bold text-base">{category}</h2>
                   </div>
-                  <Badge variant="outline" className="text-[10px] border-border/50">{items.length}</Badge>
+                  <Badge variant="outline" className="text-[10px] border-border/50">{sortedItems.length}</Badge>
                 </div>
-                {items.map((product) => (
+                {sortedItems.map((product) => (
                   <GlassCard
                     key={`${server}-${product.id}`}
                     variant="interactive"
