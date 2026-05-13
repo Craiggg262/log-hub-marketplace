@@ -29,6 +29,8 @@ interface NormalizedProduct {
   inStock: number;
   category: string;
   platform: string;
+  categorySort: number;
+  itemSort: number;
 }
 
 const UniversalLogs = () => {
@@ -49,6 +51,8 @@ const UniversalLogs = () => {
         inStock: p.in_stock,
         category: p.category,
         platform: detectPlatform(p.category + ' ' + p.name),
+        categorySort: 999,
+        itemSort: 999,
       }));
     } else {
       return liteData.logs.map((log) => ({
@@ -57,7 +61,9 @@ const UniversalLogs = () => {
         price: log.price,
         inStock: log.stock,
         category: log.categories?.name || 'Other',
-        platform: detectPlatform((log.categories?.name || '') + ' ' + log.title),
+        platform: log.categories?.name || 'Other',
+        categorySort: log.categories?.sort_order ?? 999,
+        itemSort: log.sort_order ?? 999,
       }));
     }
   }, [server, kingData.products, liteData.logs]);
