@@ -202,7 +202,6 @@ const MobileLogs = () => {
                   </GlassCard>
                 ))}
               </div>
-              </div>
                 );
               })}
           </div>
