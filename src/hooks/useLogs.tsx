@@ -12,6 +12,7 @@ export interface Log {
   rating: number;
   reviews: number;
   image: string;
+  sort_order: number;
   created_at: string;
   updated_at: string;
   categories?: {
@@ -19,6 +20,7 @@ export interface Log {
     name: string;
     icon: string;
     color: string;
+    sort_order: number;
   };
 }
 
@@ -27,6 +29,7 @@ export interface Category {
   name: string;
   icon: string;
   color: string;
+  sort_order: number;
 }
 
 export function useLogs() {
@@ -48,6 +51,7 @@ export function useLogs() {
             color
           )
         `)
+        .order('sort_order', { ascending: true })
         .order('created_at', { ascending: false });
 
       if (error) throw error;
@@ -77,6 +81,7 @@ export function useLogs() {
       const { data, error } = await supabase
         .from('categories')
         .select('*')
+        .order('sort_order', { ascending: true })
         .order('name');
 
       if (error) throw error;
