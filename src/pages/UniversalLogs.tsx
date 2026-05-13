@@ -29,6 +29,8 @@ interface NormalizedProduct {
   inStock: number;
   category: string;
   platform: string;
+  categorySort: number;
+  itemSort: number;
 }
 
 const UniversalLogs = () => {
@@ -49,6 +51,8 @@ const UniversalLogs = () => {
         inStock: p.in_stock,
         category: p.category,
         platform: detectPlatform(p.category + ' ' + p.name),
+        categorySort: 999,
+        itemSort: 999,
       }));
     } else {
       return liteData.logs.map((log) => ({
@@ -57,7 +61,9 @@ const UniversalLogs = () => {
         price: log.price,
         inStock: log.stock,
         category: log.categories?.name || 'Other',
-        platform: detectPlatform((log.categories?.name || '') + ' ' + log.title),
+        platform: log.categories?.name || 'Other',
+        categorySort: log.categories?.sort_order ?? 999,
+        itemSort: log.sort_order ?? 999,
       }));
     }
   }, [server, kingData.products, liteData.logs]);
@@ -77,12 +83,26 @@ const UniversalLogs = () => {
       if (!map.has(p.platform)) map.set(p.platform, []);
       map.get(p.platform)!.push(p);
     }
-    return Array.from(map.entries()).sort(([a], [b]) => a.localeCompare(b));
+    // Sort items inside each group
+    for (const arr of map.values()) {
+      arr.sort((a, b) => (a.itemSort - b.itemSort) || a.name.localeCompare(b.name));
+    }
+    return Array.from(map.entries()).sort(([, a], [, b]) => {
+      const sa = a[0]?.categorySort ?? 999;
+      const sb = b[0]?.categorySort ?? 999;
+      if (sa !== sb) return sa - sb;
+      return (a[0]?.platform || '').localeCompare(b[0]?.platform || '');
+    });
   }, [products, searchTerm, selectedPlatform]);
 
   const platforms = useMemo(() => {
-    const set = new Set(products.map((p) => p.platform));
-    return Array.from(set).sort();
+    const map = new Map<string, number>();
+    for (const p of products) {
+      if (!map.has(p.platform)) map.set(p.platform, p.categorySort);
+    }
+    return Array.from(map.entries())
+      .sort(([na, sa], [nb, sb]) => (sa - sb) || na.localeCompare(nb))
+      .map(([n]) => n);
   }, [products]);
 
   const togglePlatform = (p: string) => {

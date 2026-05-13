@@ -31,6 +31,7 @@ interface LogData {
   price: number;
   stock: number;
   in_stock: boolean;
+  category_id: string;
   categories: {
     name: string;
   } | null;
@@ -432,6 +433,7 @@ const Admin = () => {
           title: editingLog.title,
           description: editingLog.description,
           price: editingLog.price,
+          category_id: editingLog.category_id,
         })
         .eq('id', log.id);
 
@@ -913,27 +915,30 @@ const Admin = () => {
                     </div>
                   </div>
 
-                  {!editingLog && (
-                    <div className="space-y-2">
-                      <Label htmlFor="category">Category</Label>
-                      <Input
-                        id="category"
-                        list="admin-category-list"
-                        value={newLog.category_name}
-                        onChange={(e) => setNewLog({ ...newLog, category_name: e.target.value })}
-                        placeholder="Type any category (e.g., Facebook, Crypto, Custom Bundle)"
-                        required
-                      />
-                      <datalist id="admin-category-list">
-                        {categories.map((c) => (
-                          <option key={c.id} value={c.name} />
-                        ))}
-                      </datalist>
-                      <p className="text-xs text-muted-foreground">
-                        Pick an existing category or type a new one — it'll be created automatically.
-                      </p>
-                    </div>
-                  )}
+                  <div className="space-y-2">
+                    <Label htmlFor="category">Category</Label>
+                    <Select
+                      value={editingLog ? editingLog.category_id : newLog.category_name}
+                      onValueChange={(value) => editingLog
+                        ? setEditingLog({ ...editingLog, category_id: value })
+                        : setNewLog({ ...newLog, category_name: value })
+                      }
+                    >
+                      <SelectTrigger id="category">
+                        <SelectValue placeholder="Select a category" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {[...categories]
+                          .sort((a, b) => (a.sort_order ?? 999) - (b.sort_order ?? 999) || a.name.localeCompare(b.name))
+                          .map((c) => (
+                            <SelectItem key={c.id} value={editingLog ? c.id : c.name}>{c.name}</SelectItem>
+                          ))}
+                      </SelectContent>
+                    </Select>
+                    <p className="text-xs text-muted-foreground">
+                      {editingLog ? 'Change which category this log belongs to.' : 'Pick a category for this log.'}
+                    </p>
+                  </div>
 
                   <div className="space-y-2">
                     <Label htmlFor="description">Description</Label>

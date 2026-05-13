@@ -97,18 +97,29 @@ serve(async (req) => {
 
     // Apply price multiplier for product listings
     if (action === 'get_products' && data?.success && Array.isArray(data.data)) {
-      // Hidden products (case-insensitive substring match on name/category)
-      const HIDDEN_KEYWORDS = ['a to z amira', 'amira update', 'amira'];
-      const HIDDEN_CATEGORIES = ['x/twitter', 'x / twitter', 'x/ twitter', 'x /twitter', 'twitter', 'x'];
+      // ALLOWLIST mode: only return products that match approved categories or item names
+      const ALLOWED_CATEGORY_PREFIXES = [
+        'countries normal facebook',
+        'instagram',
+      ];
+      const ALLOWED_NAME_KEYWORDS = [
+        'proxy',
+        'byd update',
+        'vip pet update',
+        'horse update',
+        'new voice cloner tutorial',
+        'picture to video full tutorial',
+        'new sharp tools for editing',
+        'new tutorial full body fake video call',
+      ];
+
       data.data = data.data
         .filter((product: any) => {
-          const haystack = `${product?.name ?? ''} ${product?.category ?? ''}`.toLowerCase();
-          if (HIDDEN_KEYWORDS.some((kw) => haystack.includes(kw))) return false;
           const category = String(product?.category ?? '').toLowerCase().trim();
-          if (HIDDEN_CATEGORIES.includes(category)) return false;
-          const name = String(product?.name ?? '').toLowerCase();
-          if (name.includes('x/twitter') || name.includes('twitter')) return false;
-          return true;
+          const name = String(product?.name ?? '').toLowerCase().trim();
+          if (ALLOWED_CATEGORY_PREFIXES.some((c) => category.startsWith(c))) return true;
+          if (ALLOWED_NAME_KEYWORDS.some((kw) => name.includes(kw))) return true;
+          return false;
         })
         .map((product: any) => ({
           ...product,
