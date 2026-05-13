@@ -128,6 +128,7 @@ export type Database = {
           icon: string
           id: string
           name: string
+          sort_order: number
         }
         Insert: {
           color?: string
@@ -135,6 +136,7 @@ export type Database = {
           icon: string
           id?: string
           name: string
+          sort_order?: number
         }
         Update: {
           color?: string
@@ -142,6 +144,7 @@ export type Database = {
           icon?: string
           id?: string
           name?: string
+          sort_order?: number
         }
         Relationships: []
       }
@@ -191,6 +194,7 @@ export type Database = {
           price: number
           rating: number | null
           reviews: number | null
+          sort_order: number
           stock: number
           title: string
           updated_at: string
@@ -205,6 +209,7 @@ export type Database = {
           price: number
           rating?: number | null
           reviews?: number | null
+          sort_order?: number
           stock?: number
           title: string
           updated_at?: string
@@ -219,6 +224,7 @@ export type Database = {
           price?: number
           rating?: number | null
           reviews?: number | null
+          sort_order?: number
           stock?: number
           title?: string
           updated_at?: string
