@@ -83,12 +83,26 @@ const UniversalLogs = () => {
       if (!map.has(p.platform)) map.set(p.platform, []);
       map.get(p.platform)!.push(p);
     }
-    return Array.from(map.entries()).sort(([a], [b]) => a.localeCompare(b));
+    // Sort items inside each group
+    for (const arr of map.values()) {
+      arr.sort((a, b) => (a.itemSort - b.itemSort) || a.name.localeCompare(b.name));
+    }
+    return Array.from(map.entries()).sort(([, a], [, b]) => {
+      const sa = a[0]?.categorySort ?? 999;
+      const sb = b[0]?.categorySort ?? 999;
+      if (sa !== sb) return sa - sb;
+      return (a[0]?.platform || '').localeCompare(b[0]?.platform || '');
+    });
   }, [products, searchTerm, selectedPlatform]);
 
   const platforms = useMemo(() => {
-    const set = new Set(products.map((p) => p.platform));
-    return Array.from(set).sort();
+    const map = new Map<string, number>();
+    for (const p of products) {
+      if (!map.has(p.platform)) map.set(p.platform, p.categorySort);
+    }
+    return Array.from(map.entries())
+      .sort(([na, sa], [nb, sb]) => (sa - sb) || na.localeCompare(nb))
+      .map(([n]) => n);
   }, [products]);
 
   const togglePlatform = (p: string) => {
