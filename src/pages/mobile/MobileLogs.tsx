@@ -35,6 +35,8 @@ interface NormalizedProduct {
   inStock: number;
   category: string;
   platform: string;
+  categorySort: number;
+  itemSort: number;
 }
 
 const MobileLogs = () => {
@@ -54,6 +56,8 @@ const MobileLogs = () => {
         inStock: p.in_stock,
         category: p.category,
         platform: detectPlatform(p.category + ' ' + p.name),
+        categorySort: 999,
+        itemSort: 999,
       }));
     } else {
       return liteData.logs.map((log) => ({
@@ -63,6 +67,8 @@ const MobileLogs = () => {
         inStock: log.stock,
         category: log.categories?.name || 'Other',
         platform: detectPlatform((log.categories?.name || '') + ' ' + log.title),
+        categorySort: log.categories?.sort_order ?? 999,
+        itemSort: log.sort_order ?? 999,
       }));
     }
   }, [server, kingData.products, liteData.logs]);
