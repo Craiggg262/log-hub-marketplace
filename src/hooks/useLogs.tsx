@@ -12,7 +12,7 @@ export interface Log {
   rating: number;
   reviews: number;
   image: string;
-  sort_order: number;
+  sort_order?: number;
   created_at: string;
   updated_at: string;
   categories?: {
@@ -20,7 +20,7 @@ export interface Log {
     name: string;
     icon: string;
     color: string;
-    sort_order: number;
+    sort_order?: number;
   };
 }
 
@@ -29,7 +29,7 @@ export interface Category {
   name: string;
   icon: string;
   color: string;
-  sort_order: number;
+  sort_order?: number;
 }
 
 export function useLogs() {
