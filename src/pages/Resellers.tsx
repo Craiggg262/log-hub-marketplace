@@ -9,8 +9,7 @@ import { Badge } from '@/components/ui/badge';
 import { useToast } from '@/hooks/use-toast';
 import { Copy, Download, Eye, EyeOff, Key, Plus, Power, Trash2 } from 'lucide-react';
 
-const PROJECT_ID = (import.meta as any).env.VITE_SUPABASE_PROJECT_ID || 'ewaarsfeolhcfzenahqj';
-const BASE_URL = `https://${PROJECT_ID}.supabase.co/functions/v1/reseller-api`;
+const BASE_URL = 'https://loghubmarketplace.site/api/reseller-api';
 
 const buildDocsMarkdown = (base: string) => `# Log Hub Marketplace — Resellers API
 
