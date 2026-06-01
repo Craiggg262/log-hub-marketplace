@@ -126,7 +126,7 @@ serve(async (req) => {
     }
 
     for (let attempt = 1; attempt <= MAX_ATTEMPTS; attempt++) {
-      console.log(`Calling PaymentPoint API (attempt ${attempt}/${MAX_ATTEMPTS}) with bankCode ${BANK_CODE}`)
+      console.log(`Calling PaymentPoint API (attempt ${attempt}/${MAX_ATTEMPTS})`)
 
       const response = await fetch('https://api.paymentpoint.co/api/v1/createVirtualAccount', {
         method: 'POST',
