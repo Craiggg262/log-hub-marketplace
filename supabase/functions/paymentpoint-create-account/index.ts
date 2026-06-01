@@ -18,9 +18,9 @@ serve(async (req) => {
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
     )
 
-    const { userId, email, name, phoneNumber } = await req.json()
+    const { userId, email, name, phoneNumber, idType, idNumber } = await req.json()
     
-    console.log('Creating PaymentPoint virtual account for:', { userId, email, name, phoneNumber })
+    console.log('Creating PaymentPoint virtual account for:', { userId, email, name, phoneNumber, idType: idType || null, hasIdNumber: !!idNumber })
 
     if (!userId || !email || !name || !phoneNumber) {
       return new Response(
