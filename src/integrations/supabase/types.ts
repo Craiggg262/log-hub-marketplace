@@ -459,10 +459,13 @@ export type Database = {
         Row: {
           api_price: number
           charged_price: number
+          country: string | null
           created_at: string
           expires_at: string
           id: string
+          operator: string | null
           phone_number: string | null
+          provider: string
           refunded: boolean
           rental_id: string
           service_id: string
@@ -475,10 +478,13 @@ export type Database = {
         Insert: {
           api_price: number
           charged_price: number
+          country?: string | null
           created_at?: string
           expires_at: string
           id?: string
+          operator?: string | null
           phone_number?: string | null
+          provider?: string
           refunded?: boolean
           rental_id: string
           service_id: string
@@ -491,10 +497,13 @@ export type Database = {
         Update: {
           api_price?: number
           charged_price?: number
+          country?: string | null
           created_at?: string
           expires_at?: string
           id?: string
+          operator?: string | null
           phone_number?: string | null
+          provider?: string
           refunded?: boolean
           rental_id?: string
           service_id?: string
