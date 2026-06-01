@@ -38,6 +38,26 @@ serve(async (req) => {
       )
     }
 
+    // Validate optional ID fields (BVN/NIN must be exactly 11 digits)
+    let cleanIdNumber: string | null = null
+    let cleanIdType: 'bvn' | 'nin' | null = null
+    if (idType || idNumber) {
+      if (idType !== 'bvn' && idType !== 'nin') {
+        return new Response(
+          JSON.stringify({ error: 'idType must be either "bvn" or "nin"' }),
+          { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        )
+      }
+      cleanIdNumber = String(idNumber || '').replace(/\D/g, '')
+      if (cleanIdNumber.length !== 11) {
+        return new Response(
+          JSON.stringify({ error: 'idNumber must be exactly 11 digits' }),
+          { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        )
+      }
+      cleanIdType = idType
+    }
+
     // Check if user already has a virtual account
     const { data: existingProfile, error: profileFetchError } = await supabase
       .from('profiles')
