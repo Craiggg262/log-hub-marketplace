@@ -103,21 +103,26 @@ serve(async (req) => {
       )
     }
 
-    // PaymentPoint only honors bank code 20946 (Palmpay) for this business,
-    // but it occasionally fails to provision the reserved account on the first
-    // try. Retry the same call a few times with a short delay before giving up.
-    const BANK_CODE = '20946'
+    // PaymentPoint primary bank is Palmpay (20946). PalmPay now requires KYC (BVN/NIN)
+    // for many new accounts. We also pass 20897 as a fallback bank code per
+    // PaymentPoint's latest guidance. If idType/idNumber were provided, include
+    // them so PalmPay's KYC check passes and the account can be reserved.
+    const BANK_CODES = ['20946', '20897']
     const MAX_ATTEMPTS = 5
 
     let bankAccount: any = null
     let lastResponseData: any = null
 
-    const paymentPointData = {
+    const paymentPointData: Record<string, unknown> = {
       email: email,
       name: name,
       phoneNumber: cleanPhone,
-      bankCode: [BANK_CODE],
-      businessId: businessId
+      bankCode: BANK_CODES,
+      businessId: businessId,
+    }
+    if (cleanIdType && cleanIdNumber) {
+      paymentPointData.idType = cleanIdType
+      paymentPointData.idNumber = cleanIdNumber
     }
 
     for (let attempt = 1; attempt <= MAX_ATTEMPTS; attempt++) {
