@@ -102,9 +102,10 @@ const ProductDetailsModal: React.FC<ProductDetailsModalProps> = ({
     try {
       setResolvedProductId(id);
 
-      const { data, error } = await Promise.resolve({ data: null, error: null }) ; // no1logs removed - (('no1logs-api', {
-        body: { action: 'get_product_details', productId: id },
-      });
+      // no1logs removed — this modal is no longer reachable in the new flow.
+      const data: any = null;
+      const error: any = null;
+      void { action: 'get_product_details', productId: id };
 
       if (error) throw error;
 
