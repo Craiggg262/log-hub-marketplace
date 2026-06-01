@@ -3,7 +3,8 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { CreditCard, Copy, Check, Phone, Loader2 } from 'lucide-react';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { CreditCard, Copy, Check, Phone, Loader2, IdCard } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
@@ -16,6 +17,8 @@ interface VirtualAccount {
 
 const PaymentPointAccount: React.FC = () => {
   const [phoneNumber, setPhoneNumber] = useState('');
+  const [idType, setIdType] = useState<'bvn' | 'nin' | ''>('');
+  const [idNumber, setIdNumber] = useState('');
   const [loading, setLoading] = useState(false);
   const [checking, setChecking] = useState(true);
   const [virtualAccount, setVirtualAccount] = useState<VirtualAccount | null>(null);
@@ -32,7 +35,6 @@ const PaymentPointAccount: React.FC = () => {
       setChecking(false);
       return;
     }
-    
     if (profile.virtual_account_number) {
       setVirtualAccount({
         accountNumber: profile.virtual_account_number,
@@ -54,6 +56,15 @@ const PaymentPointAccount: React.FC = () => {
       return;
     }
 
+    if (idType && idNumber.length !== 11) {
+      toast({
+        title: "Invalid ID number",
+        description: `Your ${idType.toUpperCase()} must be exactly 11 digits.`,
+        variant: "destructive",
+      });
+      return;
+    }
+
     if (!user || !profile) {
       toast({
         title: "Authentication required",
@@ -64,18 +75,17 @@ const PaymentPointAccount: React.FC = () => {
     }
 
     setLoading(true);
-
     try {
       const { data, error } = await supabase.functions.invoke('paymentpoint-create-account', {
         body: {
           userId: user.id,
           email: profile.email,
           name: profile.full_name || profile.email.split('@')[0],
-          phoneNumber: phoneNumber
+          phoneNumber: phoneNumber,
+          ...(idType && idNumber ? { idType, idNumber } : {}),
         }
       });
 
-      // Surface friendly upstream error if the function returned a non-2xx.
       if (error) {
         let friendlyMsg = error.message || 'Unable to generate account.';
         try {
@@ -83,6 +93,7 @@ const PaymentPointAccount: React.FC = () => {
           if (ctx && typeof ctx.json === 'function') {
             const body = await ctx.json();
             if (body?.error) friendlyMsg = body.error;
+            if (body?.providerError) friendlyMsg += ` (${body.providerError})`;
           }
         } catch (_) { /* ignore */ }
         throw new Error(friendlyMsg);
@@ -97,12 +108,11 @@ const PaymentPointAccount: React.FC = () => {
       } else {
         throw new Error(data?.error || 'Failed to generate account');
       }
-
     } catch (error) {
       console.error('Error generating virtual account:', error);
       toast({
-        title: "Couldn't generate account right now",
-        description: error instanceof Error ? error.message : "Unable to generate account. Please try again or use Manual Payment.",
+        title: "Couldn't generate account",
+        description: error instanceof Error ? error.message : "Try entering your BVN or NIN below, or use Manual Payment.",
         variant: "destructive",
       });
     } finally {
@@ -113,10 +123,7 @@ const PaymentPointAccount: React.FC = () => {
   const handleCopy = (text: string) => {
     navigator.clipboard.writeText(text);
     setCopied(true);
-    toast({
-      title: "Copied!",
-      description: "Account number copied to clipboard",
-    });
+    toast({ title: "Copied!", description: "Account number copied to clipboard" });
     setTimeout(() => setCopied(false), 2000);
   };
 
@@ -152,12 +159,10 @@ const PaymentPointAccount: React.FC = () => {
                 <span className="text-sm font-medium text-muted-foreground">Bank Name:</span>
                 <span className="font-medium">{virtualAccount.bankName}</span>
               </div>
-              
               <div className="flex items-center justify-between">
                 <span className="text-sm font-medium text-muted-foreground">Account Name:</span>
                 <span className="font-medium text-right">{virtualAccount.accountName}</span>
               </div>
-              
               <div className="flex items-center justify-between">
                 <span className="text-sm font-medium text-muted-foreground">Account Number:</span>
                 <div className="flex items-center gap-2">
@@ -190,14 +195,44 @@ const PaymentPointAccount: React.FC = () => {
               <Input
                 id="phoneNumber"
                 type="tel"
-                placeholder="Enter your phone number (e.g., 08012345678)"
+                placeholder="e.g., 08012345678"
                 value={phoneNumber}
                 onChange={(e) => setPhoneNumber(e.target.value.replace(/\D/g, '').slice(0, 11))}
                 maxLength={11}
               />
-              <p className="text-xs text-muted-foreground">
-                Enter a valid Nigerian phone number to generate your account
-              </p>
+            </div>
+
+            <div className="rounded-lg border border-dashed p-3 space-y-3">
+              <div className="flex items-start gap-2">
+                <IdCard className="h-4 w-4 mt-0.5 text-primary" />
+                <div className="text-xs text-muted-foreground">
+                  <strong className="text-foreground">PalmPay KYC (optional but recommended).</strong> If you don't get an account number, add your BVN or NIN below — PalmPay now requires it for new account generation.
+                </div>
+              </div>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                <div className="space-y-1">
+                  <Label className="text-xs">ID Type</Label>
+                  <Select value={idType} onValueChange={(v) => setIdType(v as 'bvn' | 'nin')}>
+                    <SelectTrigger><SelectValue placeholder="Select" /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="bvn">BVN</SelectItem>
+                      <SelectItem value="nin">NIN</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-1">
+                  <Label className="text-xs">ID Number (11 digits)</Label>
+                  <Input
+                    type="text"
+                    inputMode="numeric"
+                    placeholder="11-digit ID"
+                    value={idNumber}
+                    onChange={(e) => setIdNumber(e.target.value.replace(/\D/g, '').slice(0, 11))}
+                    maxLength={11}
+                    disabled={!idType}
+                  />
+                </div>
+              </div>
             </div>
 
             <Button 
@@ -207,15 +242,9 @@ const PaymentPointAccount: React.FC = () => {
               disabled={loading || !phoneNumber || phoneNumber.length < 10}
             >
               {loading ? (
-                <>
-                  <Loader2 className="h-4 w-4 animate-spin" />
-                  Generating Account...
-                </>
+                <><Loader2 className="h-4 w-4 animate-spin" />Generating Account...</>
               ) : (
-                <>
-                  <CreditCard className="h-4 w-4" />
-                  Generate My Account Number
-                </>
+                <><CreditCard className="h-4 w-4" />Generate My Account Number</>
               )}
             </Button>
           </>

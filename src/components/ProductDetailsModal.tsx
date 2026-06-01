@@ -102,9 +102,10 @@ const ProductDetailsModal: React.FC<ProductDetailsModalProps> = ({
     try {
       setResolvedProductId(id);
 
-      const { data, error } = await supabase.functions.invoke('no1logs-api', {
-        body: { action: 'get_product_details', productId: id },
-      });
+      // no1logs removed — this modal is no longer reachable in the new flow.
+      const data: any = null;
+      const error: any = null;
+      void { action: 'get_product_details', productId: id };
 
       if (error) throw error;
 
@@ -189,12 +190,10 @@ const ProductDetailsModal: React.FC<ProductDetailsModalProps> = ({
 
     setOrdering(true);
     try {
-      const { data, error } = await supabase.functions.invoke('no1logs-api', {
-        body: {
-          action: 'place_order',
-          productDetailsIds: accountIds.join(','),
-        },
-      });
+      // no1logs removed — this modal is no longer reachable in the new flow.
+      const data: any = null;
+      const error: any = null;
+      void { action: 'place_order', productDetailsIds: accountIds.join(',') };
 
       if (error) throw error;
 

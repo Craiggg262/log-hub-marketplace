@@ -18,9 +18,9 @@ serve(async (req) => {
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
     )
 
-    const { userId, email, name, phoneNumber } = await req.json()
+    const { userId, email, name, phoneNumber, idType, idNumber } = await req.json()
     
-    console.log('Creating PaymentPoint virtual account for:', { userId, email, name, phoneNumber })
+    console.log('Creating PaymentPoint virtual account for:', { userId, email, name, phoneNumber, idType: idType || null, hasIdNumber: !!idNumber })
 
     if (!userId || !email || !name || !phoneNumber) {
       return new Response(
@@ -36,6 +36,26 @@ serve(async (req) => {
         JSON.stringify({ error: 'Invalid phone number format' }),
         { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       )
+    }
+
+    // Validate optional ID fields (BVN/NIN must be exactly 11 digits)
+    let cleanIdNumber: string | null = null
+    let cleanIdType: 'bvn' | 'nin' | null = null
+    if (idType || idNumber) {
+      if (idType !== 'bvn' && idType !== 'nin') {
+        return new Response(
+          JSON.stringify({ error: 'idType must be either "bvn" or "nin"' }),
+          { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        )
+      }
+      cleanIdNumber = String(idNumber || '').replace(/\D/g, '')
+      if (cleanIdNumber.length !== 11) {
+        return new Response(
+          JSON.stringify({ error: 'idNumber must be exactly 11 digits' }),
+          { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        )
+      }
+      cleanIdType = idType
     }
 
     // Check if user already has a virtual account
@@ -83,25 +103,30 @@ serve(async (req) => {
       )
     }
 
-    // PaymentPoint only honors bank code 20946 (Palmpay) for this business,
-    // but it occasionally fails to provision the reserved account on the first
-    // try. Retry the same call a few times with a short delay before giving up.
-    const BANK_CODE = '20946'
+    // PaymentPoint primary bank is Palmpay (20946). PalmPay now requires KYC (BVN/NIN)
+    // for many new accounts. We also pass 20897 as a fallback bank code per
+    // PaymentPoint's latest guidance. If idType/idNumber were provided, include
+    // them so PalmPay's KYC check passes and the account can be reserved.
+    const BANK_CODES = ['20946', '20897']
     const MAX_ATTEMPTS = 5
 
     let bankAccount: any = null
     let lastResponseData: any = null
 
-    const paymentPointData = {
+    const paymentPointData: Record<string, unknown> = {
       email: email,
       name: name,
       phoneNumber: cleanPhone,
-      bankCode: [BANK_CODE],
-      businessId: businessId
+      bankCode: BANK_CODES,
+      businessId: businessId,
+    }
+    if (cleanIdType && cleanIdNumber) {
+      paymentPointData.idType = cleanIdType
+      paymentPointData.idNumber = cleanIdNumber
     }
 
     for (let attempt = 1; attempt <= MAX_ATTEMPTS; attempt++) {
-      console.log(`Calling PaymentPoint API (attempt ${attempt}/${MAX_ATTEMPTS}) with bankCode ${BANK_CODE}`)
+      console.log(`Calling PaymentPoint API (attempt ${attempt}/${MAX_ATTEMPTS})`)
 
       const response = await fetch('https://api.paymentpoint.co/api/v1/createVirtualAccount', {
         method: 'POST',
