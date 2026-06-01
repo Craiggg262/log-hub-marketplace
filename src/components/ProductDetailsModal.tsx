@@ -190,12 +190,10 @@ const ProductDetailsModal: React.FC<ProductDetailsModalProps> = ({
 
     setOrdering(true);
     try {
-      const { data, error } = await Promise.resolve({ data: null, error: null }) ; // no1logs removed - (('no1logs-api', {
-        body: {
-          action: 'place_order',
-          productDetailsIds: accountIds.join(','),
-        },
-      });
+      // no1logs removed — this modal is no longer reachable in the new flow.
+      const data: any = null;
+      const error: any = null;
+      void { action: 'place_order', productDetailsIds: accountIds.join(',') };
 
       if (error) throw error;
 
