@@ -459,10 +459,13 @@ export type Database = {
         Row: {
           api_price: number
           charged_price: number
+          country: string | null
           created_at: string
           expires_at: string
           id: string
+          operator: string | null
           phone_number: string | null
+          provider: string
           refunded: boolean
           rental_id: string
           service_id: string
@@ -475,10 +478,13 @@ export type Database = {
         Insert: {
           api_price: number
           charged_price: number
+          country?: string | null
           created_at?: string
           expires_at: string
           id?: string
+          operator?: string | null
           phone_number?: string | null
+          provider?: string
           refunded?: boolean
           rental_id: string
           service_id: string
@@ -491,10 +497,13 @@ export type Database = {
         Update: {
           api_price?: number
           charged_price?: number
+          country?: string | null
           created_at?: string
           expires_at?: string
           id?: string
+          operator?: string | null
           phone_number?: string | null
+          provider?: string
           refunded?: boolean
           rental_id?: string
           service_id?: string
@@ -697,6 +706,15 @@ export type Database = {
           p_amount: number
           p_reason: string
           p_target_user_id: string
+        }
+        Returns: Json
+      }
+      api_create_log_order: {
+        Args: {
+          p_log_id: string
+          p_quantity: number
+          p_unit_price: number
+          p_user_id: string
         }
         Returns: Json
       }
