@@ -700,6 +700,15 @@ export type Database = {
         }
         Returns: Json
       }
+      api_create_log_order: {
+        Args: {
+          p_log_id: string
+          p_quantity: number
+          p_unit_price: number
+          p_user_id: string
+        }
+        Returns: Json
+      }
       create_order_from_cart: {
         Args: { p_cart_items: Json; p_total_amount: number; p_user_id: string }
         Returns: string
