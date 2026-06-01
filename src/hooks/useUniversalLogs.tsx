@@ -1,5 +1,4 @@
-import { useState, useEffect } from 'react';
-import { supabase } from '@/integrations/supabase/client';
+import { useState } from 'react';
 
 export interface UniversalProduct {
   id: number;
@@ -16,75 +15,16 @@ export interface UniversalCategory {
   products: UniversalProduct[];
 }
 
+// No1logs has been removed entirely. This hook is kept as a no-op stub so any
+// legacy imports continue to compile. It returns an empty catalog.
 export function useUniversalLogs() {
-  const [categories, setCategories] = useState<UniversalCategory[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-
-  const fetchProducts = async (search?: string) => {
-    try {
-      setLoading(true);
-      setError(null);
-
-      const { data, error } = await supabase.functions.invoke('no1logs-api', {
-        body: { action: 'get_products', search }
-      });
-
-      if (error) throw error;
-
-      // API may return either an array (docs) or an object wrapper { categories: [...] }
-      const normalized = Array.isArray(data)
-        ? data
-        : Array.isArray((data as any)?.categories)
-          ? (data as any).categories
-          : [];
-      setCategories(normalized);
-    } catch (err) {
-      console.error('Error fetching universal logs:', err);
-      setError(err instanceof Error ? err.message : 'Failed to fetch products');
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const getProductDetails = async (productId: number) => {
-    try {
-      const { data, error } = await supabase.functions.invoke('no1logs-api', {
-        body: { action: 'get_product_details', productId }
-      });
-
-      if (error) throw error;
-      return data;
-    } catch (err) {
-      console.error('Error fetching product details:', err);
-      throw err;
-    }
-  };
-
-  const getCategoryProducts = async (categoryId: number) => {
-    try {
-      const { data, error } = await supabase.functions.invoke('no1logs-api', {
-        body: { action: 'get_category_products', categoryId }
-      });
-
-      if (error) throw error;
-      return data;
-    } catch (err) {
-      console.error('Error fetching category products:', err);
-      throw err;
-    }
-  };
-
-  useEffect(() => {
-    fetchProducts();
-  }, []);
-
+  const [categories] = useState<UniversalCategory[]>([]);
   return {
     categories,
-    loading,
-    error,
-    refetch: fetchProducts,
-    getProductDetails,
-    getCategoryProducts,
+    loading: false,
+    error: null as string | null,
+    refetch: async (_search?: string) => {},
+    getProductDetails: async (_productId: number) => null,
+    getCategoryProducts: async (_categoryId: number) => null,
   };
 }
