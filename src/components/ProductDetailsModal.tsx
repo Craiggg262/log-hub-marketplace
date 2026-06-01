@@ -102,7 +102,7 @@ const ProductDetailsModal: React.FC<ProductDetailsModalProps> = ({
     try {
       setResolvedProductId(id);
 
-      const { data, error } = await supabase.functions.invoke('no1logs-api', {
+      const { data, error } = await Promise.resolve({ data: null, error: null }) ; // no1logs removed - (('no1logs-api', {
         body: { action: 'get_product_details', productId: id },
       });
 
@@ -189,7 +189,7 @@ const ProductDetailsModal: React.FC<ProductDetailsModalProps> = ({
 
     setOrdering(true);
     try {
-      const { data, error } = await supabase.functions.invoke('no1logs-api', {
+      const { data, error } = await Promise.resolve({ data: null, error: null }) ; // no1logs removed - (('no1logs-api', {
         body: {
           action: 'place_order',
           productDetailsIds: accountIds.join(','),
