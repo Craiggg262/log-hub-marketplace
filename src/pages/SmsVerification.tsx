@@ -23,6 +23,7 @@ import {
 } from "lucide-react";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 
 interface Service {
@@ -70,12 +71,28 @@ export default function SmsVerification() {
   const [purchasingService, setPurchasingService] = useState<string | null>(null);
   const [orderHistory, setOrderHistory] = useState<OrderHistory[]>([]);
   const [historyLoading, setHistoryLoading] = useState(false);
+  const [server, setServer] = useState<'1' | '2' | '5sim'>('1');
+  const [country, setCountry] = useState<string>('usa');
+  const [countries, setCountries] = useState<Array<{ code: string; name: string }>>([]);
 
   useEffect(() => {
-    fetchServices();
     fetchOrderHistory();
     rehydrateActiveRentals();
   }, []);
+
+  useEffect(() => {
+    setLoading(true);
+    fetchServices();
+  }, [server, country]);
+
+  useEffect(() => {
+    if (server === '5sim' && countries.length === 0) {
+      (async () => {
+        const { data } = await supabase.functions.invoke('sms-verification', { body: { action: '5sim_countries' } });
+        if (data?.status === 'success') setCountries(data.data || []);
+      })();
+    }
+  }, [server]);
 
   // Realtime: instantly receive code updates pushed by the Getatext webhook
   useEffect(() => {
@@ -212,7 +229,7 @@ export default function SmsVerification() {
       if (!sessionData.session) return;
 
       const { data, error } = await supabase.functions.invoke('sms-verification', {
-        body: { action: 'allService' }
+        body: { action: 'allService', server, country, operator: 'any' }
       });
 
       if (error) throw error;
@@ -270,10 +287,13 @@ export default function SmsVerification() {
     
     try {
       const { data, error } = await supabase.functions.invoke('sms-verification', {
-        body: { 
+        body: {
           action: 'getNumber',
           service_id: service.service_id,
-          max_price: service.original_usd_price
+          max_price: service.original_usd_price,
+          server,
+          country,
+          operator: 'any',
         }
       });
 
@@ -436,15 +456,38 @@ export default function SmsVerification() {
         <div>
           <h1 className="text-2xl font-bold flex items-center gap-2">
             <Globe className="h-6 w-6 text-primary" />
-            SMS Verification (USA)
+            SMS Verification
           </h1>
-          <p className="text-muted-foreground">Get USA phone numbers for verification</p>
+          <p className="text-muted-foreground">Get phone numbers for verification across multiple servers</p>
         </div>
         <Badge variant="outline" className="text-lg px-4 py-2">
           <Wallet className="h-4 w-4 mr-1" />
           ₦{profile?.wallet_balance?.toLocaleString('en-NG', { minimumFractionDigits: 2 }) || '0.00'}
         </Badge>
       </div>
+
+      {/* Server selector */}
+      <Tabs value={server} onValueChange={(v) => setServer(v as '1' | '2' | '5sim')} className="w-full">
+        <TabsList className="grid w-full grid-cols-3">
+          <TabsTrigger value="1">USA Server 1</TabsTrigger>
+          <TabsTrigger value="2">USA Server 2</TabsTrigger>
+          <TabsTrigger value="5sim">All Countries (5sim)</TabsTrigger>
+        </TabsList>
+      </Tabs>
+
+      {server === '5sim' && (
+        <div className="flex items-center gap-3">
+          <span className="text-sm text-muted-foreground">Country:</span>
+          <Select value={country} onValueChange={setCountry}>
+            <SelectTrigger className="w-64"><SelectValue placeholder="Select country" /></SelectTrigger>
+            <SelectContent className="max-h-80">
+              {countries.map((c) => (
+                <SelectItem key={c.code} value={c.code}>{c.name}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+      )}
 
       <Alert>
         <AlertCircle className="h-4 w-4" />
