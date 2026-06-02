@@ -13,9 +13,9 @@ const MTELSMS_BASE_URL = 'https://mtelsms.com/stubs/handler_api.php';
 const FIVESIM_API_KEY = Deno.env.get('FIVESIM_API_KEY');
 const FIVESIM_BASE_URL = 'https://5sim.net/v1';
 
-// Pricing: 1 USD = 1400 NGN, +50% markup
+// Pricing: 1 USD = 1400 NGN, x2 markup (per admin request)
 const USD_TO_NAIRA = 1400;
-const PRICE_MARKUP = 1.5;
+const PRICE_MARKUP = 2.0;
 const DEFAULT_RENTAL_SECONDS = 20 * 60;
 
 const nairaPrice = (usd: number) =>
