@@ -354,6 +354,10 @@ export type Database = {
           full_name: string | null
           id: string
           is_banned: boolean
+          payscribe_account_bank: string | null
+          payscribe_account_name: string | null
+          payscribe_account_number: string | null
+          payscribe_customer_id: string | null
           phone: string | null
           referral_code: string | null
           total_referral_earnings: number
@@ -370,6 +374,10 @@ export type Database = {
           full_name?: string | null
           id?: string
           is_banned?: boolean
+          payscribe_account_bank?: string | null
+          payscribe_account_name?: string | null
+          payscribe_account_number?: string | null
+          payscribe_customer_id?: string | null
           phone?: string | null
           referral_code?: string | null
           total_referral_earnings?: number
@@ -386,6 +394,10 @@ export type Database = {
           full_name?: string | null
           id?: string
           is_banned?: boolean
+          payscribe_account_bank?: string | null
+          payscribe_account_name?: string | null
+          payscribe_account_number?: string | null
+          payscribe_customer_id?: string | null
           phone?: string | null
           referral_code?: string | null
           total_referral_earnings?: number
