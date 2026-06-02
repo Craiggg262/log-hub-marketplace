@@ -49,3 +49,10 @@ verify_jwt = false
 
 [functions.reseller-api]
 verify_jwt = false
+
+[functions.payscribe-create-account]
+verify_jwt = false
+
+[functions.payscribe-webhook]
+verify_jwt = false
+

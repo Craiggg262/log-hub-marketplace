@@ -6,7 +6,7 @@ import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
 import { Wallet as WalletIcon, MessageCircle, Copy } from 'lucide-react';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
-import PaymentPointAccount from '@/components/PaymentPointAccount';
+import AutoFundingSelector from '@/components/AutoFundingSelector';
 
 const FundWallet = () => {
   const [fundAmount, setFundAmount] = useState('');
@@ -64,7 +64,7 @@ const FundWallet = () => {
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Payment Methods */}
         <div className="space-y-4">
-          <PaymentPointAccount />
+          <AutoFundingSelector />
 
           <Card>
             <CardHeader>
