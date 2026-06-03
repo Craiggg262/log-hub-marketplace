@@ -9,9 +9,9 @@ const corsHeaders = {
 const PAYSCRIBE_BASE = "https://api.payscribe.ng/api/v1";
 const API_KEY = Deno.env.get("PAYSCRIBE_API_KEY") ?? "";
 
-async function ps(path: string, body?: unknown) {
+async function psReq(path: string, method: "GET" | "POST", body?: unknown) {
   const res = await fetch(`${PAYSCRIBE_BASE}${path}`, {
-    method: "POST",
+    method,
     headers: {
       Authorization: `Bearer ${API_KEY}`,
       "Content-Type": "application/json",
@@ -25,6 +25,62 @@ async function ps(path: string, body?: unknown) {
   return { ok: res.ok, status: res.status, json };
 }
 
+// Recursively walk an object/array and pick the first plausible "id"-like value
+function deepFindId(obj: any): string | null {
+  if (!obj) return null;
+  const keys = ["customer_id", "customerId", "id", "uuid", "reference", "ref"];
+  const seen = new Set<any>();
+  const stack: any[] = [obj];
+  while (stack.length) {
+    const cur = stack.pop();
+    if (!cur || typeof cur !== "object" || seen.has(cur)) continue;
+    seen.add(cur);
+    for (const k of keys) {
+      const v = (cur as any)[k];
+      if (typeof v === "string" && v.length > 0) return v;
+      if (typeof v === "number") return String(v);
+    }
+    for (const k of Object.keys(cur)) {
+      const v = (cur as any)[k];
+      if (v && typeof v === "object") stack.push(v);
+    }
+  }
+  return null;
+}
+
+async function findCustomerByEmail(email: string): Promise<string | null> {
+  // Try a few likely endpoints — Payscribe variants
+  const candidates = [
+    `/customers?email=${encodeURIComponent(email)}`,
+    `/customers/find?email=${encodeURIComponent(email)}`,
+    `/customers/lookup?email=${encodeURIComponent(email)}`,
+    `/customers`,
+  ];
+  for (const path of candidates) {
+    try {
+      const r = await psReq(path, "GET");
+      console.log("Payscribe customer lookup", path, r.status, JSON.stringify(r.json).slice(0, 400));
+      if (!r.ok) continue;
+      // direct id?
+      const direct = deepFindId(r.json);
+      // if listing, try filter by email
+      const list =
+        r.json?.message?.details?.customers ||
+        r.json?.data?.customers ||
+        r.json?.customers ||
+        r.json?.data ||
+        r.json?.message?.details ||
+        [];
+      if (Array.isArray(list)) {
+        const match = list.find((c: any) => (c?.email || "").toLowerCase() === email.toLowerCase());
+        if (match) return deepFindId(match);
+      }
+      if (direct) return direct;
+    } catch (_) { /* ignore */ }
+  }
+  return null;
+}
+
 serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
 
@@ -34,11 +90,11 @@ serve(async (req) => {
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
     );
 
-    const { userId, email, name, phoneNumber, idType, idNumber, bank } = await req.json();
-    console.log("Payscribe create account request:", { userId, email, name, phoneNumber, idType, hasIdNumber: !!idNumber, bank });
+    const { userId, email, name, phoneNumber } = await req.json();
+    console.log("Payscribe create account request:", { userId, email, name, phoneNumber });
 
     if (!userId || !email || !name || !phoneNumber) {
-      return new Response(JSON.stringify({ error: "Missing required fields: userId, email, name, phoneNumber" }),
+      return new Response(JSON.stringify({ error: "Missing required fields" }),
         { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
     }
 
@@ -48,28 +104,7 @@ serve(async (req) => {
         { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
     }
 
-    let cleanIdType: "bvn" | "nin" | null = null;
-    let cleanIdNumber: string | null = null;
-    if (idType || idNumber) {
-      if (idType !== "bvn" && idType !== "nin") {
-        return new Response(JSON.stringify({ error: 'idType must be "bvn" or "nin"' }),
-          { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
-      }
-      cleanIdNumber = String(idNumber || "").replace(/\D/g, "");
-      if (cleanIdNumber.length !== 11) {
-        return new Response(JSON.stringify({ error: "idNumber must be exactly 11 digits" }),
-          { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
-      }
-      cleanIdType = idType;
-    }
-
-    const selectedBank: string = bank === "9psb" ? "9psb" : "palmpay";
-    if (selectedBank === "palmpay" && (!cleanIdType || !cleanIdNumber)) {
-      return new Response(JSON.stringify({ error: "PalmPay requires BVN or NIN" }),
-        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
-    }
-
-    // Check existing
+    // Check existing in DB
     const { data: existing, error: profErr } = await supabase
       .from("profiles")
       .select("payscribe_account_number, payscribe_account_bank, payscribe_account_name, payscribe_customer_id, full_name")
@@ -91,70 +126,68 @@ serve(async (req) => {
       }), { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } });
     }
 
-    // Create or reuse customer
-    let customerId = existing?.payscribe_customer_id || null;
+    // Get or create customer
+    let customerId: string | null = existing?.payscribe_customer_id || null;
+
     if (!customerId) {
-      const [first_name, ...rest] = String(name).split(" ");
+      const [first_name, ...rest] = String(name).trim().split(/\s+/);
       const last_name = rest.join(" ") || first_name;
-      const custPayload: Record<string, unknown> = {
+      const custPayload = {
         first_name,
         last_name,
         email,
         phone: cleanPhone,
       };
-      if (cleanIdType && cleanIdNumber) {
-        custPayload.identity_type = cleanIdType;
-        custPayload.identity_number = cleanIdNumber;
+      const cust = await psReq("/customers/create", "POST", custPayload);
+      console.log("Payscribe customer create:", cust.status, JSON.stringify(cust.json));
+
+      if (cust.ok && cust.json?.status !== false) {
+        customerId = deepFindId(cust.json);
       }
-      const cust = await ps("/customers/create", custPayload);
-      console.log("Payscribe customer response:", cust.status, JSON.stringify(cust.json));
-      if (!cust.ok || cust.json?.status === false) {
-        const msg = cust.json?.description || cust.json?.message || "Failed to create Payscribe customer";
-        return new Response(JSON.stringify({ error: msg, providerError: cust.json }),
-          { status: 502, headers: { ...corsHeaders, "Content-Type": "application/json" } });
-      }
-      customerId =
-        cust.json?.message?.details?.id ||
-        cust.json?.message?.details?.customer?.id ||
-        cust.json?.data?.id ||
-        cust.json?.id ||
-        null;
+
+      // If creation failed (likely "already exists") or no ID — look it up by email
       if (!customerId) {
-        return new Response(JSON.stringify({ error: "Customer ID missing from Payscribe response", providerError: cust.json }),
-          { status: 502, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+        console.log("Customer ID not in create response, looking up by email…");
+        customerId = await findCustomerByEmail(email);
       }
+
+      if (!customerId) {
+        return new Response(JSON.stringify({
+          error: "Couldn't get Payscribe customer ID. Please contact support.",
+          providerError: cust.json,
+        }), { status: 502, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+      }
+
+      // Persist customer id so we don't keep retrying
+      await supabase.from("profiles").update({
+        payscribe_customer_id: customerId,
+        phone: cleanPhone,
+      }).eq("user_id", userId);
     }
 
-    // Create permanent virtual account
-    const accPayload: Record<string, unknown> = {
+    // Create permanent virtual account on 9PSB
+    const accPayload = {
       account_type: "static",
       currency: "NGN",
       customer_id: customerId,
-      bank: [selectedBank],
+      bank: ["9psb"],
     };
-    if (selectedBank === "palmpay" && cleanIdType && cleanIdNumber) {
-      accPayload.identity_type = cleanIdType;
-      accPayload.identity_number = cleanIdNumber;
-      accPayload.bvn = cleanIdNumber;
-    }
 
-    const acc = await ps("/collections/virtual-accounts/create", accPayload);
-    console.log("Payscribe account response:", acc.status, JSON.stringify(acc.json));
+    const acc = await psReq("/collections/virtual-accounts/create", "POST", accPayload);
+    console.log("Payscribe account create:", acc.status, JSON.stringify(acc.json));
+
     if (!acc.ok || acc.json?.status === false) {
       const msg = acc.json?.description || acc.json?.message || "Failed to create Payscribe virtual account";
-      // Still save customer id so we don't recreate next time
-      if (customerId) {
-        await supabase.from("profiles").update({ payscribe_customer_id: customerId, phone: cleanPhone }).eq("user_id", userId);
-      }
-      return new Response(JSON.stringify({ error: msg, providerError: acc.json }),
+      return new Response(JSON.stringify({ error: typeof msg === "string" ? msg : "Failed", providerError: acc.json }),
         { status: 503, headers: { ...corsHeaders, "Content-Type": "application/json" } });
     }
 
-    const details = acc.json?.message?.details || {};
-    const accountInfo = Array.isArray(details.account) ? details.account[0] : details.account;
-    const accountNumber: string = accountInfo?.account_number;
-    const bankName: string = accountInfo?.bank_name || (selectedBank === "9psb" ? "9PSB" : "PalmPay");
-    const accountName: string = accountInfo?.account_name || name;
+    const details = acc.json?.message?.details || acc.json?.data || acc.json;
+    const accountInfo = Array.isArray(details?.account) ? details.account[0]
+      : (details?.account || details?.virtual_account || details);
+    const accountNumber: string = accountInfo?.account_number || accountInfo?.accountNumber;
+    const bankName: string = accountInfo?.bank_name || accountInfo?.bankName || "9PSB";
+    const accountName: string = accountInfo?.account_name || accountInfo?.accountName || name;
 
     if (!accountNumber) {
       return new Response(JSON.stringify({ error: "Account number missing from Payscribe response", providerError: acc.json }),
