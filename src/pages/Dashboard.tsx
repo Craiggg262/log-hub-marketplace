@@ -13,6 +13,7 @@ import { useLogs } from '@/hooks/useLogs';
 import ServerToggle from '@/components/ServerToggle';
 import BuyProductModal from '@/components/BuyProductModal';
 import SocialIcon from '@/components/SocialIcon';
+import FundingAccountsDisplay from '@/components/FundingAccountsDisplay';
 
 function detectPlatform(name: string): string {
   const lower = name.toLowerCase();
