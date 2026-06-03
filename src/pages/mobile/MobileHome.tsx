@@ -62,30 +62,8 @@ import ServerToggle from '@/components/ServerToggle';
                  </Button>
                </div>
  
-               {/* Virtual Account */}
-               {profile?.virtual_account_number && (
-                 <div className="glass-button rounded-xl p-3 mt-3">
-                   <div className="flex items-center justify-between">
-                     <div className="flex items-center gap-2">
-                       <CreditCard className="h-4 w-4 text-primary" />
-                       <div>
-                         <p className="text-[10px] text-muted-foreground">{profile.virtual_account_bank}</p>
-                         <p className="text-sm font-mono font-bold">{profile.virtual_account_number}</p>
-                       </div>
-                     </div>
-                     <button 
-                       onClick={handleCopyAccount}
-                       className="p-2 rounded-lg bg-primary/10 hover:bg-primary/20 transition-colors"
-                     >
-                       {accountCopied ? (
-                         <Check className="h-4 w-4 text-success" />
-                       ) : (
-                         <Copy className="h-4 w-4 text-primary" />
-                       )}
-                     </button>
-                   </div>
-                 </div>
-               )}
+              {/* Virtual Account(s) */}
+              <FundingAccountsDisplay variant="mobile-compact" />
  
                {/* Stats Row */}
                <div className="grid grid-cols-2 gap-3 mt-4">
