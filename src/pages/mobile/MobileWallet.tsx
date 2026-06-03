@@ -62,52 +62,21 @@ import FundingAccountsDisplay from '@/components/FundingAccountsDisplay';
            </div>
          </GlassCard>
  
-         {/* Funding Account */}
-         {profile?.virtual_account_number && (
-           <GlassCard>
-             <div className="p-4">
-               <div className="flex items-center gap-2 mb-3">
-                 <CreditCard className="h-5 w-5 text-primary" />
-                 <span className="font-semibold">Your Funding Account</span>
-               </div>
-               
-               <div className="glass-button rounded-xl p-4">
-                 <div className="space-y-2">
-                   <div className="flex justify-between text-sm">
-                     <span className="text-muted-foreground">Bank</span>
-                     <span className="font-medium">{profile.virtual_account_bank}</span>
-                   </div>
-                   <div className="flex justify-between text-sm">
-                     <span className="text-muted-foreground">Name</span>
-                     <span className="font-medium">{profile.virtual_account_name}</span>
-                   </div>
-                   <div className="flex justify-between items-center">
-                     <span className="text-muted-foreground text-sm">Account</span>
-                     <div className="flex items-center gap-2">
-                       <span className="font-mono font-bold text-primary text-lg">
-                         {profile.virtual_account_number}
-                       </span>
-                       <button 
-                         onClick={handleCopyAccount}
-                         className="p-2 rounded-lg bg-primary/10 hover:bg-primary/20 transition-colors"
-                       >
-                         {copied ? (
-                           <Check className="h-4 w-4 text-success" />
-                         ) : (
-                           <Copy className="h-4 w-4 text-primary" />
-                         )}
-                       </button>
-                     </div>
-                   </div>
-                 </div>
-               </div>
-               
-               <p className="text-xs text-muted-foreground mt-3 text-center">
-                 Transfer to this account to fund your wallet instantly
-               </p>
-             </div>
-           </GlassCard>
-         )}
+        {/* Funding Accounts */}
+        {(profile?.virtual_account_number || (profile as any)?.payscribe_account_number) && (
+          <GlassCard>
+            <div className="p-4">
+              <div className="flex items-center gap-2 mb-3">
+                <CreditCard className="h-5 w-5 text-primary" />
+                <span className="font-semibold">Your Funding Account(s)</span>
+              </div>
+              <FundingAccountsDisplay variant="mobile-full" />
+              <p className="text-xs text-muted-foreground mt-3 text-center">
+                Transfer to any account to fund your wallet instantly
+              </p>
+            </div>
+          </GlassCard>
+        )}
  
          {/* Recent Transactions */}
          <div>
