@@ -17,9 +17,6 @@ interface VirtualAccount {
 
 const PayscribeAccount: React.FC = () => {
   const [phoneNumber, setPhoneNumber] = useState('');
-  const [bank, setBank] = useState<'palmpay' | '9psb'>('palmpay');
-  const [idType, setIdType] = useState<'bvn' | 'nin' | ''>('bvn');
-  const [idNumber, setIdNumber] = useState('');
   const [loading, setLoading] = useState(false);
   const [checking, setChecking] = useState(true);
   const [virtualAccount, setVirtualAccount] = useState<VirtualAccount | null>(null);
