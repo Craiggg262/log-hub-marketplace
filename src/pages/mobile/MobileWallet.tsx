@@ -13,7 +13,8 @@
  import { useTransactions } from '@/hooks/useTransactions';
  import { useToast } from '@/hooks/use-toast';
  import { format } from 'date-fns';
- import { cn } from '@/lib/utils';
+import { cn } from '@/lib/utils';
+import FundingAccountsDisplay from '@/components/FundingAccountsDisplay';
  
  const MobileWallet = () => {
    const navigate = useNavigate();
