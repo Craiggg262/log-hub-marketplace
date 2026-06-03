@@ -145,40 +145,9 @@ const PayscribeAccount: React.FC = () => {
                 onChange={(e) => setPhoneNumber(e.target.value.replace(/\D/g, '').slice(0, 11))} maxLength={11} />
             </div>
 
-            <div className="space-y-2">
-              <Label className="text-xs">Bank</Label>
-              <Select value={bank} onValueChange={(v) => setBank(v as 'palmpay' | '9psb')}>
-                <SelectTrigger><SelectValue /></SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="palmpay">PalmPay (requires BVN/NIN)</SelectItem>
-                  <SelectItem value="9psb">9PSB Microfinance Bank</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-
-            <div className="rounded-lg border border-dashed p-3 space-y-3">
-              <div className="flex items-start gap-2">
-                <IdCard className="h-4 w-4 mt-0.5 text-primary" />
-                <div className="text-xs text-muted-foreground">
-                  <strong className="text-foreground">KYC (required for PalmPay).</strong> Provide your BVN or NIN below.
-                </div>
-              </div>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                <div className="space-y-1">
-                  <Label className="text-xs">ID Type</Label>
-                  <Select value={idType} onValueChange={(v) => setIdType(v as 'bvn' | 'nin')}>
-                    <SelectTrigger><SelectValue placeholder="Select" /></SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="bvn">BVN</SelectItem>
-                      <SelectItem value="nin">NIN</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div className="space-y-1">
-                  <Label className="text-xs">ID Number (11 digits)</Label>
-                  <Input type="text" inputMode="numeric" placeholder="11-digit ID" value={idNumber}
-                    onChange={(e) => setIdNumber(e.target.value.replace(/\D/g, '').slice(0, 11))} maxLength={11} disabled={!idType} />
-                </div>
+            <div className="rounded-lg border border-dashed p-3">
+              <div className="text-xs text-muted-foreground">
+                A permanent <strong className="text-foreground">9PSB Microfinance Bank</strong> account will be generated for instant wallet funding.
               </div>
             </div>
 
