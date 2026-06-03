@@ -52,19 +52,29 @@ serve(async (req) => {
     const body = JSON.parse(rawBody);
     console.log("Payscribe webhook:", JSON.stringify(body));
 
-    const eventType: string = body.event_type || "";
-    // Only credit for completed payments
-    if (!eventType.includes("payment")) {
+    const eventType: string = body.event_type || body.event || body.type || "";
+    const data = body.data || body;
+
+    // Only credit for completed/successful payments
+    const evLower = String(eventType).toLowerCase();
+    const isPayment = evLower.includes("payment") || evLower.includes("transfer") || evLower.includes("deposit") || evLower.includes("credit");
+    if (eventType && !isPayment) {
       return new Response(JSON.stringify({ message: "Ignored event", eventType }),
         { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } });
     }
 
-    const transId: string = body.trans_id || body.event_id || `PSC_${Date.now()}`;
-    const amount: number = Number(body.amount || 0);
-    const accountNumber: string = body.customer?.number || body.account?.number || "";
+    const transId: string = data.trans_id || data.transaction_id || data.reference || data.ref || body.trans_id || body.event_id || body.reference || `PSC_${Date.now()}`;
+    const amount: number = Number(data.amount || data.amount_paid || body.amount || 0);
+    const accountNumber: string =
+      data.customer?.number || data.customer?.account_number ||
+      data.account?.number || data.account?.account_number ||
+      data.account_number || data.virtual_account_number ||
+      body.customer?.number || body.account?.number || body.account_number || "";
+
+    console.log("Payscribe parsed:", { eventType, transId, amount, accountNumber });
 
     if (!accountNumber || !amount) {
-      console.warn("Missing account or amount", { accountNumber, amount });
+      console.warn("Missing account or amount", { accountNumber, amount, body });
       return new Response(JSON.stringify({ message: "Missing data, ignored" }),
         { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } });
     }
