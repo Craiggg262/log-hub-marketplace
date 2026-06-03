@@ -42,10 +42,6 @@ const PayscribeAccount: React.FC = () => {
       toast({ title: 'Invalid phone number', description: 'Enter a valid Nigerian phone number.', variant: 'destructive' });
       return;
     }
-    if (bank === 'palmpay' && (!idType || idNumber.length !== 11)) {
-      toast({ title: 'BVN/NIN required', description: 'PalmPay requires a valid 11-digit BVN or NIN.', variant: 'destructive' });
-      return;
-    }
     if (!user || !profile) return;
 
     setLoading(true);
@@ -56,8 +52,7 @@ const PayscribeAccount: React.FC = () => {
           email: profile.email,
           name: profile.full_name || profile.email.split('@')[0],
           phoneNumber,
-          bank,
-          ...(idType && idNumber ? { idType, idNumber } : {}),
+          bank: '9psb',
         },
       });
 
