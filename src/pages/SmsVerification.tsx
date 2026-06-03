@@ -471,7 +471,7 @@ export default function SmsVerification() {
         <TabsList className="grid w-full grid-cols-3">
           <TabsTrigger value="1">USA Server 1</TabsTrigger>
           <TabsTrigger value="2">USA Server 2</TabsTrigger>
-          <TabsTrigger value="5sim">All Countries (5sim)</TabsTrigger>
+          <TabsTrigger value="5sim">Portal 2</TabsTrigger>
         </TabsList>
       </Tabs>
 
