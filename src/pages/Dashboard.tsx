@@ -172,26 +172,7 @@ const Dashboard = () => {
         </div>
 
         {/* Virtual Account Section */}
-        {profile?.virtual_account_number && (
-          <div className="mt-4 p-3 bg-card/50 rounded-lg border border-primary/30">
-            <div className="flex items-center gap-2 mb-2">
-              <CreditCard className="h-4 w-4 text-primary" />
-              <span className="text-sm font-medium">Your Funding Account</span>
-            </div>
-            <div className="space-y-1 text-sm">
-              <p><span className="text-muted-foreground">Bank:</span> <span className="font-medium">{profile.virtual_account_bank}</span></p>
-              <p><span className="text-muted-foreground">Name:</span> <span className="font-medium">{profile.virtual_account_name}</span></p>
-              <div className="flex items-center gap-2">
-                <span className="text-muted-foreground">Account:</span>
-                <span className="font-mono font-bold text-primary">{profile.virtual_account_number}</span>
-                <Button onClick={handleCopyAccountNumber} variant="ghost" size="sm" className="h-6 px-2">
-                  {accountCopied ? <Check className="h-3 w-3" /> : <Copy className="h-3 w-3" />}
-                </Button>
-              </div>
-            </div>
-            <p className="text-xs text-muted-foreground mt-2">Transfer to this account to fund your wallet instantly</p>
-          </div>
-        )}
+        <FundingAccountsDisplay variant="desktop" />
 
         {/* Referral Link Section */}
         {profile?.referral_code && (
