@@ -337,6 +337,7 @@ export default function SmsVerification() {
         setActiveRentals(prev => [...prev, rental]);
         refreshProfile?.();
         fetchOrderHistory();
+        setOperatorService(null);
         
         toast({
           title: "Number Purchased",
