@@ -497,6 +497,45 @@ serve(async (req) => {
       return respond({ status: 'error', message: 'Order not eligible for refund' });
     }
 
+    // ====================== EXPIRE STALE (auto-refund all expired/unrefunded for user) ======================
+    if (action === 'expireStale') {
+      const { data: stale } = await admin.from('sms_verification_orders')
+        .select('*')
+        .eq('user_id', userId)
+        .eq('refunded', false)
+        .not('status', 'in', '("completed","code_received","cancelled","expired","refunded")')
+        .lt('expires_at', new Date().toISOString());
+
+      const refunded: any[] = [];
+      if (stale && stale.length) {
+        const { data: profile } = await admin.from('profiles').select('wallet_balance').eq('user_id', userId).single();
+        let balance = Number(profile?.wallet_balance ?? 0);
+        for (const order of stale) {
+          const provider = order.provider || 'getatext';
+          try {
+            if (provider === 'getatext') {
+              await getatext('/cancel-rental', { method: 'POST', body: JSON.stringify({ id: Number(order.rental_id) || order.rental_id }) });
+            } else if (provider === 'mtelsms') {
+              await mtel('cancelNumber', { id: String(order.rental_id) });
+            } else if (provider === '5sim') {
+              await fivesim(`/user/cancel/${order.rental_id}`);
+            }
+          } catch (_) {}
+          balance += Number(order.charged_price);
+          await admin.from('wallet_transactions').insert({
+            user_id: userId, amount: order.charged_price,
+            transaction_type: 'refund', description: 'SMS Verification Refund - Expired',
+          });
+          await admin.from('sms_verification_orders').update({
+            status: 'expired', refunded: true,
+          }).eq('id', order.id);
+          refunded.push({ id: order.rental_id, amount: order.charged_price });
+        }
+        await admin.from('profiles').update({ wallet_balance: balance }).eq('user_id', userId);
+      }
+      return respond({ status: 'success', refunded_count: refunded.length, refunded });
+    }
+
     return respond({ status: 'error', message: 'Unknown action' }, 400);
   } catch (error: any) {
     console.error('SMS Verification error:', error);
