@@ -80,8 +80,20 @@ export default function SmsVerification() {
   const [operatorsLoading, setOperatorsLoading] = useState(false);
 
   useEffect(() => {
-    fetchOrderHistory();
-    rehydrateActiveRentals();
+    (async () => {
+      try {
+        const { data } = await supabase.functions.invoke('sms-verification', { body: { action: 'expireStale' } });
+        if (data?.refunded_count > 0) {
+          toast({
+            title: 'Expired Orders Refunded',
+            description: `${data.refunded_count} expired order(s) were auto-refunded to your wallet.`,
+          });
+          refreshProfile?.();
+        }
+      } catch (e) { console.error('expireStale error', e); }
+      fetchOrderHistory();
+      rehydrateActiveRentals();
+    })();
   }, []);
 
   useEffect(() => {
