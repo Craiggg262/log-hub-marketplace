@@ -792,6 +792,51 @@ export default function SmsVerification() {
           </Card>
         </TabsContent>
       </Tabs>
+
+      {/* 5sim operator picker */}
+      <Dialog open={!!operatorService} onOpenChange={(o) => { if (!o) setOperatorService(null); }}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>Choose a Portal</DialogTitle>
+            <DialogDescription>
+              Pick which provider to rent your {operatorService?.name} number from. Prices below are the exact amount you'll be charged.
+            </DialogDescription>
+          </DialogHeader>
+          {operatorsLoading ? (
+            <div className="flex justify-center py-8">
+              <Loader2 className="h-6 w-6 animate-spin text-primary" />
+            </div>
+          ) : operators.length === 0 ? (
+            <p className="text-center text-muted-foreground py-6 text-sm">No portals available for this service.</p>
+          ) : (
+            <ScrollArea className="max-h-[60vh]">
+              <div className="space-y-2 pr-2">
+                {operators.map((op) => {
+                  const busyKey = (operatorService?.service_id || '') + op.operator;
+                  return (
+                    <div key={op.operator} className="flex items-center justify-between p-3 border rounded-lg">
+                      <div className="min-w-0">
+                        <p className="font-medium capitalize truncate">{op.operator}</p>
+                        <p className="text-xs text-muted-foreground">{op.stock} in stock</p>
+                      </div>
+                      <div className="flex items-center gap-3 flex-shrink-0">
+                        <span className="font-bold text-primary text-sm">{op.price_display}</span>
+                        <Button
+                          size="sm"
+                          disabled={purchasingService === busyKey || op.stock === 0}
+                          onClick={() => operatorService && purchaseNumber(operatorService, op.operator, { price: parseFloat(op.price), usd: op.original_usd_price })}
+                        >
+                          {purchasingService === busyKey ? <Loader2 className="h-4 w-4 animate-spin" /> : 'Buy'}
+                        </Button>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </ScrollArea>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
