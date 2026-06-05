@@ -2,7 +2,7 @@ import React from 'react';
 import { MessageCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
-const WHATSAPP_URL = 'https://t.me/bitinvest02';
+const WHATSAPP_URL = 'https://t.me/loghubmarketplace1';
 
 const AISupport: React.FC = () => {
   return (
