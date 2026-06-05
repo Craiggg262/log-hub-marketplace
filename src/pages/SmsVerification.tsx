@@ -75,6 +75,9 @@ export default function SmsVerification() {
   const [server, setServer] = useState<'1' | '2' | '5sim'>('1');
   const [country, setCountry] = useState<string>('usa');
   const [countries, setCountries] = useState<Array<{ code: string; name: string }>>([]);
+  const [operatorService, setOperatorService] = useState<Service | null>(null);
+  const [operators, setOperators] = useState<Array<{ operator: string; price: string; price_display: string; original_usd_price: string; stock: number }>>([]);
+  const [operatorsLoading, setOperatorsLoading] = useState(false);
 
   useEffect(() => {
     fetchOrderHistory();
