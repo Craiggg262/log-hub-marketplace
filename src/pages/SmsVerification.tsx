@@ -25,6 +25,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 
 interface Service {
   service_id: string;
@@ -74,6 +75,9 @@ export default function SmsVerification() {
   const [server, setServer] = useState<'1' | '2' | '5sim'>('1');
   const [country, setCountry] = useState<string>('usa');
   const [countries, setCountries] = useState<Array<{ code: string; name: string }>>([]);
+  const [operatorService, setOperatorService] = useState<Service | null>(null);
+  const [operators, setOperators] = useState<Array<{ operator: string; price: string; price_display: string; original_usd_price: string; stock: number }>>([]);
+  const [operatorsLoading, setOperatorsLoading] = useState(false);
 
   useEffect(() => {
     fetchOrderHistory();
@@ -270,30 +274,46 @@ export default function SmsVerification() {
     }
   };
 
-  const purchaseNumber = async (service: Service) => {
+  const openOperatorPicker = async (service: Service) => {
+    setOperatorService(service);
+    setOperators([]);
+    setOperatorsLoading(true);
+    try {
+      const { data } = await supabase.functions.invoke('sms-verification', {
+        body: { action: '5sim_operators', service_id: service.service_id, country, server: '5sim' }
+      });
+      if (data?.status === 'success') setOperators(data.data || []);
+    } catch (e) {
+      console.error(e);
+    } finally {
+      setOperatorsLoading(false);
+    }
+  };
+
+  const purchaseNumber = async (service: Service, operatorOverride?: string, priceOverride?: { price: number; usd: string }) => {
     if (!profile) return;
-    
-    const price = parseFloat(service.price);
+
+    const price = priceOverride?.price ?? parseFloat(service.price);
     if (profile.wallet_balance < price) {
       toast({
         title: "Insufficient Balance",
-        description: `You need ${service.price_display} but only have ₦${profile.wallet_balance.toLocaleString('en-NG', { minimumFractionDigits: 2 })}`,
+        description: `You need ₦${price.toLocaleString('en-NG', { minimumFractionDigits: 2 })} but only have ₦${profile.wallet_balance.toLocaleString('en-NG', { minimumFractionDigits: 2 })}`,
         variant: "destructive"
       });
       return;
     }
 
-    setPurchasingService(service.service_id);
-    
+    setPurchasingService(service.service_id + (operatorOverride ?? ''));
+
     try {
       const { data, error } = await supabase.functions.invoke('sms-verification', {
         body: {
           action: 'getNumber',
           service_id: service.service_id,
-          max_price: service.original_usd_price,
+          max_price: priceOverride?.usd ?? service.original_usd_price,
           server,
           country,
-          operator: 'any',
+          operator: operatorOverride ?? 'any',
         }
       });
 
@@ -317,6 +337,7 @@ export default function SmsVerification() {
         setActiveRentals(prev => [...prev, rental]);
         refreshProfile?.();
         fetchOrderHistory();
+        setOperatorService(null);
         
         toast({
           title: "Number Purchased",
@@ -662,13 +683,13 @@ export default function SmsVerification() {
                           <span className="font-bold text-primary">{service.price_display}</span>
                           <Button
                             size="sm"
-                            onClick={() => purchaseNumber(service)}
+                            onClick={() => server === '5sim' ? openOperatorPicker(service) : purchaseNumber(service)}
                             disabled={purchasingService === service.service_id}
                           >
                             {purchasingService === service.service_id ? (
                               <Loader2 className="h-4 w-4 animate-spin" />
                             ) : (
-                              'Get Number'
+                              server === '5sim' ? 'Choose Portal' : 'Get Number'
                             )}
                           </Button>
                         </div>
@@ -771,6 +792,51 @@ export default function SmsVerification() {
           </Card>
         </TabsContent>
       </Tabs>
+
+      {/* 5sim operator picker */}
+      <Dialog open={!!operatorService} onOpenChange={(o) => { if (!o) setOperatorService(null); }}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>Choose a Portal</DialogTitle>
+            <DialogDescription>
+              Pick which provider to rent your {operatorService?.name} number from. Prices below are the exact amount you'll be charged.
+            </DialogDescription>
+          </DialogHeader>
+          {operatorsLoading ? (
+            <div className="flex justify-center py-8">
+              <Loader2 className="h-6 w-6 animate-spin text-primary" />
+            </div>
+          ) : operators.length === 0 ? (
+            <p className="text-center text-muted-foreground py-6 text-sm">No portals available for this service.</p>
+          ) : (
+            <ScrollArea className="max-h-[60vh]">
+              <div className="space-y-2 pr-2">
+                {operators.map((op) => {
+                  const busyKey = (operatorService?.service_id || '') + op.operator;
+                  return (
+                    <div key={op.operator} className="flex items-center justify-between p-3 border rounded-lg">
+                      <div className="min-w-0">
+                        <p className="font-medium capitalize truncate">{op.operator}</p>
+                        <p className="text-xs text-muted-foreground">{op.stock} in stock</p>
+                      </div>
+                      <div className="flex items-center gap-3 flex-shrink-0">
+                        <span className="font-bold text-primary text-sm">{op.price_display}</span>
+                        <Button
+                          size="sm"
+                          disabled={purchasingService === busyKey || op.stock === 0}
+                          onClick={() => operatorService && purchaseNumber(operatorService, op.operator, { price: parseFloat(op.price), usd: op.original_usd_price })}
+                        >
+                          {purchasingService === busyKey ? <Loader2 className="h-4 w-4 animate-spin" /> : 'Buy'}
+                        </Button>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </ScrollArea>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

@@ -155,25 +155,37 @@ serve(async (req) => {
         return respond({ status: 'success', data });
       }
       if (server === '5sim') {
-        // For 5sim, allService returns products grouped by operator for the requested country.
-        const { ok, json } = await fivesim(`/guest/products/${country}/${operator}`);
+        // Use /guest/prices to surface the cheapest real operator price, so the
+        // listed price matches what the user will pay if they pick the cheapest
+        // operator in the buy modal.
+        const { ok, json } = await fivesim(`/guest/prices?country=${country}`);
         if (!ok) return respond({ status: 'error', message: 'Failed to fetch services' });
-        // Response shape: { "<service>": { Category, Qty, Price } }
-        const data = Object.entries(json || {})
-          .filter(([k, v]: any) => v && typeof v === 'object' && 'Price' in v)
-          .map(([k, v]: any) => {
-            const usd = Number(v.Price ?? 0);
-            const naira = nairaPrice(usd);
+        const countryBlock = (json && json[country]) || {};
+        const data = Object.entries(countryBlock)
+          .map(([svc, ops]: any) => {
+            if (!ops || typeof ops !== 'object') return null;
+            const operatorEntries = Object.entries(ops).filter(([_, info]: any) => info && typeof info === 'object' && 'cost' in info);
+            if (operatorEntries.length === 0) return null;
+            let cheapestUsd = Infinity;
+            let totalStock = 0;
+            for (const [_, info] of operatorEntries as any) {
+              const usd = Number(info.cost ?? 0);
+              if (usd > 0 && usd < cheapestUsd) cheapestUsd = usd;
+              totalStock += Number(info.count ?? 0);
+            }
+            if (!isFinite(cheapestUsd)) return null;
+            const naira = nairaPrice(cheapestUsd);
             return {
-              service_id: k,
-              name: k,
+              service_id: svc,
+              name: svc,
               price: naira.toFixed(2),
-              price_display: nairaDisplay(naira),
-              original_usd_price: String(usd),
+              price_display: `From ${nairaDisplay(naira)}`,
+              original_usd_price: String(cheapestUsd),
               validity_time: '',
-              stock: v.Qty ?? 0,
+              stock: totalStock,
             };
-          });
+          })
+          .filter(Boolean);
         return respond({ status: 'success', data });
       }
       return respond({ status: 'error', message: 'Invalid server' }, 400);
