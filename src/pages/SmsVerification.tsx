@@ -274,30 +274,46 @@ export default function SmsVerification() {
     }
   };
 
-  const purchaseNumber = async (service: Service) => {
+  const openOperatorPicker = async (service: Service) => {
+    setOperatorService(service);
+    setOperators([]);
+    setOperatorsLoading(true);
+    try {
+      const { data } = await supabase.functions.invoke('sms-verification', {
+        body: { action: '5sim_operators', service_id: service.service_id, country, server: '5sim' }
+      });
+      if (data?.status === 'success') setOperators(data.data || []);
+    } catch (e) {
+      console.error(e);
+    } finally {
+      setOperatorsLoading(false);
+    }
+  };
+
+  const purchaseNumber = async (service: Service, operatorOverride?: string, priceOverride?: { price: number; usd: string }) => {
     if (!profile) return;
-    
-    const price = parseFloat(service.price);
+
+    const price = priceOverride?.price ?? parseFloat(service.price);
     if (profile.wallet_balance < price) {
       toast({
         title: "Insufficient Balance",
-        description: `You need ${service.price_display} but only have ₦${profile.wallet_balance.toLocaleString('en-NG', { minimumFractionDigits: 2 })}`,
+        description: `You need ₦${price.toLocaleString('en-NG', { minimumFractionDigits: 2 })} but only have ₦${profile.wallet_balance.toLocaleString('en-NG', { minimumFractionDigits: 2 })}`,
         variant: "destructive"
       });
       return;
     }
 
-    setPurchasingService(service.service_id);
-    
+    setPurchasingService(service.service_id + (operatorOverride ?? ''));
+
     try {
       const { data, error } = await supabase.functions.invoke('sms-verification', {
         body: {
           action: 'getNumber',
           service_id: service.service_id,
-          max_price: service.original_usd_price,
+          max_price: priceOverride?.usd ?? service.original_usd_price,
           server,
           country,
-          operator: 'any',
+          operator: operatorOverride ?? 'any',
         }
       });
 
