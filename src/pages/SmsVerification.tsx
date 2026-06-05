@@ -683,13 +683,13 @@ export default function SmsVerification() {
                           <span className="font-bold text-primary">{service.price_display}</span>
                           <Button
                             size="sm"
-                            onClick={() => purchaseNumber(service)}
+                            onClick={() => server === '5sim' ? openOperatorPicker(service) : purchaseNumber(service)}
                             disabled={purchasingService === service.service_id}
                           >
                             {purchasingService === service.service_id ? (
                               <Loader2 className="h-4 w-4 animate-spin" />
                             ) : (
-                              'Get Number'
+                              server === '5sim' ? 'Choose Portal' : 'Get Number'
                             )}
                           </Button>
                         </div>
