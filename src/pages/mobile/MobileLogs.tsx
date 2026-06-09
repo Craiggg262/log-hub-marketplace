@@ -37,6 +37,7 @@ interface NormalizedProduct {
   platform: string;
   categorySort: number;
   itemSort: number;
+  description?: string;
 }
 
 const MobileLogs = () => {
@@ -69,6 +70,7 @@ const MobileLogs = () => {
         platform: detectPlatform((log.categories?.name || '') + ' ' + log.title),
         categorySort: log.categories?.sort_order ?? 999,
         itemSort: log.sort_order ?? 999,
+        description: log.description,
       }));
     }
   }, [server, kingData.products, liteData.logs]);

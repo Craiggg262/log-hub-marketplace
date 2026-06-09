@@ -17,6 +17,7 @@ interface BuyProductModalProps {
     price: number | string;
     inStock: number;
     category?: string;
+    description?: string;
   };
   server: 'king' | 'lite';
 }
@@ -176,10 +177,12 @@ const BuyProductModal: React.FC<BuyProductModalProps> = ({
 
           <div className="border-t border-border/50" />
 
-          <div>
-            <p className="text-xs text-muted-foreground uppercase font-semibold mb-1">Description</p>
-            <p className="text-sm text-foreground">{product.name}</p>
-          </div>
+          {product.description && product.description.trim() && product.description.trim() !== product.name.trim() && (
+            <div>
+              <p className="text-xs text-muted-foreground uppercase font-semibold mb-1">Description</p>
+              <p className="text-sm text-foreground whitespace-pre-wrap">{product.description}</p>
+            </div>
+          )}
 
           <div className="border-t border-border/50" />
 
