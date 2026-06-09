@@ -17,6 +17,7 @@ interface BuyProductModalProps {
     price: number | string;
     inStock: number;
     category?: string;
+    description?: string;
   };
   server: 'king' | 'lite';
 }
