@@ -31,6 +31,7 @@ interface NormalizedProduct {
   platform: string;
   categorySort: number;
   itemSort: number;
+  description?: string;
 }
 
 const UniversalLogs = () => {
