@@ -114,11 +114,11 @@ const FundWallet = () => {
                       <div className="flex items-center justify-between">
                         <span className="text-sm font-medium">Account Number:</span>
                         <div className="flex items-center gap-2">
-                          <span className="font-mono">5567602066</span>
+                          <span className="font-mono">6526920830</span>
                           <Button 
                             variant="ghost" 
                             size="sm"
-                            onClick={() => handleCopyAccount('5567602066')}
+                            onClick={() => handleCopyAccount('6526920830')}
                           >
                             <Copy className="h-3 w-3" />
                           </Button>
@@ -128,11 +128,11 @@ const FundWallet = () => {
                       <div className="flex items-center justify-between">
                         <span className="text-sm font-medium">Account Name:</span>
                         <div className="flex items-center gap-2">
-                          <span className="text-sm">EJEMEGWA CHUKWUJEKWU PETER</span>
+                          <span className="text-sm">Logmarketplace Enterprise</span>
                           <Button 
                             variant="ghost" 
                             size="sm"
-                            onClick={() => handleCopyAccount('EJEMEGWA CHUKWUJEKWU PETER')}
+                            onClick={() => handleCopyAccount('Logmarketplace Enterprise')}
                           >
                             <Copy className="h-3 w-3" />
                           </Button>
@@ -142,11 +142,11 @@ const FundWallet = () => {
                       <div className="flex items-center justify-between">
                         <span className="text-sm font-medium">Bank:</span>
                         <div className="flex items-center gap-2">
-                          <span className="text-sm">MONIEPOINT MFB</span>
+                          <span className="text-sm">Moniepoint MFB</span>
                           <Button 
                             variant="ghost" 
                             size="sm"
-                            onClick={() => handleCopyAccount('MONIEPOINT MFB')}
+                            onClick={() => handleCopyAccount('Moniepoint MFB')}
                           >
                             <Copy className="h-3 w-3" />
                           </Button>
