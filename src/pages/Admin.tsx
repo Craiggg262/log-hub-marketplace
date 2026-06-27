@@ -959,6 +959,49 @@ const Admin = () => {
                     />
                   </div>
 
+                  <div className="space-y-2">
+                    <Label htmlFor="logo">Logo / Image (optional)</Label>
+                    <div className="flex items-center gap-3">
+                      {(editingLog?.logo_url || newLog.logo_url) && (
+                        <img
+                          src={editingLog ? (editingLog.logo_url || '') : newLog.logo_url}
+                          alt="logo preview"
+                          className="h-14 w-14 rounded-xl object-cover border border-border/40"
+                        />
+                      )}
+                      <Input
+                        id="logo"
+                        type="file"
+                        accept="image/*"
+                        disabled={logoUploading}
+                        onChange={async (e) => {
+                          const file = e.target.files?.[0];
+                          if (!file) return;
+                          setLogoUploading(true);
+                          try {
+                            const ext = file.name.split('.').pop() || 'png';
+                            const path = `logos/${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`;
+                            const { error: upErr } = await supabase.storage
+                              .from('log-logos')
+                              .upload(path, file, { cacheControl: '3600', upsert: false, contentType: file.type });
+                            if (upErr) throw upErr;
+                            const { data: pub } = supabase.storage.from('log-logos').getPublicUrl(path);
+                            const url = pub.publicUrl;
+                            if (editingLog) setEditingLog({ ...editingLog, logo_url: url });
+                            else setNewLog({ ...newLog, logo_url: url });
+                            toast({ title: 'Logo uploaded' });
+                          } catch (err: any) {
+                            toast({ title: 'Upload failed', description: err.message, variant: 'destructive' });
+                          } finally {
+                            setLogoUploading(false);
+                            (e.target as HTMLInputElement).value = '';
+                          }
+                        }}
+                      />
+                    </div>
+                    <p className="text-xs text-muted-foreground">Square images work best (e.g. 256×256).</p>
+                  </div>
+
                   <div className="flex gap-2">
                     <Button type="submit" className="flex-1">
                       {editingLog ? 'Update Log' : 'Add Log to Marketplace'}
