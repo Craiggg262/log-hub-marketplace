@@ -3,10 +3,11 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Minus, Plus, ShoppingCart, Loader2 } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
-import SocialIcon from '@/components/SocialIcon';
+import ProductLogo from '@/components/ProductLogo';
 
 interface BuyProductModalProps {
   open: boolean;
@@ -17,9 +18,12 @@ interface BuyProductModalProps {
     price: number | string;
     inStock: number;
     category?: string;
+    platform?: string;
     description?: string;
+    logo_url?: string | null;
   };
   server: 'king' | 'lite';
+  onSuccess?: () => void;
 }
 
 const BuyProductModal: React.FC<BuyProductModalProps> = ({
@@ -27,29 +31,34 @@ const BuyProductModal: React.FC<BuyProductModalProps> = ({
   onOpenChange,
   product,
   server,
+  onSuccess,
 }) => {
   const [quantity, setQuantity] = useState(1);
   const [ordering, setOrdering] = useState(false);
   const { user, profile } = useAuth();
   const { toast } = useToast();
+  const navigate = useNavigate();
 
   const unitPrice = parseFloat(String(product.price));
   const total = unitPrice * quantity;
   const walletBalance = profile?.wallet_balance || 0;
   const maxQty = Math.min(product.inStock, 100);
 
-  const handleQuantityChange = (delta: number) => {
+  const handleQuantityChange = (delta: number) =>
     setQuantity((q) => Math.max(1, Math.min(q + delta, maxQty)));
-  };
 
   const formatPrice = (p: number) => `₦${p.toLocaleString('en-NG', { minimumFractionDigits: 0 })}`;
 
+  const goToOrders = () => {
+    if (onSuccess) return onSuccess();
+    const isMobile = window.location.pathname.startsWith('/app');
+    navigate(isMobile ? '/app/orders' : '/orders');
+  };
+
   const handleBuy = async () => {
     if (!user || ordering) return;
-
     setOrdering(true);
     try {
-      // Re-fetch LIVE balance from DB to prevent race conditions
       const { data: freshProfile, error: profileErr } = await supabase
         .from('profiles')
         .select('wallet_balance, is_banned')
@@ -60,12 +69,10 @@ const BuyProductModal: React.FC<BuyProductModalProps> = ({
         toast({ title: 'Error', description: 'Could not verify balance. Try again.', variant: 'destructive' });
         return;
       }
-
       if (freshProfile.is_banned) {
-        toast({ title: 'Account Suspended', description: 'Your account has been suspended. Contact support.', variant: 'destructive' });
+        toast({ title: 'Account Suspended', description: 'Your account has been suspended.', variant: 'destructive' });
         return;
       }
-
       const liveBalance = freshProfile.wallet_balance;
       if (liveBalance < total) {
         toast({ title: 'Insufficient Balance', description: 'Please fund your wallet first.', variant: 'destructive' });
@@ -73,7 +80,6 @@ const BuyProductModal: React.FC<BuyProductModalProps> = ({
       }
 
       if (server === 'king') {
-        // Loggsplug API order
         const { data, error } = await supabase.functions.invoke('loggsplug-api', {
           body: { action: 'place_order', productId: product.id, qty: quantity },
         });
@@ -95,7 +101,6 @@ const BuyProductModal: React.FC<BuyProductModalProps> = ({
           })
           .select()
           .single();
-
         if (orderErr) throw orderErr;
 
         await supabase.from('wallet_transactions').insert({
@@ -111,20 +116,16 @@ const BuyProductModal: React.FC<BuyProductModalProps> = ({
           await processReferralEarning(user.id, total, undefined, insertedOrder?.id);
         } catch {}
 
-        toast({ title: 'Order Placed!', description: `${product.name} x${quantity} purchased successfully.` });
+        toast({ title: 'Order Placed!', description: `${product.name} x${quantity}` });
       } else {
-        // Lite server — admin-uploaded logs from database
         const cartItems = [{ log_id: product.id, quantity, price: unitPrice }];
-        
         const { data: orderId, error: orderErr } = await supabase.rpc('create_order_from_cart', {
           p_user_id: user.id,
           p_total_amount: total,
           p_cart_items: cartItems,
         });
-
         if (orderErr) throw orderErr;
 
-        // Deduct wallet
         await supabase.from('wallet_transactions').insert({
           user_id: user.id,
           amount: -total,
@@ -138,11 +139,12 @@ const BuyProductModal: React.FC<BuyProductModalProps> = ({
           await processReferralEarning(user.id, total, orderId);
         } catch {}
 
-        toast({ title: 'Order Placed!', description: `${product.name} x${quantity} purchased successfully.` });
+        toast({ title: 'Order Placed!', description: `${product.name} x${quantity}` });
       }
 
       onOpenChange(false);
       setQuantity(1);
+      goToOrders();
     } catch (err) {
       console.error('Order error:', err);
       toast({
@@ -160,9 +162,9 @@ const BuyProductModal: React.FC<BuyProductModalProps> = ({
       <DialogContent className="max-w-md mx-auto">
         <DialogHeader>
           <div className="flex justify-center mb-2">
-            <SocialIcon platform={product.category || ''} size={48} />
+            <ProductLogo logoUrl={product.logo_url} platform={product.platform || product.category} size={72} rounded="2xl" />
           </div>
-          <DialogTitle className="text-center text-lg">{product.name}</DialogTitle>
+          <DialogTitle className="text-center text-lg uppercase">{product.name}</DialogTitle>
         </DialogHeader>
 
         <div className="space-y-4">
@@ -175,13 +177,14 @@ const BuyProductModal: React.FC<BuyProductModalProps> = ({
             </Badge>
           </div>
 
-          <div className="border-t border-border/50" />
-
           {product.description && product.description.trim() && product.description.trim() !== product.name.trim() && (
-            <div>
-              <p className="text-xs text-muted-foreground uppercase font-semibold mb-1">Description</p>
-              <p className="text-sm text-foreground whitespace-pre-wrap">{product.description}</p>
-            </div>
+            <>
+              <div className="border-t border-border/50" />
+              <div>
+                <p className="text-xs text-muted-foreground uppercase font-semibold mb-1">Description</p>
+                <p className="text-sm text-foreground whitespace-pre-wrap">{product.description}</p>
+              </div>
+            </>
           )}
 
           <div className="border-t border-border/50" />
@@ -190,23 +193,11 @@ const BuyProductModal: React.FC<BuyProductModalProps> = ({
             <div>
               <p className="text-sm text-muted-foreground mb-2">Quantity</p>
               <div className="flex items-center gap-2">
-                <Button
-                  variant="outline"
-                  size="icon"
-                  className="h-10 w-10 rounded-xl"
-                  onClick={() => handleQuantityChange(-1)}
-                  disabled={quantity <= 1}
-                >
+                <Button variant="outline" size="icon" className="h-10 w-10 rounded-xl" onClick={() => handleQuantityChange(-1)} disabled={quantity <= 1}>
                   <Minus className="h-4 w-4" />
                 </Button>
                 <span className="w-12 text-center font-bold text-lg">{quantity}</span>
-                <Button
-                  variant="outline"
-                  size="icon"
-                  className="h-10 w-10 rounded-xl"
-                  onClick={() => handleQuantityChange(1)}
-                  disabled={quantity >= maxQty}
-                >
+                <Button variant="outline" size="icon" className="h-10 w-10 rounded-xl" onClick={() => handleQuantityChange(1)} disabled={quantity >= maxQty}>
                   <Plus className="h-4 w-4" />
                 </Button>
               </div>
@@ -239,7 +230,7 @@ const BuyProductModal: React.FC<BuyProductModalProps> = ({
             ) : (
               <>
                 <ShoppingCart className="h-5 w-5" />
-                Buy Now
+                Checkout
               </>
             )}
           </Button>

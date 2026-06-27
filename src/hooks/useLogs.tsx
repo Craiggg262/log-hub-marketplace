@@ -12,6 +12,7 @@ export interface Log {
   rating: number;
   reviews: number;
   image: string;
+  logo_url?: string | null;
   sort_order?: number;
   created_at: string;
   updated_at: string;
@@ -48,28 +49,28 @@ export function useLogs() {
             id,
             name,
             icon,
-            color
+            color,
+            sort_order
           )
         `)
         .order('sort_order', { ascending: true })
         .order('created_at', { ascending: false });
 
       if (error) throw error;
-      
-      // For each log, get the count of available log items
+
       const logsWithStock = await Promise.all(
         (data || []).map(async (log) => {
           const { data: itemsCount } = await supabase
             .rpc('get_available_log_items_count', { log_uuid: log.id });
-          
+
           return {
             ...log,
             stock: itemsCount || 0,
-            in_stock: (itemsCount || 0) > 0
+            in_stock: (itemsCount || 0) > 0,
           };
         })
       );
-      
+
       setLogs(logsWithStock);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to fetch logs');

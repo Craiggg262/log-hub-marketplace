@@ -509,18 +509,65 @@ export default function SmsVerification() {
       </Tabs>
 
       {server === '5sim' && (
-        <div className="flex items-center gap-3">
-          <span className="text-sm text-muted-foreground">Country:</span>
-          <Select value={country} onValueChange={setCountry}>
-            <SelectTrigger className="w-64"><SelectValue placeholder="Select country" /></SelectTrigger>
-            <SelectContent className="max-h-80">
-              {countries.map((c) => (
-                <SelectItem key={c.code} value={c.code}>{c.name}</SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+        <div className="space-y-3">
+          <div className="flex items-center justify-between flex-wrap gap-2">
+            <h3 className="text-sm font-semibold uppercase tracking-widest text-primary">Select Country</h3>
+            {country && (
+              <button
+                onClick={() => setCountry('')}
+                className="text-xs text-muted-foreground underline"
+              >
+                Change country
+              </button>
+            )}
+          </div>
+
+          {!country ? (
+            <div className="glass-card rounded-2xl p-3">
+              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-2 max-h-[420px] overflow-y-auto pr-1">
+                {countries.map((c) => {
+                  const iso = (c.code || '').toLowerCase().slice(0, 2);
+                  return (
+                    <button
+                      key={c.code}
+                      onClick={() => setCountry(c.code)}
+                      className="glass-card hover:scale-[1.02] transition-all rounded-xl p-3 flex flex-col items-center gap-2 text-center"
+                    >
+                      <img
+                        src={`https://flagcdn.com/w80/${iso}.png`}
+                        alt=""
+                        className="h-8 w-12 object-cover rounded-md border border-border/40"
+                        onError={(e) => { (e.currentTarget as HTMLImageElement).style.opacity = '0'; }}
+                        loading="lazy"
+                      />
+                      <span className="text-xs font-medium leading-tight line-clamp-2">{c.name}</span>
+                      <span className="text-[10px] text-muted-foreground uppercase">{c.code}</span>
+                    </button>
+                  );
+                })}
+                {countries.length === 0 && (
+                  <p className="col-span-full text-center text-sm text-muted-foreground py-6">
+                    Loading countries…
+                  </p>
+                )}
+              </div>
+            </div>
+          ) : (
+            <div className="glass-card rounded-xl p-3 flex items-center gap-3">
+              <img
+                src={`https://flagcdn.com/w80/${(countries.find((c) => c.code === country)?.iso || country).toLowerCase().slice(0,2)}.png`}
+                alt=""
+                className="h-8 w-12 object-cover rounded-md border border-border/40"
+              />
+              <div>
+                <p className="text-xs text-muted-foreground">Currently selected</p>
+                <p className="font-semibold">{countries.find((c) => c.code === country)?.name || country}</p>
+              </div>
+            </div>
+          )}
         </div>
       )}
+
 
       <Alert>
         <AlertCircle className="h-4 w-4" />

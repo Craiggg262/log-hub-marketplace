@@ -278,4 +278,28 @@ Dark theme with blue/orange accents inspired by no1logsmarketplace.com
    .touch-scale:active {
      transform: scale(0.96);
    }
+
+   /* Elevated liquid-glass card with stronger top-highlight */
+   .glass-card-elevated {
+     background: linear-gradient(180deg, hsl(220 25% 17% / 0.85) 0%, hsl(220 25% 12% / 0.85) 100%);
+     backdrop-filter: blur(28px);
+     -webkit-backdrop-filter: blur(28px);
+     border: 1px solid hsl(220 20% 30% / 0.5);
+     box-shadow:
+       0 16px 40px hsl(0 0% 0% / 0.4),
+       inset 0 1px 0 hsl(0 0% 100% / 0.08),
+       inset 0 0 60px hsl(38 92% 50% / 0.04);
+   }
+
+   .glass-pill {
+     background: hsl(220 25% 18% / 0.6);
+     backdrop-filter: blur(14px);
+     -webkit-backdrop-filter: blur(14px);
+     border: 1px solid hsl(220 20% 30% / 0.4);
+     border-radius: 999px;
+   }
+
+   /* Hide horizontal scrollbars on country grids etc. */
+   .scrollbar-hide::-webkit-scrollbar { display: none; }
+   .scrollbar-hide { scrollbar-width: none; }
 }
