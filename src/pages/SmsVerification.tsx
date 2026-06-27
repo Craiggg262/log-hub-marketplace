@@ -526,7 +526,7 @@ export default function SmsVerification() {
             <div className="glass-card rounded-2xl p-3">
               <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-2 max-h-[420px] overflow-y-auto pr-1">
                 {countries.map((c) => {
-                  const iso = (c.iso || c.code || '').toLowerCase().slice(0, 2);
+                  const iso = (c.code || '').toLowerCase().slice(0, 2);
                   return (
                     <button
                       key={c.code}
