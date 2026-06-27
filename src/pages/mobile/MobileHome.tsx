@@ -83,11 +83,6 @@ import FundingAccountsDisplay from '@/components/FundingAccountsDisplay';
             </GlassCard>
           </div>
  
-          {/* Server Selection */}
-          <div className="px-4">
-            <h2 className="text-sm font-semibold text-foreground/80 mb-2">Choose Server</h2>
-            <ServerToggle />
-          </div>
 
           {/* Quick Actions */}
           <div>
@@ -97,16 +92,16 @@ import FundingAccountsDisplay from '@/components/FundingAccountsDisplay';
             <QuickActionGrid />
           </div>
  
-          {/* Browse Logs CTA */}
+          {/* Browse Marketplace CTA */}
           <div className="px-4">
-            <GlassCard variant="interactive" onClick={() => navigate('/app/logs')}>
+            <GlassCard variant="interactive" onClick={() => navigate('/app/logs')} className="silk-shimmer">
               <div className="p-4 flex items-center gap-4">
                 <div className="w-12 h-12 rounded-2xl gradient-primary flex items-center justify-center">
                   <ShoppingCart className="h-6 w-6 text-primary-foreground" />
                 </div>
                 <div className="flex-1">
-                  <h3 className="font-semibold">Browse & Buy Logs</h3>
-                  <p className="text-xs text-muted-foreground">Tap to view all available logs</p>
+                  <h3 className="font-semibold">Browse Marketplace</h3>
+                  <p className="text-xs text-muted-foreground">Pick a server, then choose a category to buy</p>
                 </div>
                 <ChevronRight className="h-5 w-5 text-muted-foreground" />
               </div>
