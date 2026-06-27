@@ -32,6 +32,7 @@ interface LogData {
   stock: number;
   in_stock: boolean;
   category_id: string;
+  logo_url?: string | null;
   categories: {
     name: string;
   } | null;
@@ -80,8 +81,10 @@ const Admin = () => {
     title: '',
     description: '',
     price: '',
-    category_name: ''
+    category_name: '',
+    logo_url: '',
   });
+  const [logoUploading, setLogoUploading] = useState(false);
   const [editingLog, setEditingLog] = useState<LogData | null>(null);
   const [fundUser, setFundUser] = useState({ userId: '', amount: '' });
   const [newLogItem, setNewLogItem] = useState({ log_id: '', account_details: '', quantity: '1' });
@@ -326,7 +329,8 @@ const Admin = () => {
           stock: 0,
           category_id: category.id,
           in_stock: false,
-          image: `https://ui-avatars.com/api/?name=${encodeURIComponent(newLog.title)}&background=3b82f6&color=fff`
+          logo_url: newLog.logo_url || null,
+          image: newLog.logo_url || `https://ui-avatars.com/api/?name=${encodeURIComponent(newLog.title)}&background=3b82f6&color=fff`
         });
 
       if (error) throw error;
@@ -336,7 +340,7 @@ const Admin = () => {
         description: `${newLog.title} has been added to the marketplace`,
       });
       
-      setNewLog({ title: '', description: '', price: '', category_name: '' });
+      setNewLog({ title: '', description: '', price: '', category_name: '', logo_url: '' });
       await fetchData();
     } catch (error) {
       toast({
@@ -434,6 +438,7 @@ const Admin = () => {
           description: editingLog.description,
           price: editingLog.price,
           category_id: editingLog.category_id,
+          logo_url: editingLog.logo_url || null,
         })
         .eq('id', log.id);
 
