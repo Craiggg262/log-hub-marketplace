@@ -159,23 +159,24 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     
     if (error) throw error;
 
-    // If signup succeeded and we have phone, generate account immediately
+    // If signup succeeded and we have phone, auto-generate both funding accounts.
     if (data?.user && phone) {
-      try {
-        const { error: funcError } = await supabase.functions.invoke('paymentpoint-create-account', {
-          body: {
-            userId: data.user.id,
-            email: email,
-            name: fullName,
-            phoneNumber: phone
+      const uid = data.user.id;
+      // Fire and forget — never block signup on funding-account provisioning.
+      Promise.allSettled([
+        supabase.functions.invoke('paymentpoint-create-account', {
+          body: { userId: uid, email, name: fullName, phoneNumber: phone },
+        }),
+        supabase.functions.invoke('payscribe-create-account', {
+          body: { userId: uid, email, name: fullName, phoneNumber: phone, bank: '9psb' },
+        }),
+      ]).then((results) => {
+        results.forEach((r, i) => {
+          if (r.status === 'rejected') {
+            console.error(`Auto-create ${i === 0 ? 'PaymentPoint' : 'Payscribe'} failed:`, r.reason);
           }
         });
-        if (funcError) {
-          console.error('Failed to auto-generate account:', funcError);
-        }
-      } catch (err) {
-        console.error('Error calling paymentpoint-create-account:', err);
-      }
+      });
     }
   };
 
