@@ -94,9 +94,38 @@ const Wallet = () => {
               <TabsTrigger value="manual">Manual Payment</TabsTrigger>
             </TabsList>
 
-            <TabsContent value="automatic" className="mt-6">
-              <PaymentPointAccount />
+            <TabsContent value="automatic" className="mt-6 space-y-4">
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                {([
+                  { key: 'paymentpoint', label: 'PaymentPoint', desc: 'Permanent NGN account', icon: Building2 },
+                  { key: 'payscribe', label: 'Payscribe', desc: '9PSB virtual account', icon: CreditCard },
+                  { key: 'logpay', label: 'LogPay', desc: 'Card, transfer, USSD', icon: Zap },
+                ] as const).map(({ key, label, desc, icon: Icon }) => {
+                  const active = autoProvider === key;
+                  return (
+                    <button
+                      key={key}
+                      type="button"
+                      onClick={() => setAutoProvider(key)}
+                      className={`text-left glass-card rounded-2xl p-4 transition-all border-2 ${active ? 'border-primary shadow-lg scale-[1.02]' : 'border-transparent hover:border-border/60'}`}
+                    >
+                      <div className={`h-10 w-10 rounded-xl flex items-center justify-center mb-3 ${active ? 'gradient-primary' : 'bg-muted'}`}>
+                        <Icon className={`h-5 w-5 ${active ? 'text-primary-foreground' : 'text-foreground'}`} />
+                      </div>
+                      <div className="font-semibold">{label}</div>
+                      <div className="text-xs text-muted-foreground">{desc}</div>
+                    </button>
+                  );
+                })}
+              </div>
+
+              <div className="pt-2">
+                {autoProvider === 'paymentpoint' && <PaymentPointAccount />}
+                {autoProvider === 'payscribe' && <PayscribeAccount />}
+                {autoProvider === 'logpay' && <LogPayFund />}
+              </div>
             </TabsContent>
+
 
             <TabsContent value="manual" className="mt-6 space-y-4">
               <div className="space-y-2">
