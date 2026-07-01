@@ -4,10 +4,12 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
-import { Wallet as WalletIcon, Plus, MessageCircle, History } from 'lucide-react';
+import { Wallet as WalletIcon, Plus, MessageCircle, History, Zap, Building2, CreditCard } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import { useTransactions } from '@/hooks/useTransactions';
 import PaymentPointAccount from '@/components/PaymentPointAccount';
+import PayscribeAccount from '@/components/PayscribeAccount';
+import LogPayFund from '@/components/LogPayFund';
 import FundingAccountsDisplay from '@/components/FundingAccountsDisplay';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
@@ -16,6 +18,7 @@ const Wallet = () => {
   const { toast } = useToast();
   const { profile } = useAuth();
   const { transactions, loading } = useTransactions();
+  const [autoProvider, setAutoProvider] = useState<'paymentpoint' | 'payscribe' | 'logpay'>('paymentpoint');
 
   const handleManualPayment = () => {
     if (!fundAmount || parseFloat(fundAmount) <= 0) {
