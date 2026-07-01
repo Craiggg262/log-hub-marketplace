@@ -26,6 +26,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
+import { isoForCountry } from "@/lib/fivesim-country-iso";
 
 interface Service {
   service_id: string;
@@ -526,7 +527,7 @@ export default function SmsVerification() {
             <div className="glass-card rounded-2xl p-3">
               <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-2 max-h-[420px] overflow-y-auto pr-1">
                 {countries.map((c) => {
-                  const iso = (c.code || '').toLowerCase().slice(0, 2);
+                  const iso = isoForCountry(c.code);
                   return (
                     <button
                       key={c.code}
@@ -541,7 +542,6 @@ export default function SmsVerification() {
                         loading="lazy"
                       />
                       <span className="text-xs font-medium leading-tight line-clamp-2">{c.name}</span>
-                      <span className="text-[10px] text-muted-foreground uppercase">{c.code}</span>
                     </button>
                   );
                 })}
@@ -555,7 +555,7 @@ export default function SmsVerification() {
           ) : (
             <div className="glass-card rounded-xl p-3 flex items-center gap-3">
               <img
-                src={`https://flagcdn.com/w80/${(countries.find((c) => c.code === country)?.iso || country).toLowerCase().slice(0,2)}.png`}
+                src={`https://flagcdn.com/w80/${isoForCountry(country)}.png`}
                 alt=""
                 className="h-8 w-12 object-cover rounded-md border border-border/40"
               />
