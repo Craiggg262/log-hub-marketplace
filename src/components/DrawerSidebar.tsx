@@ -19,6 +19,7 @@ import {
   LayoutGrid,
   Phone,
   Code2,
+  Rocket,
 } from "lucide-react";
 import {
   Sheet,
@@ -47,10 +48,10 @@ const menuItems = [
   { title: "Fund Wallet", url: "/fund-wallet", icon: Plus },
   { title: "Referral Earn", url: "/referral-earn", icon: Gift },
   { title: "Resellers API", url: "/resellers", icon: Code2 },
+  { title: "Boosting", url: "/boosting", icon: Rocket },
   { title: "Transactions", url: "/history", icon: CreditCard },
   { title: "Settings", url: "/settings", icon: Settings },
   { title: "Support", url: "https://t.me/loghubmarketplace1", icon: MessageCircle, external: true },
-  { title: "Boost Account", url: "https://boosterhub.name.ng", icon: ExternalLink, external: true },
 ];
 
 export function DrawerSidebar({ trigger }: DrawerSidebarProps) {
