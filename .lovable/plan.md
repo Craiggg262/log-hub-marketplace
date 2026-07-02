@@ -1,94 +1,50 @@
+## Plan
 
-# Full Site & App Redesign — Log Hub Marketplace
+### 1. Boosting pricing fix
+- In `supabase/functions/boosting-proxy/index.ts`, treat provider `rate` as **NGN per 1000** (not USD). Remove the `NAIRA_PER_DOLLAR` conversion. New formula: `displayRate = providerRate * 2`. Apply to both `services` listing and `add` charge calculation.
 
-This is a large, multi-area change. Colors and palette stay the same (dark + blue/orange). Visual language shifts to a more polished "liquid glass" look modeled on the screenshots from ultimatelogsmarketplace.com. Below is what I'll build and where, so you can confirm before I touch the code.
+### 2. Remove LogPay (temporarily)
+- Remove `LogPayFund` import and card from `src/pages/Wallet.tsx` and `src/pages/FundWallet.tsx` (wherever it renders). Keep the edge function files and component file in place so I can re-enable later; just unmount from UI.
 
----
+### 3. Public logo bucket + logos showing on user end
+- Call `supabase--storage_update_bucket` on `log-logos` with `public=true` (if workspace allows; otherwise fall back to long-lived signed URLs generated in `ProductLogo`/log fetches).
+- In `useLogs`/`useUniversalLogs` and `BuyProductModal`, resolve `logo_url` (either stored public URL or `getPublicUrl`) and render via `ProductLogo` on marketplace tiles + product details.
+- Add category image on `categories` table (new `image_url` column) and display it as (a) the category tile thumbnail and (b) header banner inside the category view in `Marketplace.tsx` / `UniversalLogs.tsx`.
 
-## 1. Landing / website (logged-out)
+### 4. Admin dropdowns for category (both places)
+- In `src/pages/Admin.tsx`:
+  - **Edit Log form**: add Category `<Select>` bound to `categories` list.
+  - **Add Sub-Account (bulk upload)**: add Category `<Select>` at the top so uploads target a chosen category/log correctly.
+- Ensure the "Add Log" form's category select shows all categories (already partly done) and creating a new category works.
 
-- New hero modeled after Ultimate Logs: tagline "Digital solutions for every market", big headline "Buy Verified Accounts & Logins", primary CTAs **Browse Accounts** and **Log In**.
-- Live-purchases ticker chip ("User 0x… just bought …") on hero.
-- Trust badges row: "100% Verified Logins", "Instant Auto-Delivery", "Escrow protection", "Live help desk".
-- Service cards section (glass cards): Social Accounts, Email Rentals, Number Rentals, VTU & Bill Payments, each with "In Stock" / "Coming Soon" pill + Buy Now.
-- Closing CTA band: "Ready To Purchase Premium Logs?" with Register / Browse buttons.
-- Stronger liquid-glass styling everywhere: layered blurs, soft inner highlight, subtle shine.
+### 5. Admin image uploads for categories and logs
+- Add migration: `ALTER TABLE public.categories ADD COLUMN image_url text;` + GRANTs already in place.
+- In `Admin.tsx`:
+  - New "Categories" management panel: list categories with inline image upload (uploads to `log-logos` bucket under `categories/<id>.<ext>`), save URL back.
+  - In Add Log + Edit Log forms, keep the existing `logo_url` upload; verify it saves and displays.
+- Storage policies: add public read policy on `log-logos` if bucket flip is rejected.
 
-## 2. Dashboard — remove scattered logs
+### 6. Dark / Light mode toggle everywhere
+- Add a `ThemeProvider` (`src/hooks/useTheme.tsx`) that toggles `document.documentElement.classList` between `dark` and `light`, persisted to `localStorage`.
+- Verify `tailwind.config.ts` has `darkMode: 'class'` (add if missing) and that `src/index.css` defines light-mode tokens under `:root` and dark tokens under `.dark` (currently dark is default). Reorganize tokens so both themes render correctly.
+- Add `<ThemeToggle />` (sun/moon icon Button) rendered in:
+  - Desktop top header (inside `Layout.tsx` header area)
+  - `Settings.tsx` (row with switch)
+  - `MobileProfile.tsx` (row with switch)
+- Wrap the app in `ThemeProvider` in `main.tsx` or `App.tsx`.
 
-- Dashboard no longer renders the logs grid. Replace with:
-  - Balance card (glass) + Add Funds / History.
-  - **Browse Marketplace** primary CTA card → routes to `/app/marketplace`.
-  - Quick actions: Buy Numbers, Buy Email, VTU, Referrals.
-  - Recent transactions table (compact).
-  - Referral card with code + copy.
-- Same change on mobile home.
+### 7. Boosting visible on Dashboard (web + web app)
+- Add a "Boosting" quick-action card to:
+  - `src/pages/Dashboard.tsx` (web) — alongside Marketplace / Wallet CTAs.
+  - `src/pages/mobile/MobileHome.tsx` (mobile web app) — as a quick action tile linking to `/app/boosting`.
+- Uses the `Rocket` icon and the same glass-card style already in use.
 
-## 3. New Marketplace flow (replaces current logs-on-dashboard)
+### 8. Verification
+- `bun run build` (auto).
+- Restart dev server if needed after theme CSS changes.
+- Spot-check with a Playwright screenshot on `/dashboard` and `/boosting` to confirm the boosting card renders and the theme toggle works.
 
-Route `/app/marketplace`:
-1. **Server picker step**: two big glass cards — King Server / Lite Server (uses existing `useServerSelection`).
-2. **Categories step**: grid of category cards (Facebook, Instagram, VPN, Email, etc.) each with a logo + count of products.
-3. **Category page**: list of products in that category, each card shows product logo, name, "X Available" stock dot, price, **Buy** button — matches the AFRICA FACEBOOK / ASIA FACEBOOK / VPN screenshots.
-4. **Buy modal**: opens on Buy click → shows logo, account name, description, available quantity, quantity selector, total price, **Checkout** button. On success → auto-redirect to `/app/orders`.
-
-## 4. Admin: per-log logo upload
-
-- Add `logo_url` to `logs` table (migration) + Supabase storage bucket `log-logos` (public).
-- Admin log create/edit form: image upload field (uploads to bucket, stores public URL on the row).
-- User-facing product cards and buy modal render `logo_url` (fallback to category icon if missing).
-
-## 5. Wallet redesign (credit-card style)
-
-- "AVAILABLE FUNDS" card on top (glass, large balance).
-- **Virtual account(s) as credit-card visuals**: gradient card with bank logo top-right, big spaced account number ("6526 9208 30"), "ACCOUNT NAME" + name below, "VIRTUAL PAYMENT METHOD" label. If both PaymentPoint and Payscribe exist, render two stacked cards with an "OR" divider (keeps the rule you set earlier).
-- "Other Payment Option" section for manual funding (keeps Moniepoint details you set).
-- Recent Transactions table styled like the screenshot.
-- Same card visuals on mobile wallet.
-
-## 6. SMS Verification — professional look
-
-- Top: "Buy Number — Purchase virtual numbers for SMS verification" + "Instant refund if no OTP received" pill.
-- "Choose a category to get started" — glass cards for:
-  - USA Numbers (Short-Term)
-  - Global Numbers Option 1 / Option 2 (the existing 5sim portals you asked about earlier)
-  - Long-term rentals
-- Country picker grid: each country card shows real flag + name + ISO code (like the screenshot). Click → service list for that country → buy → number + Request Code panel.
-- Keep existing pricing fix (display price = charged price) and expireStale refund logic.
-
-## 7. Sidebar / navigation polish
-
-- Drawer matches Ultimate Logs structure:
-  - MARKETPLACE: Dashboard, Buy Social Accounts, Buy Number, Buy Emails, Manage Rentals, Bill Payments (NEW pill).
-  - HISTORY: Order History, Transactions, Wallet.
-  - ACCOUNT: Profile Settings, Developer API, Help Center.
-  - Footer card: "Log Hub News — Join WhatsApp" → existing Telegram support link.
-- Mobile bottom tabs stay (Home / Number / Menu / Settings / Wallet).
-
-## 8. Liquid-glass system upgrades
-
-- Add new utility classes: `.glass-card-elevated`, `.glass-credit-card` (with gradient + inner shine), `.glass-pill`.
-- Slightly increase blur + add subtle inner top highlight + soft border gradient on cards. All via `index.css` tokens — no color changes.
-
----
-
-## Technical notes (for me)
-
-- New routes: `/app/marketplace`, `/app/marketplace/:server`, `/app/marketplace/:server/:categoryId`.
-- New components: `MarketplaceServerPicker`, `MarketplaceCategoryGrid`, `MarketplaceProductGrid`, `ProductBuyModal` (reuse `BuyProductModal`), `VirtualAccountCard`, `CountryGridPicker`.
-- DB migration: `ALTER TABLE public.logs ADD COLUMN logo_url text;` + create `log-logos` storage bucket with public read + admin write policy.
-- Admin form (`src/pages/Admin.tsx` log editor) gains a file input that uploads to `log-logos`.
-- Dashboard/MobileHome: remove logs grid section; add Browse Marketplace CTA.
-- Wallet + MobileWallet: replace plain account list with `VirtualAccountCard` components.
-- SmsVerification: restructure into category-picker → country-picker → service/buy flow; flags via `https://flagcdn.com/w80/{iso}.png`.
-- Keep all existing business logic (pricing, refunds, webhooks, support link, etc.) untouched.
-
----
-
-## Out of scope (confirm if you want these too)
-
-- Changing color palette (you said keep the same).
-- Replacing payment providers or wallet logic.
-- Reworking VTU/airtime/data/cable/electricity forms beyond visual polish.
-
-Reply **"go"** to start, or tell me anything to change/cut. This is a multi-step build — I'll ship it in one pass once approved.
+### Technical notes
+- No changes to order/wallet business logic beyond removing LogPay UI mount.
+- Public bucket flip may be blocked by workspace policy; if so I'll use `getPublicUrl` with existing bucket + a permissive `SELECT` policy on `storage.objects` where `bucket_id = 'log-logos'`.
+- Boosting price change is display-only; provider request payload unchanged.
