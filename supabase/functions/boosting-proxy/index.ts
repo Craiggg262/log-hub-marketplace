@@ -1,6 +1,6 @@
 // Proxy for reallysimplesocial.com Perfect-Panel API.
 // Actions: services (list), balance, add (place order), status (single/multi).
-// Adds a 2x markup for prices shown to end users.
+// Provider rates are already in NGN per 1000 — we display them x2 as the user markup.
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
@@ -11,8 +11,7 @@ const corsHeaders = {
 
 const API_URL = "https://reallysimplesocial.com/api/v2";
 const API_KEY = Deno.env.get("REALLYSIMPLESOCIAL_API_KEY") ?? "";
-const NAIRA_PER_DOLLAR = 1400; // markup base — matches SMS pricing
-const MARKUP_MULTIPLIER = 2;    // display price is 2x provider price
+const MARKUP_MULTIPLIER = 2; // display price is 2x provider price (already in NGN)
 
 async function panel(payload: Record<string, string | number>) {
   const form = new URLSearchParams();
@@ -44,8 +43,8 @@ serve(async (req) => {
       const { json: data } = await panel({ action: "services" });
       const services = Array.isArray(data) ? data : [];
       const withDisplay = services.map((s: any) => {
-        const providerPer1k = Number(s.rate ?? 0); // USD per 1000
-        const displayNairaPer1k = providerPer1k * NAIRA_PER_DOLLAR * MARKUP_MULTIPLIER;
+        const providerPer1k = Number(s.rate ?? 0); // NGN per 1000
+        const displayNairaPer1k = providerPer1k * MARKUP_MULTIPLIER;
         return {
           service: String(s.service),
           name: s.name,
@@ -65,13 +64,12 @@ serve(async (req) => {
       if (!service || !link || !quantity) return json({ success: false, error: "service, link, quantity required" }, 400);
       if (!userId) return json({ success: false, error: "Auth required" }, 401);
 
-      // Compute charge based on markup
       const { json: svcData } = await panel({ action: "services" });
       const svc = Array.isArray(svcData) ? svcData.find((s: any) => String(s.service) === String(service)) : null;
       if (!svc) return json({ success: false, error: "Unknown service" }, 400);
 
       const providerPer1k = Number(svc.rate ?? 0);
-      const chargeNaira = (providerPer1k * NAIRA_PER_DOLLAR * MARKUP_MULTIPLIER * Number(quantity)) / 1000;
+      const chargeNaira = (providerPer1k * MARKUP_MULTIPLIER * Number(quantity)) / 1000;
 
       const supabase = createClient(
         Deno.env.get("SUPABASE_URL") ?? "",
@@ -81,11 +79,9 @@ serve(async (req) => {
       const balance = Number(profile?.wallet_balance ?? 0);
       if (balance < chargeNaira) return json({ success: false, error: `Insufficient balance. Need ${nairaDisplay(chargeNaira)}` }, 402);
 
-      // Place order at provider
       const { json: orderRes, ok } = await panel({ action: "add", service, link, quantity });
       if (!ok || orderRes?.error) return json({ success: false, error: orderRes?.error || "Provider error" }, 502);
 
-      // Debit wallet
       await supabase.from("profiles").update({ wallet_balance: balance - chargeNaira }).eq("user_id", userId);
       await supabase.from("wallet_transactions").insert({
         user_id: userId,
