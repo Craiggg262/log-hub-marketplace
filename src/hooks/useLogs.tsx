@@ -22,6 +22,7 @@ export interface Log {
     icon: string;
     color: string;
     sort_order?: number;
+    image_url?: string | null;
   };
 }
 
@@ -31,7 +32,9 @@ export interface Category {
   icon: string;
   color: string;
   sort_order?: number;
+  image_url?: string | null;
 }
+
 
 export function useLogs() {
   const [logs, setLogs] = useState<Log[]>([]);
@@ -50,9 +53,11 @@ export function useLogs() {
             name,
             icon,
             color,
-            sort_order
+            sort_order,
+            image_url
           )
         `)
+
         .order('sort_order', { ascending: true })
         .order('created_at', { ascending: false });
 
