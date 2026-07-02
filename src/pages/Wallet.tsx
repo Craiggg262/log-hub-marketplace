@@ -4,12 +4,11 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
-import { Wallet as WalletIcon, Plus, MessageCircle, History, Zap, Building2, CreditCard } from 'lucide-react';
+import { Wallet as WalletIcon, Plus, MessageCircle, History, Building2, CreditCard } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import { useTransactions } from '@/hooks/useTransactions';
 import PaymentPointAccount from '@/components/PaymentPointAccount';
 import PayscribeAccount from '@/components/PayscribeAccount';
-import LogPayFund from '@/components/LogPayFund';
 import FundingAccountsDisplay from '@/components/FundingAccountsDisplay';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
@@ -18,7 +17,8 @@ const Wallet = () => {
   const { toast } = useToast();
   const { profile } = useAuth();
   const { transactions, loading } = useTransactions();
-  const [autoProvider, setAutoProvider] = useState<'paymentpoint' | 'payscribe' | 'logpay'>('paymentpoint');
+  const [autoProvider, setAutoProvider] = useState<'paymentpoint' | 'payscribe'>('paymentpoint');
+
 
   const handleManualPayment = () => {
     if (!fundAmount || parseFloat(fundAmount) <= 0) {
@@ -95,11 +95,10 @@ const Wallet = () => {
             </TabsList>
 
             <TabsContent value="automatic" className="mt-6 space-y-4">
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 {([
                   { key: 'paymentpoint', label: 'PaymentPoint', desc: 'Permanent NGN account', icon: Building2 },
                   { key: 'payscribe', label: 'Payscribe', desc: '9PSB virtual account', icon: CreditCard },
-                  { key: 'logpay', label: 'LogPay', desc: 'Card, transfer, USSD', icon: Zap },
                 ] as const).map(({ key, label, desc, icon: Icon }) => {
                   const active = autoProvider === key;
                   return (
@@ -122,9 +121,9 @@ const Wallet = () => {
               <div className="pt-2">
                 {autoProvider === 'paymentpoint' && <PaymentPointAccount />}
                 {autoProvider === 'payscribe' && <PayscribeAccount />}
-                {autoProvider === 'logpay' && <LogPayFund />}
               </div>
             </TabsContent>
+
 
 
             <TabsContent value="manual" className="mt-6 space-y-4">

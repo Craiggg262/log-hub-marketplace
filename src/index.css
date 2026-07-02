@@ -9,64 +9,64 @@ Dark theme with blue/orange accents inspired by no1logsmarketplace.com
 
 @layer base {
   :root {
-    --background: 220 20% 10%;
-    --foreground: 210 40% 98%;
+    /* Light theme */
+    --background: 210 40% 98%;
+    --foreground: 220 20% 12%;
 
-    --card: 220 25% 14%;
-    --card-foreground: 210 40% 98%;
+    --card: 0 0% 100%;
+    --card-foreground: 220 20% 12%;
 
-    --popover: 220 25% 14%;
-    --popover-foreground: 210 40% 98%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 220 20% 12%;
 
     --primary: 38 92% 50%;
     --primary-foreground: 220 20% 10%;
 
-    --secondary: 220 25% 20%;
-    --secondary-foreground: 210 40% 98%;
+    --secondary: 210 30% 94%;
+    --secondary-foreground: 220 20% 12%;
 
-    --muted: 220 20% 18%;
-    --muted-foreground: 215 20% 65%;
+    --muted: 210 30% 94%;
+    --muted-foreground: 220 10% 40%;
 
-    --accent: 217 91% 60%;
-    --accent-foreground: 0 0% 98%;
+    --accent: 217 91% 55%;
+    --accent-foreground: 0 0% 100%;
 
-    --destructive: 0 84.2% 60.2%;
-    --destructive-foreground: 0 0% 98%;
+    --destructive: 0 84.2% 55%;
+    --destructive-foreground: 0 0% 100%;
 
-    --border: 220 20% 22%;
-    --input: 220 20% 22%;
+    --border: 220 15% 88%;
+    --input: 220 15% 88%;
     --ring: 38 92% 50%;
 
     --success: 142 76% 36%;
-    --success-foreground: 0 0% 98%;
+    --success-foreground: 0 0% 100%;
 
     --warning: 38 92% 50%;
     --warning-foreground: 220 20% 10%;
 
     --radius: 0.75rem;
 
-    --sidebar-background: 220 25% 12%;
-    --sidebar-foreground: 210 40% 98%;
+    --sidebar-background: 0 0% 100%;
+    --sidebar-foreground: 220 20% 12%;
     --sidebar-primary: 38 92% 50%;
     --sidebar-primary-foreground: 220 20% 10%;
-    --sidebar-accent: 220 25% 18%;
-    --sidebar-accent-foreground: 210 40% 98%;
-    --sidebar-border: 220 20% 22%;
+    --sidebar-accent: 210 30% 94%;
+    --sidebar-accent-foreground: 220 20% 12%;
+    --sidebar-border: 220 15% 88%;
     --sidebar-ring: 38 92% 50%;
 
-    /* Custom gradients */
     --gradient-primary: linear-gradient(135deg, hsl(38, 92%, 50%), hsl(25, 95%, 53%));
-    --gradient-hero: linear-gradient(135deg, hsl(220, 25%, 14%) 0%, hsl(220, 20%, 10%) 50%, hsl(25, 30%, 15%) 100%);
-    --gradient-card: linear-gradient(180deg, hsl(220, 25%, 16%) 0%, hsl(220, 25%, 12%) 100%);
-     
-     /* Mobile Glass Design Tokens */
-     --glass-bg: 220 25% 14% / 0.6;
-     --glass-border: 220 20% 30% / 0.3;
-     --glass-blur: 20px;
-     --glass-glow: 38 92% 50% / 0.15;
-     --mobile-nav-height: 80px;
-     --safe-area-bottom: env(safe-area-inset-bottom, 0px);
+    --gradient-hero: linear-gradient(135deg, hsl(210, 40%, 98%) 0%, hsl(210, 30%, 94%) 50%, hsl(38, 60%, 92%) 100%);
+    --gradient-card: linear-gradient(180deg, hsl(0, 0%, 100%) 0%, hsl(210, 30%, 96%) 100%);
+
+    --glass-bg: 0 0% 100% / 0.6;
+    --glass-border: 220 15% 80% / 0.4;
+    --glass-blur: 20px;
+    --glass-glow: 38 92% 50% / 0.15;
+    --mobile-nav-height: 80px;
+    --safe-area-bottom: env(safe-area-inset-bottom, 0px);
   }
+
 
   .dark {
     --background: 220 20% 10%;
@@ -90,7 +90,7 @@ Dark theme with blue/orange accents inspired by no1logsmarketplace.com
     --accent: 217 91% 60%;
     --accent-foreground: 0 0% 98%;
 
-    --destructive: 0 62.8% 30.6%;
+    --destructive: 0 62.8% 40%;
     --destructive-foreground: 210 40% 98%;
 
     --border: 220 20% 22%;
@@ -111,7 +111,14 @@ Dark theme with blue/orange accents inspired by no1logsmarketplace.com
     --sidebar-accent-foreground: 210 40% 98%;
     --sidebar-border: 220 20% 22%;
     --sidebar-ring: 38 92% 50%;
+
+    --gradient-hero: linear-gradient(135deg, hsl(220, 25%, 14%) 0%, hsl(220, 20%, 10%) 50%, hsl(25, 30%, 15%) 100%);
+    --gradient-card: linear-gradient(180deg, hsl(220, 25%, 16%) 0%, hsl(220, 25%, 12%) 100%);
+
+    --glass-bg: 220 25% 14% / 0.6;
+    --glass-border: 220 20% 30% / 0.3;
   }
+
 }
 
 @layer base {
