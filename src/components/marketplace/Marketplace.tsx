@@ -221,15 +221,25 @@ const Marketplace: React.FC = () => {
   }
 
   // STEP: PRODUCTS --------------------------------------------------------
+  const activeCategoryImage = activeCategory
+    ? categories.find((c) => c.name === activeCategory)?.image ?? null
+    : null;
+
   return (
     <div className="space-y-5">
       <ServerSwitchBar />
+      {activeCategoryImage && (
+        <div className="rounded-2xl overflow-hidden border border-border/40 aspect-[21/9] bg-muted">
+          <img src={activeCategoryImage} alt={activeCategory ?? ''} className="w-full h-full object-cover" />
+        </div>
+      )}
       <div>
         <h1 className="text-2xl font-bold uppercase tracking-tight">{activeCategory}</h1>
         <p className="text-sm text-muted-foreground">
           {filteredProducts.length} product{filteredProducts.length !== 1 ? 's' : ''} available
         </p>
       </div>
+
 
       <div className="relative">
         <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground h-4 w-4" />

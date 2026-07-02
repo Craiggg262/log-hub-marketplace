@@ -6,8 +6,9 @@ import { PullToRefresh } from '@/components/mobile/PullToRefresh';
 import { QuickActionGrid } from '@/components/mobile/QuickActionGrid';
 import { 
   Wallet, ShoppingCart, Copy, Check, 
-  CreditCard, Gift, ChevronRight, TrendingUp
+  CreditCard, Gift, ChevronRight, TrendingUp, Rocket
 } from 'lucide-react';
+
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/hooks/useAuth';
 import { useToast } from '@/hooks/use-toast';
@@ -107,6 +108,23 @@ import FundingAccountsDisplay from '@/components/FundingAccountsDisplay';
               </div>
             </GlassCard>
           </div>
+
+          {/* Boosting CTA */}
+          <div className="px-4">
+            <GlassCard variant="interactive" onClick={() => navigate('/app/boosting')} className="silk-shimmer">
+              <div className="p-4 flex items-center gap-4">
+                <div className="w-12 h-12 rounded-2xl gradient-primary flex items-center justify-center">
+                  <Rocket className="h-6 w-6 text-primary-foreground" />
+                </div>
+                <div className="flex-1">
+                  <h3 className="font-semibold">Social Boosting</h3>
+                  <p className="text-xs text-muted-foreground">Followers, likes, views &amp; more</p>
+                </div>
+                <ChevronRight className="h-5 w-5 text-muted-foreground" />
+              </div>
+            </GlassCard>
+          </div>
+
  
          {/* Referral Banner */}
          {profile?.referral_code && (
