@@ -5,8 +5,9 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { useToast } from '@/hooks/use-toast';
 import {
-  Wallet, ShoppingCart, MessageCircle, Copy, Check, Gift, Phone, Wifi, Zap, Tv, Globe, Package, ChevronRight, ArrowRight,
+  Wallet, ShoppingCart, MessageCircle, Copy, Check, Gift, Phone, Wifi, Zap, Tv, Globe, Package, ChevronRight, ArrowRight, Rocket,
 } from 'lucide-react';
+
 import { useAuth } from '@/hooks/useAuth';
 import FundingAccountsDisplay from '@/components/FundingAccountsDisplay';
 
@@ -149,6 +150,28 @@ const Dashboard = () => {
           <ArrowRight className="h-6 w-6 text-primary shrink-0" />
         </CardContent>
       </Card>
+
+      {/* Boosting CTA */}
+      <Card
+        onClick={() => navigate('/boosting')}
+        className="glass-card border-0 cursor-pointer hover:border-primary/50 transition-all overflow-hidden"
+      >
+        <CardContent className="p-5 md:p-6 flex items-center justify-between gap-4">
+          <div className="flex items-center gap-4">
+            <div className="h-12 w-12 md:h-14 md:w-14 rounded-2xl gradient-primary flex items-center justify-center">
+              <Rocket className="h-6 w-6 md:h-7 md:w-7 text-primary-foreground" />
+            </div>
+            <div>
+              <h2 className="text-base md:text-lg font-bold">Social Boosting</h2>
+              <p className="text-xs md:text-sm text-muted-foreground">
+                Followers, likes, views &amp; more — grow every platform
+              </p>
+            </div>
+          </div>
+          <ArrowRight className="h-5 w-5 text-primary shrink-0" />
+        </CardContent>
+      </Card>
+
 
       {/* Quick Services */}
       <div>

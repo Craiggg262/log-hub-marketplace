@@ -33,9 +33,11 @@ interface NormalizedProduct {
   platform: string;
   categorySort: number;
   itemSort: number;
+  categoryImage?: string | null;
   description?: string;
   logo_url?: string | null;
 }
+
 
 const Marketplace: React.FC = () => {
   const navigate = useNavigate();
@@ -72,28 +74,32 @@ const Marketplace: React.FC = () => {
       platform: log.categories?.name || detectPlatform(log.title),
       categorySort: log.categories?.sort_order ?? 999,
       itemSort: log.sort_order ?? 999,
+      categoryImage: log.categories?.image_url ?? null,
       description: log.description,
       logo_url: log.logo_url,
     }));
   }, [server, kingData.products, liteData.logs]);
 
+
   const loading = server === 'king' ? kingData.loading : liteData.loading;
 
   const categories = useMemo(() => {
-    const map = new Map<string, { name: string; sort: number; count: number; sample: NormalizedProduct }>();
+    const map = new Map<string, { name: string; sort: number; count: number; sample: NormalizedProduct; image?: string | null }>();
     for (const p of products) {
       if (p.inStock <= 0) continue;
       const existing = map.get(p.category);
       if (existing) {
         existing.count++;
+        if (!existing.image && p.categoryImage) existing.image = p.categoryImage;
       } else {
-        map.set(p.category, { name: p.category, sort: p.categorySort, count: 1, sample: p });
+        map.set(p.category, { name: p.category, sort: p.categorySort, count: 1, sample: p, image: p.categoryImage });
       }
     }
     return Array.from(map.values()).sort(
       (a, b) => a.sort - b.sort || a.name.localeCompare(b.name)
     );
   }, [products]);
+
 
   const filteredProducts = useMemo(() => {
     return products
@@ -188,18 +194,26 @@ const Marketplace: React.FC = () => {
                   setActiveCategory(c.name);
                   setStep('products');
                 }}
-                className="glass-card rounded-2xl p-4 text-left transition-all hover:scale-[1.03] hover:border-primary/50 group"
+                className="glass-card rounded-2xl p-0 text-left transition-all hover:scale-[1.03] hover:border-primary/50 group overflow-hidden"
               >
-                <div className="flex items-center gap-3 mb-2">
-                  <ProductLogo logoUrl={c.sample.logo_url} platform={c.sample.platform} size={44} />
-                  <Badge variant="secondary" className="text-[10px]">{c.count}</Badge>
+                {c.image ? (
+                  <div className="aspect-[16/9] w-full overflow-hidden bg-muted">
+                    <img src={c.image} alt={c.name} className="w-full h-full object-cover" loading="lazy" />
+                  </div>
+                ) : null}
+                <div className="p-4">
+                  <div className="flex items-center gap-3 mb-2">
+                    <ProductLogo logoUrl={c.sample.logo_url} platform={c.sample.platform} size={40} />
+                    <Badge variant="secondary" className="text-[10px]">{c.count}</Badge>
+                  </div>
+                  <p className="font-bold text-sm leading-tight line-clamp-2">{c.name}</p>
+                  <p className="text-[10px] text-muted-foreground mt-1">
+                    {c.count} product{c.count !== 1 ? 's' : ''}
+                  </p>
                 </div>
-                <p className="font-bold text-sm leading-tight line-clamp-2">{c.name}</p>
-                <p className="text-[10px] text-muted-foreground mt-1">
-                  {c.count} product{c.count !== 1 ? 's' : ''}
-                </p>
               </button>
             ))}
+
           </div>
         )}
       </div>
@@ -207,15 +221,25 @@ const Marketplace: React.FC = () => {
   }
 
   // STEP: PRODUCTS --------------------------------------------------------
+  const activeCategoryImage = activeCategory
+    ? categories.find((c) => c.name === activeCategory)?.image ?? null
+    : null;
+
   return (
     <div className="space-y-5">
       <ServerSwitchBar />
+      {activeCategoryImage && (
+        <div className="rounded-2xl overflow-hidden border border-border/40 aspect-[21/9] bg-muted">
+          <img src={activeCategoryImage} alt={activeCategory ?? ''} className="w-full h-full object-cover" />
+        </div>
+      )}
       <div>
         <h1 className="text-2xl font-bold uppercase tracking-tight">{activeCategory}</h1>
         <p className="text-sm text-muted-foreground">
           {filteredProducts.length} product{filteredProducts.length !== 1 ? 's' : ''} available
         </p>
       </div>
+
 
       <div className="relative">
         <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground h-4 w-4" />

@@ -3,13 +3,16 @@
  import { MobileLayout } from '@/components/mobile/MobileLayout';
  import { GlassCard } from '@/components/mobile/GlassCard';
  import { Button } from '@/components/ui/button';
+ import { Switch } from '@/components/ui/switch';
  import { 
    User, Mail, Phone, Gift, Settings, 
    LogOut, ChevronRight, Shield, HelpCircle,
-    ExternalLink, Code2
+    ExternalLink, Code2, Moon, Sun
  } from 'lucide-react';
  import { useAuth } from '@/hooks/useAuth';
+ import { useTheme } from '@/hooks/useTheme';
  import { cn } from '@/lib/utils';
+
  
  interface MenuItem {
    icon: React.ElementType;
@@ -23,6 +26,8 @@
  const MobileProfile = () => {
    const navigate = useNavigate();
    const { user, profile, signOut } = useAuth();
+   const { theme, toggle } = useTheme();
+
  
    const handleSignOut = async () => {
      await signOut();
@@ -93,6 +98,21 @@
              )}
            </div>
          </GlassCard>
+
+         {/* Theme Toggle */}
+         <GlassCard>
+           <div className="p-4 flex items-center gap-4">
+             <div className="w-10 h-10 rounded-xl bg-primary/20 flex items-center justify-center">
+               {theme === 'dark' ? <Moon className="h-5 w-5 text-primary" /> : <Sun className="h-5 w-5 text-primary" />}
+             </div>
+             <div className="flex-1">
+               <p className="font-medium">{theme === 'dark' ? 'Dark Mode' : 'Light Mode'}</p>
+               <p className="text-xs text-muted-foreground">Toggle app appearance</p>
+             </div>
+             <Switch checked={theme === 'dark'} onCheckedChange={toggle} />
+           </div>
+         </GlassCard>
+
  
          {/* Menu Items */}
          <div className="space-y-2">

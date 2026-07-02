@@ -4,14 +4,18 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
-import { Settings as SettingsIcon, User, Bell, Shield, Eye, EyeOff } from 'lucide-react';
+import { Settings as SettingsIcon, User, Bell, Shield, Eye, EyeOff, Sun, Moon } from 'lucide-react';
 import { Switch } from '@/components/ui/switch';
 import { Separator } from '@/components/ui/separator';
 import { useAuth } from '@/hooks/useAuth';
+import { useTheme } from '@/hooks/useTheme';
 import { supabase } from '@/integrations/supabase/client';
+
 
 const Settings = () => {
   const { user, profile } = useAuth();
+  const { theme, toggle } = useTheme();
+
   const [profileData, setProfileData] = useState({
     fullName: '',
     email: '',
@@ -304,8 +308,29 @@ const Settings = () => {
 
         {/* Notifications & Account */}
         <div className="space-y-6">
+          {/* Appearance */}
           <Card>
             <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                {theme === 'dark' ? <Moon className="h-5 w-5" /> : <Sun className="h-5 w-5" />}
+                Appearance
+              </CardTitle>
+              <CardDescription>Choose light or dark mode</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="flex items-center justify-between">
+                <div>
+                  <Label>Dark Mode</Label>
+                  <p className="text-sm text-muted-foreground">Toggle between light and dark themes</p>
+                </div>
+                <Switch checked={theme === 'dark'} onCheckedChange={toggle} />
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader>
+
               <CardTitle className="flex items-center gap-2">
                 <Bell className="h-5 w-5" />
                 Notifications

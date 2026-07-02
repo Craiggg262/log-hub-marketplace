@@ -88,8 +88,11 @@ const Admin = () => {
   const [editingLog, setEditingLog] = useState<LogData | null>(null);
   const [fundUser, setFundUser] = useState({ userId: '', amount: '' });
   const [newLogItem, setNewLogItem] = useState({ log_id: '', account_details: '', quantity: '1' });
+  const [subAccountCategoryFilter, setSubAccountCategoryFilter] = useState<string>('all');
   const [categories, setCategories] = useState<any[]>([]);
+  const [categoryImageUploading, setCategoryImageUploading] = useState<string | null>(null);
   const [selectedLogForItems, setSelectedLogForItems] = useState<string | null>(null);
+
   const [withdrawalRequests, setWithdrawalRequests] = useState<WithdrawalRequest[]>([]);
   const [userSearch, setUserSearch] = useState('');
   const [broadcasts, setBroadcasts] = useState<any[]>([]);
@@ -1074,7 +1077,67 @@ const Admin = () => {
                 </div>
               </CardContent>
             </Card>
+
+            {/* Category Images */}
+            <Card>
+              <CardHeader>
+                <CardTitle>Category Images</CardTitle>
+                <CardDescription>Upload a banner image for each category (shown on the marketplace).</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-3">
+                  {[...categories]
+                    .sort((a, b) => (a.sort_order ?? 999) - (b.sort_order ?? 999) || a.name.localeCompare(b.name))
+                    .map((c) => (
+                      <div key={c.id} className="flex items-center gap-3 p-3 border rounded-lg">
+                        {c.image_url ? (
+                          <img src={c.image_url} alt={c.name} className="h-14 w-24 rounded-lg object-cover border border-border/40" />
+                        ) : (
+                          <div className="h-14 w-24 rounded-lg bg-muted flex items-center justify-center text-xs text-muted-foreground">No image</div>
+                        )}
+                        <div className="flex-1">
+                          <p className="font-medium">{c.name}</p>
+                          <p className="text-xs text-muted-foreground">Recommended 16:9</p>
+                        </div>
+                        <Input
+                          type="file"
+                          accept="image/*"
+                          className="max-w-[220px]"
+                          disabled={categoryImageUploading === c.id}
+                          onChange={async (e) => {
+                            const file = e.target.files?.[0];
+                            if (!file) return;
+                            setCategoryImageUploading(c.id);
+                            try {
+                              const ext = file.name.split('.').pop() || 'png';
+                              const path = `categories/${c.id}-${Date.now()}.${ext}`;
+                              const { error: upErr } = await supabase.storage
+                                .from('log-logos')
+                                .upload(path, file, { cacheControl: '3600', upsert: false, contentType: file.type });
+                              if (upErr) throw upErr;
+                              const { data: pub } = supabase.storage.from('log-logos').getPublicUrl(path);
+                              const { error: updErr } = await supabase
+                                .from('categories')
+                                .update({ image_url: pub.publicUrl })
+                                .eq('id', c.id);
+                              if (updErr) throw updErr;
+                              toast({ title: 'Category image updated' });
+                              fetchData();
+                            } catch (err: any) {
+                              toast({ title: 'Upload failed', description: err.message, variant: 'destructive' });
+                            } finally {
+                              setCategoryImageUploading(null);
+                              (e.target as HTMLInputElement).value = '';
+                            }
+                          }}
+                        />
+                      </div>
+                    ))}
+                </div>
+              </CardContent>
+            </Card>
           </TabsContent>
+
 
           <TabsContent value="sub-accounts" className="space-y-6">
             {/* Add Sub-Account */}
@@ -1091,20 +1154,40 @@ const Admin = () => {
               <CardContent>
                 <form onSubmit={handleAddLogItem} className="space-y-4">
                   <div className="space-y-2">
+                    <Label>Filter by Category</Label>
+                    <Select value={subAccountCategoryFilter} onValueChange={setSubAccountCategoryFilter}>
+                      <SelectTrigger>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="all">All categories</SelectItem>
+                        {[...categories]
+                          .sort((a, b) => (a.sort_order ?? 999) - (b.sort_order ?? 999) || a.name.localeCompare(b.name))
+                          .map((c) => (
+                            <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>
+                          ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  <div className="space-y-2">
                     <Label htmlFor="logSelect">Select Log</Label>
                     <Select value={newLogItem.log_id} onValueChange={(value) => setNewLogItem({...newLogItem, log_id: value})}>
                       <SelectTrigger>
                         <SelectValue placeholder="Select a log to add accounts to" />
                       </SelectTrigger>
                       <SelectContent>
-                        {logs.map((log) => (
-                          <SelectItem key={log.id} value={log.id}>
-                            {log.title} - {formatPrice(log.price)}
-                          </SelectItem>
-                        ))}
+                        {logs
+                          .filter((log) => subAccountCategoryFilter === 'all' || log.category_id === subAccountCategoryFilter)
+                          .map((log) => (
+                            <SelectItem key={log.id} value={log.id}>
+                              {log.title} - {formatPrice(log.price)}
+                            </SelectItem>
+                          ))}
                       </SelectContent>
                     </Select>
                   </div>
+
 
                   <div className="space-y-2">
                     <Label htmlFor="accountDetails">Account Details</Label>
