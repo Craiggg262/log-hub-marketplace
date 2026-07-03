@@ -988,8 +988,11 @@ const Admin = () => {
                               .from('log-logos')
                               .upload(path, file, { cacheControl: '3600', upsert: false, contentType: file.type });
                             if (upErr) throw upErr;
-                            const { data: pub } = supabase.storage.from('log-logos').getPublicUrl(path);
-                            const url = pub.publicUrl;
+                            const { data: signed, error: signErr } = await supabase.storage
+                              .from('log-logos')
+                              .createSignedUrl(path, 60 * 60 * 24 * 365 * 100);
+                            if (signErr) throw signErr;
+                            const url = signed.signedUrl;
                             if (editingLog) setEditingLog({ ...editingLog, logo_url: url });
                             else setNewLog({ ...newLog, logo_url: url });
                             toast({ title: 'Logo uploaded' });
