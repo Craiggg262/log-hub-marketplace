@@ -44,6 +44,60 @@ export type Database = {
         }
         Relationships: []
       }
+      boosting_orders: {
+        Row: {
+          average_time: string | null
+          charge_amount: number
+          created_at: string
+          id: string
+          link: string
+          provider_order: string
+          quantity: number
+          refunded_amount: number
+          remains: number | null
+          service_id: string
+          service_name: string
+          start_count: number | null
+          status: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          average_time?: string | null
+          charge_amount: number
+          created_at?: string
+          id?: string
+          link: string
+          provider_order: string
+          quantity: number
+          refunded_amount?: number
+          remains?: number | null
+          service_id: string
+          service_name: string
+          start_count?: number | null
+          status?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          average_time?: string | null
+          charge_amount?: number
+          created_at?: string
+          id?: string
+          link?: string
+          provider_order?: string
+          quantity?: number
+          refunded_amount?: number
+          remains?: number | null
+          service_id?: string
+          service_name?: string
+          start_count?: number | null
+          status?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       broadcast_notifications: {
         Row: {
           created_at: string
