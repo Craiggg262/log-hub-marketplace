@@ -108,6 +108,14 @@ const Boosting: React.FC = () => {
         </div>
       </div>
 
+      <div className="flex justify-end">
+        <Button asChild variant="outline" size="sm" className="gap-2">
+          <Link to={window.location.pathname.startsWith('/app') ? '/app/boosting/orders' : '/boosting/orders'}>
+            <ListOrdered className="h-4 w-4" /> Order History
+          </Link>
+        </Button>
+      </div>
+
       <Card className="glass-card border-0">
         <CardHeader>
           <CardTitle>Place a Boost</CardTitle>
