@@ -1118,10 +1118,13 @@ const Admin = () => {
                                 .from('log-logos')
                                 .upload(path, file, { cacheControl: '3600', upsert: false, contentType: file.type });
                               if (upErr) throw upErr;
-                              const { data: pub } = supabase.storage.from('log-logos').getPublicUrl(path);
+                              const { data: signed, error: signErr } = await supabase.storage
+                                .from('log-logos')
+                                .createSignedUrl(path, 60 * 60 * 24 * 365 * 100);
+                              if (signErr) throw signErr;
                               const { error: updErr } = await supabase
                                 .from('categories')
-                                .update({ image_url: pub.publicUrl })
+                                .update({ image_url: signed.signedUrl })
                                 .eq('id', c.id);
                               if (updErr) throw updErr;
                               toast({ title: 'Category image updated' });
