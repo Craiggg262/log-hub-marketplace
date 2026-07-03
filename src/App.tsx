@@ -29,6 +29,7 @@ import ReferralEarn from "./pages/ReferralEarn";
 import SmsVerification from "./pages/SmsVerification";
 import Resellers from "./pages/Resellers";
 import Boosting from "./pages/Boosting";
+import BoostingOrders from "./pages/BoostingOrders";
 import { CommunityPopup } from "./components/CommunityPopup";
 import BroadcastNotification from "./components/BroadcastNotification";
  
