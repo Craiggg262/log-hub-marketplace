@@ -29,6 +29,7 @@ import ReferralEarn from "./pages/ReferralEarn";
 import SmsVerification from "./pages/SmsVerification";
 import Resellers from "./pages/Resellers";
 import Boosting from "./pages/Boosting";
+import BoostingOrders from "./pages/BoostingOrders";
 import { CommunityPopup } from "./components/CommunityPopup";
 import BroadcastNotification from "./components/BroadcastNotification";
  
@@ -159,6 +160,8 @@ function AppContent() {
         <Route path="/app/resellers" element={<MobileProtectedRoute><Resellers /></MobileProtectedRoute>} />
         <Route path="/boosting" element={<ProtectedRoute><Boosting /></ProtectedRoute>} />
         <Route path="/app/boosting" element={<MobileProtectedRoute><Boosting /></MobileProtectedRoute>} />
+        <Route path="/boosting/orders" element={<ProtectedRoute><BoostingOrders /></ProtectedRoute>} />
+        <Route path="/app/boosting/orders" element={<MobileProtectedRoute><BoostingOrders /></MobileProtectedRoute>} />
         
         {/* Mobile App Routes */}
         <Route path="/install" element={<MobileInstall />} />

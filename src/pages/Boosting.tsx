@@ -1,4 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react';
+import { Link } from 'react-router-dom';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -7,7 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
-import { Loader2, Rocket, Search } from 'lucide-react';
+import { Loader2, Rocket, Search, ListOrdered } from 'lucide-react';
 
 interface Service {
   service: string;
@@ -105,6 +106,14 @@ const Boosting: React.FC = () => {
             <Rocket className="h-7 w-7 text-primary-foreground" />
           </div>
         </div>
+      </div>
+
+      <div className="flex justify-end">
+        <Button asChild variant="outline" size="sm" className="gap-2">
+          <Link to={window.location.pathname.startsWith('/app') ? '/app/boosting/orders' : '/boosting/orders'}>
+            <ListOrdered className="h-4 w-4" /> Order History
+          </Link>
+        </Button>
       </div>
 
       <Card className="glass-card border-0">
