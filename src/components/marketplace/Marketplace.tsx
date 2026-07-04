@@ -326,6 +326,37 @@ const Marketplace: React.FC = () => {
           }}
         />
       )}
+
+      <Dialog open={!!previewImage} onOpenChange={(o) => { if (!o) setPreviewImage(null); }}>
+        <DialogContent className="max-w-4xl p-0 bg-transparent border-0 shadow-none [&>button]:hidden">
+          <div className="relative">
+            {previewImage && (
+              <img
+                src={previewImage.url}
+                alt={previewImage.alt}
+                className="w-full h-auto max-h-[85vh] object-contain rounded-2xl"
+              />
+            )}
+            <button
+              type="button"
+              onClick={() => setPreviewImage(null)}
+              className="absolute top-3 right-3 h-10 w-10 rounded-full bg-background/90 backdrop-blur border border-border/60 flex items-center justify-center hover:bg-background transition-colors"
+              aria-label="Close preview"
+            >
+              <X className="h-5 w-5" />
+            </button>
+            <div className="absolute bottom-3 left-1/2 -translate-x-1/2">
+              <button
+                type="button"
+                onClick={() => setPreviewImage(null)}
+                className="px-4 py-2 rounded-full text-sm font-semibold bg-background/90 backdrop-blur border border-border/60 hover:bg-background transition-colors"
+              >
+                Keep browsing
+              </button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
