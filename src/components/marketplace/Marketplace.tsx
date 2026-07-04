@@ -4,7 +4,8 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
-import { ChevronLeft, Search, Package, ShoppingCart, Crown, Zap } from 'lucide-react';
+import { ChevronLeft, Search, Package, ShoppingCart, Crown, Zap, X } from 'lucide-react';
+import { Dialog, DialogContent } from '@/components/ui/dialog';
 import { useServerSelection } from '@/hooks/useServerSelection';
 import { useLoggsplug } from '@/hooks/useLoggsplug';
 import { useLogs } from '@/hooks/useLogs';
@@ -50,6 +51,7 @@ const Marketplace: React.FC = () => {
   const [activeCategory, setActiveCategory] = useState<string | null>(null);
   const [search, setSearch] = useState('');
   const [buyProduct, setBuyProduct] = useState<NormalizedProduct | null>(null);
+  const [previewImage, setPreviewImage] = useState<{ url: string; alt: string } | null>(null);
 
   const products: NormalizedProduct[] = useMemo(() => {
     if (server === 'king') {
@@ -197,7 +199,15 @@ const Marketplace: React.FC = () => {
                 className="glass-card rounded-2xl p-0 text-left transition-all hover:scale-[1.03] hover:border-primary/50 group overflow-hidden"
               >
                 {c.image ? (
-                  <div className="aspect-[16/9] w-full overflow-hidden bg-muted">
+                  <div
+                    role="button"
+                    tabIndex={0}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setPreviewImage({ url: c.image!, alt: c.name });
+                    }}
+                    className="aspect-[16/9] w-full overflow-hidden bg-muted cursor-zoom-in"
+                  >
                     <img src={c.image} alt={c.name} className="w-full h-full object-cover" loading="lazy" />
                   </div>
                 ) : null}
@@ -229,9 +239,13 @@ const Marketplace: React.FC = () => {
     <div className="space-y-5">
       <ServerSwitchBar />
       {activeCategoryImage && (
-        <div className="rounded-2xl overflow-hidden border border-border/40 aspect-[21/9] bg-muted">
+        <button
+          type="button"
+          onClick={() => setPreviewImage({ url: activeCategoryImage, alt: activeCategory ?? '' })}
+          className="block w-full rounded-2xl overflow-hidden border border-border/40 aspect-[21/9] bg-muted cursor-zoom-in"
+        >
           <img src={activeCategoryImage} alt={activeCategory ?? ''} className="w-full h-full object-cover" />
-        </div>
+        </button>
       )}
       <div>
         <h1 className="text-2xl font-bold uppercase tracking-tight">{activeCategory}</h1>
@@ -265,7 +279,18 @@ const Marketplace: React.FC = () => {
               className="glass-card rounded-2xl p-4 text-left transition-all hover:scale-[1.01] hover:border-primary/50"
             >
               <div className="flex items-center gap-3">
-                <ProductLogo logoUrl={p.logo_url} platform={p.platform} size={56} rounded="2xl" />
+                <span
+                  role={p.logo_url ? 'button' : undefined}
+                  tabIndex={p.logo_url ? 0 : -1}
+                  onClick={(e) => {
+                    if (!p.logo_url) return;
+                    e.stopPropagation();
+                    setPreviewImage({ url: p.logo_url, alt: p.name });
+                  }}
+                  className={p.logo_url ? 'cursor-zoom-in' : ''}
+                >
+                  <ProductLogo logoUrl={p.logo_url} platform={p.platform} size={56} rounded="2xl" />
+                </span>
                 <div className="flex-1 min-w-0">
                   <p className="font-bold text-sm line-clamp-2 leading-tight uppercase">{p.name}</p>
                   <div className="flex items-center gap-2 mt-2">
@@ -301,6 +326,37 @@ const Marketplace: React.FC = () => {
           }}
         />
       )}
+
+      <Dialog open={!!previewImage} onOpenChange={(o) => { if (!o) setPreviewImage(null); }}>
+        <DialogContent className="max-w-4xl p-0 bg-transparent border-0 shadow-none [&>button]:hidden">
+          <div className="relative">
+            {previewImage && (
+              <img
+                src={previewImage.url}
+                alt={previewImage.alt}
+                className="w-full h-auto max-h-[85vh] object-contain rounded-2xl"
+              />
+            )}
+            <button
+              type="button"
+              onClick={() => setPreviewImage(null)}
+              className="absolute top-3 right-3 h-10 w-10 rounded-full bg-background/90 backdrop-blur border border-border/60 flex items-center justify-center hover:bg-background transition-colors"
+              aria-label="Close preview"
+            >
+              <X className="h-5 w-5" />
+            </button>
+            <div className="absolute bottom-3 left-1/2 -translate-x-1/2">
+              <button
+                type="button"
+                onClick={() => setPreviewImage(null)}
+                className="px-4 py-2 rounded-full text-sm font-semibold bg-background/90 backdrop-blur border border-border/60 hover:bg-background transition-colors"
+              >
+                Keep browsing
+              </button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
