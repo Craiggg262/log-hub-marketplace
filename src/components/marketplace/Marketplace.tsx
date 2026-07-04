@@ -279,7 +279,18 @@ const Marketplace: React.FC = () => {
               className="glass-card rounded-2xl p-4 text-left transition-all hover:scale-[1.01] hover:border-primary/50"
             >
               <div className="flex items-center gap-3">
-                <ProductLogo logoUrl={p.logo_url} platform={p.platform} size={56} rounded="2xl" />
+                <span
+                  role={p.logo_url ? 'button' : undefined}
+                  tabIndex={p.logo_url ? 0 : -1}
+                  onClick={(e) => {
+                    if (!p.logo_url) return;
+                    e.stopPropagation();
+                    setPreviewImage({ url: p.logo_url, alt: p.name });
+                  }}
+                  className={p.logo_url ? 'cursor-zoom-in' : ''}
+                >
+                  <ProductLogo logoUrl={p.logo_url} platform={p.platform} size={56} rounded="2xl" />
+                </span>
                 <div className="flex-1 min-w-0">
                   <p className="font-bold text-sm line-clamp-2 leading-tight uppercase">{p.name}</p>
                   <div className="flex items-center gap-2 mt-2">
