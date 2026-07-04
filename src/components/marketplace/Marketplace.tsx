@@ -199,7 +199,15 @@ const Marketplace: React.FC = () => {
                 className="glass-card rounded-2xl p-0 text-left transition-all hover:scale-[1.03] hover:border-primary/50 group overflow-hidden"
               >
                 {c.image ? (
-                  <div className="aspect-[16/9] w-full overflow-hidden bg-muted">
+                  <div
+                    role="button"
+                    tabIndex={0}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setPreviewImage({ url: c.image!, alt: c.name });
+                    }}
+                    className="aspect-[16/9] w-full overflow-hidden bg-muted cursor-zoom-in"
+                  >
                     <img src={c.image} alt={c.name} className="w-full h-full object-cover" loading="lazy" />
                   </div>
                 ) : null}
