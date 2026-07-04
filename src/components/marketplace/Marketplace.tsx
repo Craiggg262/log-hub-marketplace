@@ -51,6 +51,7 @@ const Marketplace: React.FC = () => {
   const [activeCategory, setActiveCategory] = useState<string | null>(null);
   const [search, setSearch] = useState('');
   const [buyProduct, setBuyProduct] = useState<NormalizedProduct | null>(null);
+  const [previewImage, setPreviewImage] = useState<{ url: string; alt: string } | null>(null);
 
   const products: NormalizedProduct[] = useMemo(() => {
     if (server === 'king') {
