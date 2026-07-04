@@ -1,4 +1,4 @@
-# Welcome to your Lovable project
+# Welcome to your Craigs project
 
 ## Project info
 
@@ -8,7 +8,7 @@
 
 There are several ways of editing your application.
 
-**Use Lovable**
+**Use Craig Analytics**
 
 Simply visit the [Lovable Project](https://lovable.dev/projects/659910ed-16a1-4aea-89d7-64e391080b25) and start prompting.
 
