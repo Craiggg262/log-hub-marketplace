@@ -239,9 +239,13 @@ const Marketplace: React.FC = () => {
     <div className="space-y-5">
       <ServerSwitchBar />
       {activeCategoryImage && (
-        <div className="rounded-2xl overflow-hidden border border-border/40 aspect-[21/9] bg-muted">
+        <button
+          type="button"
+          onClick={() => setPreviewImage({ url: activeCategoryImage, alt: activeCategory ?? '' })}
+          className="block w-full rounded-2xl overflow-hidden border border-border/40 aspect-[21/9] bg-muted cursor-zoom-in"
+        >
           <img src={activeCategoryImage} alt={activeCategory ?? ''} className="w-full h-full object-cover" />
-        </div>
+        </button>
       )}
       <div>
         <h1 className="text-2xl font-bold uppercase tracking-tight">{activeCategory}</h1>
