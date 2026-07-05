@@ -56,3 +56,8 @@ verify_jwt = false
 [functions.payscribe-webhook]
 verify_jwt = false
 
+[functions.vtu-gateway]
+verify_jwt = false
+
+
+
