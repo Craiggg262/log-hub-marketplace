@@ -25,20 +25,14 @@ const BuyData = () => {
   const [planCode, setPlanCode] = useState<string>("");
   const [loadingServices, setLoadingServices] = useState(false);
   const [loadingPlans, setLoadingPlans] = useState(false);
-
-  // Portal 2 manual bundle
-  const [bundleId, setBundleId] = useState("");
-  const [manualAmount, setManualAmount] = useState("");
-
   const [phone, setPhone] = useState("");
   const [submitting, setSubmitting] = useState(false);
 
   useEffect(() => {
-    setServiceId(""); setPlanCode(""); setPlans([]); setBundleId(""); setManualAmount("");
-    setServices([]);
+    setServiceId(""); setPlanCode(""); setPlans([]); setServices([]);
     setLoadingServices(true);
     supabase.functions
-      .invoke("vtu-gateway", { body: { action: "fetch_services", portal, service_type: portal === "1" ? "data" : "data" } })
+      .invoke("vtu-gateway", { body: { action: "fetch_services", portal, service_type: "data" } })
       .then(({ data, error }) => {
         if (error || data?.error) {
           toast({ title: "Failed to load networks", description: data?.error || error?.message, variant: "destructive" });
@@ -50,7 +44,7 @@ const BuyData = () => {
   }, [portal, toast]);
 
   useEffect(() => {
-    if (!serviceId || portal !== "1") { setPlans([]); return; }
+    if (!serviceId) { setPlans([]); return; }
     setLoadingPlans(true);
     setPlanCode("");
     supabase.functions
@@ -68,21 +62,13 @@ const BuyData = () => {
   const svc = services.find((s) => String(s.service_id) === serviceId);
   const selectedPlan = plans.find((p) => String(p.plan_code) === planCode);
 
-  const baseAmount = portal === "1"
-    ? Number(selectedPlan?.amount || 0)
-    : Number(manualAmount) || 0;
+  const baseAmount = Number(selectedPlan?.amount || 0);
   const chargeAmount = Math.round(baseAmount * MARKUP * 100) / 100;
 
   const handleBuy = async () => {
     if (!svc) return toast({ title: "Choose network", variant: "destructive" });
+    if (!selectedPlan) return toast({ title: "Choose a data plan", variant: "destructive" });
     if (!/^0\d{10}$/.test(phone)) return toast({ title: "Invalid phone number", variant: "destructive" });
-
-    if (portal === "1") {
-      if (!selectedPlan) return toast({ title: "Choose a data plan", variant: "destructive" });
-    } else {
-      if (!bundleId) return toast({ title: "Enter bundle ID", variant: "destructive" });
-      if (baseAmount < 50) return toast({ title: "Enter valid amount", variant: "destructive" });
-    }
 
     setSubmitting(true);
     const body: any = {
@@ -91,22 +77,17 @@ const BuyData = () => {
       service_id: svc.service_id,
       network_name: svc.network_name,
       phone_number: phone,
+      amount: baseAmount,
+      plan_code: selectedPlan.plan_code,
+      plan_name: selectedPlan.plan_name,
     };
-    if (portal === "1") {
-      body.amount = baseAmount;
-      body.plan_code = selectedPlan.plan_code;
-      body.plan_name = selectedPlan.plan_name;
-    } else {
-      body.amount = baseAmount;
-      body.bundle_id = bundleId;
-    }
     const { data, error } = await supabase.functions.invoke("vtu-gateway", { body });
     setSubmitting(false);
     if (error || data?.error) {
       toast({ title: "Purchase failed", description: data?.error || error?.message, variant: "destructive" });
       return;
     }
-    toast({ title: "Data delivered!", description: `${selectedPlan?.plan_name || `Bundle #${bundleId}`} to ${phone}` });
+    toast({ title: "Data delivered!", description: `${selectedPlan.plan_name} to ${phone}` });
     refetchProfile?.();
   };
 
@@ -152,55 +133,24 @@ const BuyData = () => {
             </Select>
           </div>
 
-          {portal === "1" ? (
-            <div>
-              <Label>Data Plan</Label>
-              <Select value={planCode} onValueChange={setPlanCode} disabled={!serviceId || loadingPlans}>
-                <SelectTrigger className="mt-1">
-                  <SelectValue placeholder={loadingPlans ? "Loading plans..." : "Choose plan"} />
-                </SelectTrigger>
-                <SelectContent>
-                  {plans.map((pl) => (
-                    <SelectItem key={pl.plan_code} value={String(pl.plan_code)}>
-                      {pl.plan_name} {pl.validity ? `• ${pl.validity}` : ""} — ₦{Math.round(pl.amount * MARKUP).toLocaleString()}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-              {plans.length === 0 && serviceId && !loadingPlans && (
-                <p className="text-xs text-muted-foreground mt-1">No plans available for this network.</p>
-              )}
-            </div>
-          ) : (
-            <>
-              <div>
-                <Label>Bundle ID</Label>
-                <Input
-                  className="mt-1"
-                  inputMode="numeric"
-                  placeholder="e.g. 12"
-                  value={bundleId}
-                  onChange={(e) => setBundleId(e.target.value.replace(/\D/g, ""))}
-                />
-                <p className="text-xs text-muted-foreground mt-1">
-                  Find bundle IDs at{" "}
-                  <a href="https://www.cheapdatahub.ng/api/plan-ids/" target="_blank" rel="noreferrer" className="text-primary underline">
-                    cheapdatahub.ng/api/plan-ids
-                  </a>
-                </p>
-              </div>
-              <div>
-                <Label>Base Amount (₦)</Label>
-                <Input
-                  className="mt-1"
-                  inputMode="numeric"
-                  placeholder="Provider cost of that bundle"
-                  value={manualAmount}
-                  onChange={(e) => setManualAmount(e.target.value.replace(/\D/g, ""))}
-                />
-              </div>
-            </>
-          )}
+          <div>
+            <Label>Data Plan</Label>
+            <Select value={planCode} onValueChange={setPlanCode} disabled={!serviceId || loadingPlans}>
+              <SelectTrigger className="mt-1">
+                <SelectValue placeholder={loadingPlans ? "Loading plans..." : "Choose plan"} />
+              </SelectTrigger>
+              <SelectContent>
+                {plans.map((pl) => (
+                  <SelectItem key={pl.plan_code} value={String(pl.plan_code)}>
+                    {pl.plan_name} {pl.validity ? `• ${pl.validity}` : ""} — ₦{Math.round(pl.amount * MARKUP).toLocaleString()}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            {plans.length === 0 && serviceId && !loadingPlans && (
+              <p className="text-xs text-muted-foreground mt-1">No plans available for this network.</p>
+            )}
+          </div>
 
           <div>
             <Label>Phone Number</Label>
