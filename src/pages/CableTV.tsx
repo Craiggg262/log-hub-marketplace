@@ -26,22 +26,36 @@ const CableTV = () => {
   const [verifying, setVerifying] = useState(false);
   const [verified, setVerified] = useState<{ name: string; plans: any[] } | null>(null);
   const [planCode, setPlanCode] = useState("");
-  const [manualPlanId, setManualPlanId] = useState("");
-  const [manualAmount, setManualAmount] = useState("");
+  // Portal 2 plans (static from API function)
+  const [portal2Plans, setPortal2Plans] = useState<any[]>([]);
+  const [loadingPlans, setLoadingPlans] = useState(false);
   const [submitting, setSubmitting] = useState(false);
 
   useEffect(() => {
-    setServiceId(""); setServices([]); setVerified(null); setPlanCode("");
+    setServiceId(""); setServices([]); setVerified(null); setPlanCode(""); setPortal2Plans([]);
     supabase.functions
       .invoke("vtu-gateway", { body: { action: "fetch_services", portal, service_type: "tv" } })
       .then(({ data }) => setServices(data?.services || []));
   }, [portal]);
 
+  // Portal 2: fetch plans when provider changes
+  useEffect(() => {
+    if (portal !== "2" || !serviceId) { setPortal2Plans([]); return; }
+    setLoadingPlans(true);
+    setPlanCode("");
+    supabase.functions
+      .invoke("vtu-gateway", { body: { action: "fetch_cable_plans", portal, service_id: serviceId } })
+      .then(({ data, error }) => {
+        if (error || data?.error) {
+          toast({ title: "Failed to load plans", description: data?.error || error?.message, variant: "destructive" });
+        } else {
+          setPortal2Plans(data?.plans || []);
+        }
+      })
+      .finally(() => setLoadingPlans(false));
+  }, [serviceId, portal, toast]);
+
   const handleVerify = async () => {
-    if (portal !== "1") {
-      toast({ title: "Portal 2 has no verify — enter plan ID & amount manually" });
-      return;
-    }
     if (!serviceId || !smartcard) return toast({ title: "Fill provider & smartcard", variant: "destructive" });
     setVerifying(true);
     const { data, error } = await supabase.functions.invoke("vtu-gateway", {
@@ -52,17 +66,19 @@ const CableTV = () => {
     setVerified({ name: data.smartcard_name || "Verified", plans: data.cable_plans || [] });
   };
 
-  const selectedPlan = verified?.plans.find((p: any) => String(p.plan_code ?? p.code) === planCode);
+  const selectedPortal1Plan = verified?.plans.find((p: any) => String(p.plan_code ?? p.code) === planCode);
+  const selectedPortal2Plan = portal2Plans.find((p) => String(p.plan_code) === planCode);
   const baseAmount = portal === "1"
-    ? Number(selectedPlan?.amount || selectedPlan?.price || 0)
-    : Number(manualAmount) || 0;
+    ? Number(selectedPortal1Plan?.amount || selectedPortal1Plan?.price || 0)
+    : Number(selectedPortal2Plan?.amount || 0);
   const chargeAmount = Math.round(baseAmount * MARKUP * 100) / 100;
 
   const handleBuy = async () => {
     const svc = services.find((s) => String(s.service_id) === serviceId);
     if (!svc) return toast({ title: "Choose provider", variant: "destructive" });
-    if (!smartcard) return toast({ title: "Enter smartcard", variant: "destructive" });
+    if (!smartcard) return toast({ title: "Enter smartcard number", variant: "destructive" });
     if (!/^0\d{10}$/.test(phone)) return toast({ title: "Invalid phone", variant: "destructive" });
+    if (!planCode) return toast({ title: "Choose plan", variant: "destructive" });
 
     const body: any = {
       action: "buy_cabletv",
@@ -72,15 +88,12 @@ const CableTV = () => {
       smartcard_number: smartcard,
       phone,
       amount: baseAmount,
+      plan_code: planCode,
     };
     if (portal === "1") {
-      if (!selectedPlan) return toast({ title: "Choose plan", variant: "destructive" });
-      body.plan_code = selectedPlan.plan_code ?? selectedPlan.code;
-      body.plan_name = selectedPlan.plan_name ?? selectedPlan.name;
+      body.plan_name = selectedPortal1Plan?.plan_name ?? selectedPortal1Plan?.name;
     } else {
-      if (!manualPlanId || baseAmount < 50) return toast({ title: "Enter plan ID and amount", variant: "destructive" });
-      body.plan_code = manualPlanId;
-      body.plan_name = `Plan #${manualPlanId}`;
+      body.plan_name = selectedPortal2Plan?.plan_name;
     }
     setSubmitting(true);
     const { data, error } = await supabase.functions.invoke("vtu-gateway", { body });
@@ -118,8 +131,8 @@ const CableTV = () => {
 
           <div>
             <Label>Provider</Label>
-            <Select value={serviceId} onValueChange={(v) => { setServiceId(v); setVerified(null); }}>
-              <SelectTrigger className="mt-1"><SelectValue placeholder="Choose provider" /></SelectTrigger>
+            <Select value={serviceId} onValueChange={(v) => { setServiceId(v); setVerified(null); setPlanCode(""); }}>
+              <SelectTrigger className="mt-1"><SelectValue placeholder="Choose decoder" /></SelectTrigger>
               <SelectContent>
                 {services.map((s) => (
                   <SelectItem key={s.service_id} value={String(s.service_id)}>{s.network_name}</SelectItem>
@@ -165,16 +178,24 @@ const CableTV = () => {
               )}
             </>
           ) : (
-            <>
-              <div>
-                <Label>Plan ID</Label>
-                <Input className="mt-1" inputMode="numeric" value={manualPlanId} onChange={(e) => setManualPlanId(e.target.value.replace(/\D/g, ""))} placeholder="e.g. 15" />
-              </div>
-              <div>
-                <Label>Base Amount (₦)</Label>
-                <Input className="mt-1" inputMode="numeric" value={manualAmount} onChange={(e) => setManualAmount(e.target.value.replace(/\D/g, ""))} placeholder="Provider cost of plan" />
-              </div>
-            </>
+            <div>
+              <Label>Plan</Label>
+              <Select value={planCode} onValueChange={setPlanCode} disabled={!serviceId || loadingPlans}>
+                <SelectTrigger className="mt-1">
+                  <SelectValue placeholder={loadingPlans ? "Loading plans..." : "Choose plan"} />
+                </SelectTrigger>
+                <SelectContent>
+                  {portal2Plans.map((pl) => (
+                    <SelectItem key={pl.plan_code} value={String(pl.plan_code)}>
+                      {pl.plan_name} — ₦{Math.round(pl.amount * MARKUP).toLocaleString()}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              {portal2Plans.length === 0 && serviceId && !loadingPlans && (
+                <p className="text-xs text-muted-foreground mt-1">No plans available.</p>
+              )}
+            </div>
           )}
 
           {baseAmount > 0 && (
