@@ -108,9 +108,9 @@ const BuyAirtime = () => {
                 <SelectValue placeholder={loadingServices ? "Loading..." : "Choose network"} />
               </SelectTrigger>
               <SelectContent>
-                {services.map((s) => (
+                {Array.from(new Map(services.map((s: any) => [String(s.network_name || "").toUpperCase(), s])).values()).map((s: any) => (
                   <SelectItem key={s.service_id} value={String(s.service_id)}>
-                    {s.network_name} {s.provider ? `(${s.provider})` : ""}
+                    {String(s.network_name || "").toUpperCase()}
                   </SelectItem>
                 ))}
               </SelectContent>
