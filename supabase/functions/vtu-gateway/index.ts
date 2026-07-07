@@ -173,12 +173,24 @@ const CDH_CABLE_PLANS: CdhCable[] = [
   { provider: "StarTimes", plan_name: "Super (Antenna) - 1 Month", plan_id: 26, price: 9500 },
 ];
 
-// Normalize a Portal 1 service object to { service_id, network_name, provider? }
+// Normalize a Portal 1 service object. VTUGate returns one service per
+// (network × data-type) combo. We surface a stable shape the client can
+// group on: { service_id, network_name, plan_type }.
 function normalizeVtuGateService(s: any) {
+  const rawNetwork =
+    s.network ?? s.network_name ?? s.tv_name ?? s.disco?.toUpperCase?.() ?? "";
+  const inferredNetwork = !rawNetwork && typeof s.service_name === "string"
+    ? s.service_name.split(/\s+/)[0]
+    : rawNetwork;
+  const inferredType = s.plan_type ?? s.type ?? s.provider ?? (
+    typeof s.service_name === "string" && inferredNetwork
+      ? s.service_name.replace(new RegExp(`^${inferredNetwork}\\s*`, "i"), "").trim()
+      : ""
+  );
   return {
     service_id: s.service_id ?? s.id,
-    network_name: s.network_name ?? s.tv_name ?? s.disco?.toUpperCase?.() ?? s.name ?? "",
-    provider: s.provider,
+    network_name: String(inferredNetwork || s.name || "").toUpperCase(),
+    plan_type: inferredType || null,
     disco: s.disco,
   };
 }
