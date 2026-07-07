@@ -469,6 +469,7 @@ Deno.serve(async (req) => {
         call: async () => {
           const r = await cdh("/data/purchase/", {
             bundle_id: planCode,
+            mobile_number: phone,
             phone_number: phone,
           });
           return { ok: r.ok, data: r.data };
