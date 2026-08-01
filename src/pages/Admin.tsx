@@ -9,6 +9,7 @@ import { Shield, Plus, Users, Edit, Trash2, TrendingUp, Database, Eye, Settings,
 import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import AdminLeaderboard from '@/components/leaderboard/AdminLeaderboard';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { supabase } from '@/integrations/supabase/client';
@@ -865,7 +866,7 @@ const Admin = () => {
         </div>
 
         <Tabs defaultValue="logs" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-8">
+          <TabsList className="grid w-full grid-cols-9">
             <TabsTrigger value="logs">Logs</TabsTrigger>
             <TabsTrigger value="sub-accounts">Sub-Accounts</TabsTrigger>
             <TabsTrigger value="users">Users</TabsTrigger>
@@ -873,8 +874,14 @@ const Admin = () => {
             <TabsTrigger value="withdrawals">Withdrawals</TabsTrigger>
             <TabsTrigger value="orders">Orders</TabsTrigger>
             <TabsTrigger value="broadcasts">Broadcasts</TabsTrigger>
+            <TabsTrigger value="leaderboard">Leaderboard</TabsTrigger>
             <TabsTrigger value="settings">Settings</TabsTrigger>
           </TabsList>
+
+          <TabsContent value="leaderboard" className="space-y-6">
+            <AdminLeaderboard />
+          </TabsContent>
+
 
           <TabsContent value="logs" className="space-y-6">
             {/* Add/Edit New Log */}

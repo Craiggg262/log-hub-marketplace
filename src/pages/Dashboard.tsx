@@ -5,15 +5,17 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { useToast } from '@/hooks/use-toast';
 import {
-  Wallet, ShoppingCart, MessageCircle, Copy, Check, Gift, Phone, Wifi, Zap, Tv, Globe, Package, ChevronRight, ArrowRight, Rocket,
+  Wallet, ShoppingCart, MessageCircle, Copy, Check, Gift, Phone, Wifi, Zap, Tv, Globe, Package, ChevronRight, ArrowRight, Rocket, Trophy,
 } from 'lucide-react';
 
 import { useAuth } from '@/hooks/useAuth';
 import FundingAccountsDisplay from '@/components/FundingAccountsDisplay';
+import TradingLeaderboard from '@/components/leaderboard/TradingLeaderboard';
 
 const Dashboard = () => {
   const navigate = useNavigate();
   const [copied, setCopied] = useState(false);
+  const [leaderboardOpen, setLeaderboardOpen] = useState(false);
   const { toast } = useToast();
   const { profile } = useAuth();
 
@@ -34,7 +36,7 @@ const Dashboard = () => {
     <div className="space-y-6 relative">
       {/* WhatsApp Group Link */}
       <Button
-        onClick={() => window.open('https://chat.whatsapp.com/LltaVAyG0BvJp5t9gmlqz7?mode=ems_copy_h_t', '_blank')}
+        onClick={() => window.open('https://chat.whatsapp.com/K02gik0B7cT8vblUWIzMi8', '_blank')}
         className="fixed bottom-20 right-4 md:right-6 z-50 h-14 w-14 rounded-full shadow-lg bg-green-600 hover:bg-green-700 p-0"
         size="icon"
       >
@@ -171,6 +173,29 @@ const Dashboard = () => {
           <ArrowRight className="h-5 w-5 text-primary shrink-0" />
         </CardContent>
       </Card>
+
+      {/* Weekly Trading Leaderboard */}
+      <Card
+        onClick={() => setLeaderboardOpen(true)}
+        className="glass-card border-0 cursor-pointer hover:border-primary/50 transition-all overflow-hidden"
+      >
+        <CardContent className="p-5 md:p-6 flex items-center justify-between gap-4">
+          <div className="flex items-center gap-4">
+            <div className="h-12 w-12 md:h-14 md:w-14 rounded-2xl bg-yellow-500/20 flex items-center justify-center">
+              <Trophy className="h-6 w-6 md:h-7 md:w-7 text-yellow-500" />
+            </div>
+            <div>
+              <h2 className="text-base md:text-lg font-bold">Weekly Trading Champions</h2>
+              <p className="text-xs md:text-sm text-muted-foreground">
+                See the top 10 traders this week and your position
+              </p>
+            </div>
+          </div>
+          <ArrowRight className="h-5 w-5 text-primary shrink-0" />
+        </CardContent>
+      </Card>
+
+      <TradingLeaderboard open={leaderboardOpen} onOpenChange={setLeaderboardOpen} />
 
 
       {/* Quick Services */}

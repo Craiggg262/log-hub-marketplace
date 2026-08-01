@@ -799,7 +799,12 @@ export type Database = {
         Args: { log_uuid: string }
         Returns: number
       }
+      get_weekly_leaderboard: {
+        Args: { p_full_email?: boolean }
+        Returns: Json
+      }
       is_admin: { Args: never; Returns: boolean }
+      mask_email: { Args: { p_email: string }; Returns: string }
       process_order_cashout:
         | { Args: { p_order_id: string; p_user_id: string }; Returns: Json }
         | { Args: { p_order_id: string; p_user_id: string }; Returns: Json }
@@ -811,6 +816,14 @@ export type Database = {
           p_universal_order_id?: string
         }
         Returns: undefined
+      }
+      weekly_comp_window: {
+        Args: never
+        Returns: {
+          ends_at: string
+          is_active: boolean
+          starts_at: string
+        }[]
       }
     }
     Enums: {

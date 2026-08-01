@@ -6,7 +6,7 @@ import { PullToRefresh } from '@/components/mobile/PullToRefresh';
 import { QuickActionGrid } from '@/components/mobile/QuickActionGrid';
 import { 
   Wallet, ShoppingCart, Copy, Check, 
-  CreditCard, Gift, ChevronRight, TrendingUp, Rocket
+  CreditCard, Gift, ChevronRight, TrendingUp, Rocket, Trophy
 } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
@@ -14,6 +14,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { useToast } from '@/hooks/use-toast';
 
 import FundingAccountsDisplay from '@/components/FundingAccountsDisplay';
+import TradingLeaderboard from '@/components/leaderboard/TradingLeaderboard';
 
  
  const MobileHome = () => {
@@ -21,6 +22,7 @@ import FundingAccountsDisplay from '@/components/FundingAccountsDisplay';
    const { profile } = useAuth();
    const { toast } = useToast();
    const [accountCopied, setAccountCopied] = useState(false);
+   const [leaderboardOpen, setLeaderboardOpen] = useState(false);
  
    const formatPrice = (price: number) => `₦${price.toLocaleString()}`;
  
@@ -125,7 +127,25 @@ import FundingAccountsDisplay from '@/components/FundingAccountsDisplay';
             </GlassCard>
           </div>
 
- 
+          {/* Weekly Trading Leaderboard */}
+          <div className="px-4">
+            <GlassCard variant="interactive" onClick={() => setLeaderboardOpen(true)}>
+              <div className="p-4 flex items-center gap-4">
+                <div className="w-12 h-12 rounded-2xl bg-yellow-500/20 flex items-center justify-center">
+                  <Trophy className="h-6 w-6 text-yellow-500" />
+                </div>
+                <div className="flex-1">
+                  <h3 className="font-semibold">Weekly Champions</h3>
+                  <p className="text-xs text-muted-foreground">Top 10 traders &amp; your position</p>
+                </div>
+                <ChevronRight className="h-5 w-5 text-muted-foreground" />
+              </div>
+            </GlassCard>
+          </div>
+
+          <TradingLeaderboard open={leaderboardOpen} onOpenChange={setLeaderboardOpen} />
+
+
          {/* Referral Banner */}
          {profile?.referral_code && (
            <div className="px-4 pb-4">

@@ -29,7 +29,7 @@ const Wallet = () => {
       amount: parseFloat(fundAmount), timestamp: new Date().toISOString(), status: 'pending',
     }));
     toast({ title: 'Redirecting…', description: `Sending you to support for ₦${parseFloat(fundAmount).toLocaleString('en-NG')}` });
-    setTimeout(() => window.open('https://t.me/loghubmarketplace1', '_blank'), 800);
+    setTimeout(() => window.open('https://wa.me/2348105133393', '_blank'), 800);
   };
 
   const formatPrice = (price: number) =>
@@ -144,7 +144,7 @@ const Wallet = () => {
                   <MessageCircle className="h-4 w-4 text-primary" /> Manual Payment via Support
                 </div>
                 <p className="text-muted-foreground">
-                  Click below to message support on Telegram with your amount and proof of payment. Your wallet is credited within 5–10 minutes.
+                  Click below to message support on WhatsApp with your amount and proof of payment. Your wallet is credited within 5–10 minutes.
                 </p>
               </div>
               <Button onClick={handleManualPayment} className="w-full gap-2" size="lg">
