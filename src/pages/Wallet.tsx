@@ -144,7 +144,7 @@ const Wallet = () => {
                   <MessageCircle className="h-4 w-4 text-primary" /> Manual Payment via Support
                 </div>
                 <p className="text-muted-foreground">
-                  Click below to message support on Telegram with your amount and proof of payment. Your wallet is credited within 5–10 minutes.
+                  Click below to message support on WhatsApp with your amount and proof of payment. Your wallet is credited within 5–10 minutes.
                 </p>
               </div>
               <Button onClick={handleManualPayment} className="w-full gap-2" size="lg">

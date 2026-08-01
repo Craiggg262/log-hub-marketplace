@@ -183,7 +183,7 @@ const Index = () => {
           <p className="text-sm text-muted-foreground">
             Support:{' '}
             <a href="https://wa.me/2348105133393" target="_blank" rel="noreferrer" className="text-primary hover:underline">
-              t.me/loghubmarketplace1
+              wa.me/2348105133393
             </a>
           </p>
         </div>

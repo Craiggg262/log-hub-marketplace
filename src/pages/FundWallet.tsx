@@ -41,7 +41,7 @@ const FundWallet = () => {
   const handleWhatsAppRedirect = () => {
     const amount = parseFloat(fundAmount);
     const message = `Hello! I want to fund my wallet with ${formatPrice(amount)}. I have made the payment and will send proof shortly.`;
-    const whatsappUrl = `https://wa.link/8rqbox?text=${encodeURIComponent(message)}`;
+    const whatsappUrl = `https://wa.me/2348105133393?text=${encodeURIComponent(message)}`;
     
     window.open(whatsappUrl, '_blank');
     
