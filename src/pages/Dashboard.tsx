@@ -172,6 +172,29 @@ const Dashboard = () => {
         </CardContent>
       </Card>
 
+      {/* Weekly Trading Leaderboard */}
+      <Card
+        onClick={() => setLeaderboardOpen(true)}
+        className="glass-card border-0 cursor-pointer hover:border-primary/50 transition-all overflow-hidden"
+      >
+        <CardContent className="p-5 md:p-6 flex items-center justify-between gap-4">
+          <div className="flex items-center gap-4">
+            <div className="h-12 w-12 md:h-14 md:w-14 rounded-2xl bg-yellow-500/20 flex items-center justify-center">
+              <Trophy className="h-6 w-6 md:h-7 md:w-7 text-yellow-500" />
+            </div>
+            <div>
+              <h2 className="text-base md:text-lg font-bold">Weekly Trading Champions</h2>
+              <p className="text-xs md:text-sm text-muted-foreground">
+                See the top 10 traders this week and your position
+              </p>
+            </div>
+          </div>
+          <ArrowRight className="h-5 w-5 text-primary shrink-0" />
+        </CardContent>
+      </Card>
+
+      <TradingLeaderboard open={leaderboardOpen} onOpenChange={setLeaderboardOpen} />
+
 
       {/* Quick Services */}
       <div>
