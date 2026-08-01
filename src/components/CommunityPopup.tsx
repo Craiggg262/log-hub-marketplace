@@ -37,7 +37,7 @@ export const CommunityPopup: React.FC = () => {
 
         <div className="space-y-3 pt-2">
           <a
-            href="https://chat.whatsapp.com/LltaVAyG0BvJp5t9gmlqz7"
+            href="https://chat.whatsapp.com/K02gik0B7cT8vblUWIzMi8"
             target="_blank"
             rel="noopener noreferrer"
             className="flex items-start gap-3 p-3 rounded-lg border border-border hover:border-primary/50 hover:bg-accent/50 transition"
@@ -69,7 +69,7 @@ export const CommunityPopup: React.FC = () => {
           </a>
 
           <a
-            href="https://t.me/loghubmarketplace1"
+            href="https://wa.me/2348105133393"
             target="_blank"
             rel="noopener noreferrer"
             className="flex items-start gap-3 p-3 rounded-lg border border-border hover:border-primary/50 hover:bg-accent/50 transition"
