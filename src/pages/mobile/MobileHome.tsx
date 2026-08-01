@@ -136,7 +136,7 @@ import TradingLeaderboard from '@/components/leaderboard/TradingLeaderboard';
                 </div>
                 <div className="flex-1">
                   <h3 className="font-semibold">Weekly Champions</h3>
-                  <p className="text-xs text-muted-foreground">Top 10 traders &amp; your position</p>
+                  <p className="text-xs text-muted-foreground">Top 4 traders &amp; your position</p>
                 </div>
                 <ChevronRight className="h-5 w-5 text-muted-foreground" />
               </div>

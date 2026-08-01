@@ -187,7 +187,7 @@ const Dashboard = () => {
             <div>
               <h2 className="text-base md:text-lg font-bold">Weekly Trading Champions</h2>
               <p className="text-xs md:text-sm text-muted-foreground">
-                See the top 10 traders this week and your position
+                See the top 4 traders this week and your position
               </p>
             </div>
           </div>

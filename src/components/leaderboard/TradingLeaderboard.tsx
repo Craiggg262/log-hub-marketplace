@@ -160,7 +160,7 @@ export const TradingLeaderboard: React.FC<{
           </div>
           <DialogTitle className="text-center text-xl">Weekly Trading Champions</DialogTitle>
           <DialogDescription className="text-center">
-            Top 10 traders of the week. Climb the board and win.
+            Top 4 traders of the week. Climb the board and win.
           </DialogDescription>
         </DialogHeader>
 
