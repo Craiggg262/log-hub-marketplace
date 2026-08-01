@@ -6,7 +6,7 @@ import { PullToRefresh } from '@/components/mobile/PullToRefresh';
 import { QuickActionGrid } from '@/components/mobile/QuickActionGrid';
 import { 
   Wallet, ShoppingCart, Copy, Check, 
-  CreditCard, Gift, ChevronRight, TrendingUp, Rocket
+  CreditCard, Gift, ChevronRight, TrendingUp, Rocket, Trophy
 } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
@@ -14,6 +14,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { useToast } from '@/hooks/use-toast';
 
 import FundingAccountsDisplay from '@/components/FundingAccountsDisplay';
+import TradingLeaderboard from '@/components/leaderboard/TradingLeaderboard';
 
  
  const MobileHome = () => {
@@ -21,6 +22,7 @@ import FundingAccountsDisplay from '@/components/FundingAccountsDisplay';
    const { profile } = useAuth();
    const { toast } = useToast();
    const [accountCopied, setAccountCopied] = useState(false);
+   const [leaderboardOpen, setLeaderboardOpen] = useState(false);
  
    const formatPrice = (price: number) => `₦${price.toLocaleString()}`;
  
