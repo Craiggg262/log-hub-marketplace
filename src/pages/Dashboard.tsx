@@ -5,15 +5,17 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { useToast } from '@/hooks/use-toast';
 import {
-  Wallet, ShoppingCart, MessageCircle, Copy, Check, Gift, Phone, Wifi, Zap, Tv, Globe, Package, ChevronRight, ArrowRight, Rocket,
+  Wallet, ShoppingCart, MessageCircle, Copy, Check, Gift, Phone, Wifi, Zap, Tv, Globe, Package, ChevronRight, ArrowRight, Rocket, Trophy,
 } from 'lucide-react';
 
 import { useAuth } from '@/hooks/useAuth';
 import FundingAccountsDisplay from '@/components/FundingAccountsDisplay';
+import TradingLeaderboard from '@/components/leaderboard/TradingLeaderboard';
 
 const Dashboard = () => {
   const navigate = useNavigate();
   const [copied, setCopied] = useState(false);
+  const [leaderboardOpen, setLeaderboardOpen] = useState(false);
   const { toast } = useToast();
   const { profile } = useAuth();
 
