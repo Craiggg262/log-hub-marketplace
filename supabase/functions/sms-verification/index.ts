@@ -13,13 +13,17 @@ const MTELSMS_BASE_URL = 'https://mtelsms.com/stubs/handler_api.php';
 const FIVESIM_API_KEY = Deno.env.get('FIVESIM_API_KEY');
 const FIVESIM_BASE_URL = 'https://5sim.net/v1';
 
-// Pricing: 1 USD = 1400 NGN, +40% markup (per admin request)
+// Pricing: 1 USD = 1400 NGN
+// USA Server 1 (getatext) gets a 60% markup; all other SMS servers get 40%.
 const USD_TO_NAIRA = 1400;
-const PRICE_MARKUP = 1.4;
+const SERVER1_MARKUP = 1.6;
+const OTHER_SMS_MARKUP = 1.4;
 const DEFAULT_RENTAL_SECONDS = 20 * 60;
 
-const nairaPrice = (usd: number) =>
-  parseFloat((usd * USD_TO_NAIRA * PRICE_MARKUP).toFixed(2));
+const nairaPriceServer1 = (usd: number) =>
+  parseFloat((usd * USD_TO_NAIRA * SERVER1_MARKUP).toFixed(2));
+const nairaPriceOther = (usd: number) =>
+  parseFloat((usd * USD_TO_NAIRA * OTHER_SMS_MARKUP).toFixed(2));
 const nairaDisplay = (amt: number) =>
   `₦${amt.toLocaleString('en-NG', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 
@@ -124,7 +128,7 @@ serve(async (req) => {
         const items = Array.isArray(json?.prices) ? json.prices : Array.isArray(json) ? json : [json];
         const data = items.filter((s: any) => s && s.api_name).map((s: any) => {
           const usd = parseFloat(s.price);
-          const naira = nairaPrice(usd);
+          const naira = nairaPriceServer1(usd);
           return {
             service_id: s.api_name,
             name: s.service_name || s.api_name,
@@ -142,7 +146,7 @@ serve(async (req) => {
         if (!ok || json?.status !== 'success') return respond({ status: 'error', message: 'Failed to fetch services' });
         const data = (json.data || []).map((s: any) => {
           const usd = parseFloat(s.price);
-          const naira = nairaPrice(usd);
+          const naira = nairaPriceOther(usd);
           return {
             service_id: String(s.service_id),
             name: s.name,
@@ -174,7 +178,7 @@ serve(async (req) => {
               totalStock += Number(info.count ?? 0);
             }
             if (!isFinite(cheapestUsd)) return null;
-            const naira = nairaPrice(cheapestUsd);
+            const naira = nairaPriceOther(cheapestUsd);
             return {
               service_id: svc,
               name: svc,
@@ -210,7 +214,7 @@ serve(async (req) => {
       const serviceBlock = countryBlock[service_id] || {};
       const operators = Object.entries(serviceBlock).map(([op, info]: any) => {
         const usd = Number(info?.cost ?? 0);
-        const naira = nairaPrice(usd);
+        const naira = nairaPriceOther(usd);
         return {
           operator: op,
           price: naira.toFixed(2),
@@ -239,7 +243,7 @@ serve(async (req) => {
 
       if (server === '1') {
         const apiUsd = parseFloat(String(max_price ?? 0)) || 0.5;
-        charged = nairaPrice(apiUsd);
+        charged = nairaPriceServer1(apiUsd);
         if (profile.wallet_balance < charged) {
           return respond({ error: 'Insufficient wallet balance', required: charged, available: profile.wallet_balance }, 400);
         }
@@ -272,7 +276,7 @@ serve(async (req) => {
         }
         const r = rent.json?.data || {};
         const usd = parseFloat(String(r.service_price ?? apiUsd));
-        charged = nairaPrice(usd);
+        charged = nairaPriceOther(usd);
         if (profile.wallet_balance < charged) {
           await mtel('cancelNumber', { id: String(r.id) });
           return respond({ error: 'Insufficient wallet balance', required: charged, available: profile.wallet_balance }, 400);
@@ -291,7 +295,7 @@ serve(async (req) => {
         }
         const r = buy.json || {};
         const usd = Number(r.price ?? 0);
-        charged = nairaPrice(usd);
+        charged = nairaPriceOther(usd);
         if (profile.wallet_balance < charged) {
           await fivesim(`/user/cancel/${r.id}`);
           return respond({ error: 'Insufficient wallet balance', required: charged, available: profile.wallet_balance }, 400);
