@@ -234,7 +234,7 @@ serve(async (req) => {
             return {
               service_id: s.api_name,
               name: s.service_name || s.api_name,
-              price: usdToNaira(usd),
+              price: usdToNairaServer1(usd),
               currency: 'NGN',
               stock: s.stock ?? 0,
               server: '1',
@@ -250,7 +250,7 @@ serve(async (req) => {
         const services = (data.data || []).map((s: any) => ({
           service_id: String(s.service_id),
           name: s.name,
-          price: usdToNaira(parseFloat(s.price)),
+          price: usdToNairaOther(parseFloat(s.price)),
           currency: 'NGN',
           server: '2',
           country: 'usa',
@@ -268,7 +268,7 @@ serve(async (req) => {
         const services = Object.entries(data || {}).map(([name, info]: any) => ({
           service_id: name,
           name,
-          price: usdToNaira(Number(info?.Price ?? 0)),
+          price: usdToNairaOther(Number(info?.Price ?? 0)),
           currency: 'NGN',
           stock: info?.Qty ?? 0,
           server: '5sim',
@@ -305,7 +305,7 @@ serve(async (req) => {
         const match = items.find((s: any) => s.api_name === service_id);
         if (!match) return json({ error: 'Service not found' }, 404);
         const apiUsd = parseFloat(match.price);
-        charged = usdToNaira(apiUsd);
+        charged = usdToNairaServer1(apiUsd);
         if (Number(profile.wallet_balance) < charged) {
           return json({ error: 'Insufficient balance', required: charged, available: profile.wallet_balance }, 402);
         }
@@ -338,7 +338,7 @@ serve(async (req) => {
         }
         const r = rent.data?.data || {};
         const usd = parseFloat(String(r.service_price ?? apiUsd));
-        charged = usdToNaira(usd);
+        charged = usdToNairaOther(usd);
         if (Number(profile.wallet_balance) < charged) {
           // attempt cancel upstream
           await mtel('cancelNumber', { id: String(r.id) });
@@ -355,7 +355,7 @@ serve(async (req) => {
         if (!buy.ok) return json({ error: buy.data?.error || buy.data?.raw || 'Failed to buy number' }, 502);
         const r = buy.data || {};
         const usd = Number(r.price ?? 0);
-        charged = usdToNaira(usd);
+        charged = usdToNairaOther(usd);
         if (Number(profile.wallet_balance) < charged) {
           await fivesim(`/user/cancel/${r.id}`);
           return json({ error: 'Insufficient balance', required: charged, available: profile.wallet_balance }, 402);
