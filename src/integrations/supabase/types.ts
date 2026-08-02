@@ -205,6 +205,33 @@ export type Database = {
         }
         Relationships: []
       }
+      leaderboard_adjustments: {
+        Row: {
+          amount: number
+          created_at: string
+          id: string
+          reason: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          amount: number
+          created_at?: string
+          id?: string
+          reason?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          amount?: number
+          created_at?: string
+          id?: string
+          reason?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       log_items: {
         Row: {
           account_details: string
