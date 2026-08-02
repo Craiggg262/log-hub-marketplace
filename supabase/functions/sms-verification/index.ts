@@ -13,13 +13,17 @@ const MTELSMS_BASE_URL = 'https://mtelsms.com/stubs/handler_api.php';
 const FIVESIM_API_KEY = Deno.env.get('FIVESIM_API_KEY');
 const FIVESIM_BASE_URL = 'https://5sim.net/v1';
 
-// Pricing: 1 USD = 1400 NGN, +40% markup (per admin request)
+// Pricing: 1 USD = 1400 NGN
+// USA Server 1 (getatext) gets a 60% markup; all other SMS servers get 40%.
 const USD_TO_NAIRA = 1400;
-const PRICE_MARKUP = 1.4;
+const SERVER1_MARKUP = 1.6;
+const OTHER_SMS_MARKUP = 1.4;
 const DEFAULT_RENTAL_SECONDS = 20 * 60;
 
-const nairaPrice = (usd: number) =>
-  parseFloat((usd * USD_TO_NAIRA * PRICE_MARKUP).toFixed(2));
+const nairaPriceServer1 = (usd: number) =>
+  parseFloat((usd * USD_TO_NAIRA * SERVER1_MARKUP).toFixed(2));
+const nairaPriceOther = (usd: number) =>
+  parseFloat((usd * USD_TO_NAIRA * OTHER_SMS_MARKUP).toFixed(2));
 const nairaDisplay = (amt: number) =>
   `₦${amt.toLocaleString('en-NG', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 
