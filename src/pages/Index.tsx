@@ -182,8 +182,8 @@ const Index = () => {
           <p className="text-sm text-muted-foreground">© 2025 Log Hub Marketplace. All rights reserved.</p>
           <p className="text-sm text-muted-foreground">
             Support:{' '}
-            <a href="https://wa.me/2348105133393" target="_blank" rel="noreferrer" className="text-primary hover:underline">
-              wa.me/2348105133393
+            <a href="https://t.me/loghubmarketplacesupport" target="_blank" rel="noreferrer" className="text-primary hover:underline">
+              t.me/loghubmarketplacesupport
             </a>
           </p>
         </div>
