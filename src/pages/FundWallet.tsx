@@ -41,12 +41,12 @@ const FundWallet = () => {
   const handleWhatsAppRedirect = () => {
     const amount = parseFloat(fundAmount);
     const message = `Hello! I want to fund my wallet with ${formatPrice(amount)}. I have made the payment and will send proof shortly.`;
-    const whatsappUrl = `https://wa.me/2348105133393?text=${encodeURIComponent(message)}`;
+    const telegramUrl = `https://t.me/loghubmarketplacesupport?start=${encodeURIComponent(message)}`;
     
-    window.open(whatsappUrl, '_blank');
+    window.open(telegramUrl, '_blank');
     
     toast({
-      title: "Redirecting to WhatsApp",
+      title: "Redirecting to Telegram",
       description: "Please send your payment proof to complete the funding.",
     });
   };

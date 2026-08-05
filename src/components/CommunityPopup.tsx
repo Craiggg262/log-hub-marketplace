@@ -69,7 +69,7 @@ export const CommunityPopup: React.FC = () => {
           </a>
 
           <a
-            href="https://wa.me/2348105133393"
+            href="https://t.me/loghubmarketplacesupport"
             target="_blank"
             rel="noopener noreferrer"
             className="flex items-start gap-3 p-3 rounded-lg border border-border hover:border-primary/50 hover:bg-accent/50 transition"
@@ -79,7 +79,7 @@ export const CommunityPopup: React.FC = () => {
               <div className="font-medium flex items-center gap-1">
                 For any complaints, message our Support <ExternalLink className="h-3 w-3" />
               </div>
-              <p className="text-xs text-muted-foreground">We respond fast on WhatsApp.</p>
+              <p className="text-xs text-muted-foreground">We respond fast on Telegram.</p>
             </div>
           </a>
         </div>
