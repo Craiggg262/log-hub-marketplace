@@ -28,8 +28,8 @@ const Wallet = () => {
     localStorage.setItem('pendingTransaction', JSON.stringify({
       amount: parseFloat(fundAmount), timestamp: new Date().toISOString(), status: 'pending',
     }));
-    toast({ title: 'Redirecting…', description: `Sending you to support for ₦${parseFloat(fundAmount).toLocaleString('en-NG')}` });
-    setTimeout(() => window.open('https://t.me/loghubmarketplacesupport', '_blank'), 800);
+    toast({ title: 'Redirecting…', description: `Sending you to WhatsApp for ₦${parseFloat(fundAmount).toLocaleString('en-NG')}` });
+    setTimeout(() => window.open('https://wa.me/2348105133393', '_blank'), 800);
   };
 
   const formatPrice = (price: number) =>
