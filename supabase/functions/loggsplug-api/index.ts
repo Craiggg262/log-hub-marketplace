@@ -97,29 +97,30 @@ serve(async (req) => {
 
     // Apply price multiplier for product listings
     if (action === 'get_products' && data?.success && Array.isArray(data.data)) {
-      // ALLOWLIST mode: only return products that match approved categories or item names
-      const ALLOWED_CATEGORY_PREFIXES = [
-        'countries normal facebook',
-        'instagram',
-      ];
-      const ALLOWED_NAME_KEYWORDS = [
-        'proxy',
-        'byd update',
-        'vip pet update',
-        'horse update',
-        'new voice cloner tutorial',
-        'picture to video full tutorial',
-        'new sharp tools for editing',
-        'new tutorial full body fake video call',
+      // DENYLIST mode: everything from the provider shows (including newly added
+      // categories/products) EXCEPT the categories that were previously removed.
+      const BLOCKED_CATEGORY_PREFIXES = [
+        'facebook usa 🇺🇸 dating',
+        'facebook usa dating',
+        'empty countries', // all EMPTY COUNTRIES TIKTOK ACCOUNTS variants
+        'country normal usa',
+        'paid premium vpn',
+        'aged twitter',
+        'aged blue verified twitter',
+        'az loggsplug offers',
+        'snapchat account',
+        'countries facebook (below 50 friends)',
+        'aged & new random facebook',
+        'discord hq aged accounts',
+        'reddit',
+        'create page facebook',
+        'mails & usa',
       ];
 
       data.data = data.data
         .filter((product: any) => {
           const category = String(product?.category ?? '').toLowerCase().trim();
-          const name = String(product?.name ?? '').toLowerCase().trim();
-          if (ALLOWED_CATEGORY_PREFIXES.some((c) => category.startsWith(c))) return true;
-          if (ALLOWED_NAME_KEYWORDS.some((kw) => name.includes(kw))) return true;
-          return false;
+          return !BLOCKED_CATEGORY_PREFIXES.some((c) => category.startsWith(c));
         })
         .map((product: any) => ({
           ...product,
@@ -127,6 +128,7 @@ serve(async (req) => {
           original_reseller_price: product.reseller_price,
         }));
     }
+
 
     // For orders, multiply the charged amount for display
     if (action === 'place_order' && data?.success) {
