@@ -24,7 +24,7 @@ serve(async (req) => {
     }
 
     const body = await req.json().catch(() => ({}));
-    const { action, productId, qty, debugAll } = body;
+    const { action, productId, qty } = body;
 
     console.log(`loggsplug-api: action=${action}, productId=${productId}, qty=${qty}`);
 
@@ -96,7 +96,7 @@ serve(async (req) => {
     }
 
     // Apply price multiplier for product listings
-    if (action === 'get_products' && !debugAll && data?.success && Array.isArray(data.data)) {
+    if (action === 'get_products' && data?.success && Array.isArray(data.data)) {
       // DENYLIST mode: everything from the provider shows (including newly added
       // categories/products) EXCEPT the categories that were previously removed.
       const BLOCKED_CATEGORY_PREFIXES = [
