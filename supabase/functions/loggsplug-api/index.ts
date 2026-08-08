@@ -24,7 +24,7 @@ serve(async (req) => {
     }
 
     const body = await req.json().catch(() => ({}));
-    const { action, productId, qty } = body;
+    const { action, productId, qty, debugAll } = body;
 
     console.log(`loggsplug-api: action=${action}, productId=${productId}, qty=${qty}`);
 
@@ -96,7 +96,7 @@ serve(async (req) => {
     }
 
     // Apply price multiplier for product listings
-    if (action === 'get_products' && data?.success && Array.isArray(data.data)) {
+    if (action === 'get_products' && !debugAll && data?.success && Array.isArray(data.data)) {
       // ALLOWLIST mode: only return products that match approved categories or item names
       const ALLOWED_CATEGORY_PREFIXES = [
         'countries normal facebook',
