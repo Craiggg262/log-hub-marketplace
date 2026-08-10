@@ -39,7 +39,7 @@
       { icon: Code2, label: 'Resellers API', path: '/app/resellers' },
      { icon: Settings, label: 'Settings', path: '/app/settings' },
      { icon: Shield, label: 'Privacy Policy', path: '/app/privacy' },
-     { icon: HelpCircle, label: 'Help & Support', action: () => window.open('https://t.me/loghubmarketplacesupport', '_blank'), external: true },
+     { icon: HelpCircle, label: 'Help & Support', action: () => window.open('https://t.me/loghubmarketplacesupport1', '_blank'), external: true },
      { 
        icon: ExternalLink, 
        label: 'Boost Account', 
