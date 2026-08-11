@@ -7,6 +7,7 @@ import { useToast } from '@/hooks/use-toast';
 import { Wallet as WalletIcon, MessageCircle, Copy } from 'lucide-react';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import AutoFundingSelector from '@/components/AutoFundingSelector';
+import CryptoFunding from '@/components/CryptoFunding';
 import { useCurrency } from '@/lib/currency';
 
 const FundWallet = () => {
@@ -64,6 +65,8 @@ const FundWallet = () => {
         {/* Payment Methods */}
         <div className="space-y-4">
           <AutoFundingSelector />
+
+          <CryptoFunding />
 
           <Card>
             <CardHeader>

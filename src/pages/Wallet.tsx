@@ -10,6 +10,7 @@ import { useTransactions } from '@/hooks/useTransactions';
 import PaymentPointAccount from '@/components/PaymentPointAccount';
 import PayscribeAccount from '@/components/PayscribeAccount';
 import FundingAccountsDisplay from '@/components/FundingAccountsDisplay';
+import CryptoFunding from '@/components/CryptoFunding';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useCurrency } from '@/lib/currency';
 
@@ -89,10 +90,15 @@ const Wallet = () => {
         </CardHeader>
         <CardContent>
           <Tabs defaultValue="automatic" className="w-full">
-            <TabsList className="grid w-full grid-cols-2">
-              <TabsTrigger value="automatic">Automatic Payment</TabsTrigger>
-              <TabsTrigger value="manual">Manual Payment</TabsTrigger>
+            <TabsList className="grid w-full grid-cols-3">
+              <TabsTrigger value="automatic">Automatic</TabsTrigger>
+              <TabsTrigger value="crypto">Crypto</TabsTrigger>
+              <TabsTrigger value="manual">Manual</TabsTrigger>
             </TabsList>
+
+            <TabsContent value="crypto" className="mt-6">
+              <CryptoFunding />
+            </TabsContent>
 
             <TabsContent value="automatic" className="mt-6 space-y-4">
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
