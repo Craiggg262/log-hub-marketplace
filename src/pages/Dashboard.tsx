@@ -11,6 +11,7 @@ import {
 import { useAuth } from '@/hooks/useAuth';
 import FundingAccountsDisplay from '@/components/FundingAccountsDisplay';
 import TradingLeaderboard from '@/components/leaderboard/TradingLeaderboard';
+import { useCurrency } from '@/lib/currency';
 
 const Dashboard = () => {
   const navigate = useNavigate();
@@ -19,8 +20,7 @@ const Dashboard = () => {
   const { toast } = useToast();
   const { profile } = useAuth();
 
-  const formatPrice = (price: number) =>
-    `₦${price.toLocaleString('en-NG', { minimumFractionDigits: 0 })}`;
+  const { formatPrice } = useCurrency();
 
   const referralCode = profile?.referral_code || '';
   const referralLink = `${window.location.origin}/signup?ref=${referralCode}`;

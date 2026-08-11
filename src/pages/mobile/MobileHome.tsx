@@ -15,6 +15,7 @@ import { useToast } from '@/hooks/use-toast';
 
 import FundingAccountsDisplay from '@/components/FundingAccountsDisplay';
 import TradingLeaderboard from '@/components/leaderboard/TradingLeaderboard';
+import { useCurrency } from '@/lib/currency';
 
  
  const MobileHome = () => {
@@ -24,7 +25,7 @@ import TradingLeaderboard from '@/components/leaderboard/TradingLeaderboard';
    const [accountCopied, setAccountCopied] = useState(false);
    const [leaderboardOpen, setLeaderboardOpen] = useState(false);
  
-   const formatPrice = (price: number) => `₦${price.toLocaleString()}`;
+  const { formatPrice } = useCurrency();
  
    const handleCopyAccount = () => {
      if (profile?.virtual_account_number) {

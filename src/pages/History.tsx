@@ -5,6 +5,7 @@ import { Input } from '@/components/ui/input';
 import { History as HistoryIcon, Search, Calendar, TrendingUp, ArrowUpRight, ArrowDownRight } from 'lucide-react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useTransactions } from '@/hooks/useTransactions';
+import { useCurrency } from '@/lib/currency';
 
 const History = () => {
   const [searchTerm, setSearchTerm] = useState('');
@@ -47,9 +48,7 @@ const History = () => {
     return <ArrowUpRight className="h-4 w-4 text-muted-foreground" />;
   };
 
-  const formatPrice = (price: number) => {
-    return `₦${price.toLocaleString('en-NG', { minimumFractionDigits: 2 })}`;
-  };
+  const { formatPrice } = useCurrency();
 
   const totalDeposits = transactions
     .filter(t => t.transaction_type === 'deposit')

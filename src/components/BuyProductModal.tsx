@@ -8,6 +8,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import ProductLogo from '@/components/ProductLogo';
+import { useCurrency } from '@/lib/currency';
 
 interface BuyProductModalProps {
   open: boolean;
@@ -47,7 +48,7 @@ const BuyProductModal: React.FC<BuyProductModalProps> = ({
   const handleQuantityChange = (delta: number) =>
     setQuantity((q) => Math.max(1, Math.min(q + delta, maxQty)));
 
-  const formatPrice = (p: number) => `₦${p.toLocaleString('en-NG', { minimumFractionDigits: 0 })}`;
+  const { formatPrice } = useCurrency();
 
   const goToOrders = () => {
     if (onSuccess) return onSuccess();

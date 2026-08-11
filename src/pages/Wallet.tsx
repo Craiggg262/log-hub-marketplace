@@ -11,6 +11,7 @@ import PaymentPointAccount from '@/components/PaymentPointAccount';
 import PayscribeAccount from '@/components/PayscribeAccount';
 import FundingAccountsDisplay from '@/components/FundingAccountsDisplay';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { useCurrency } from '@/lib/currency';
 
 const Wallet = () => {
   const [fundAmount, setFundAmount] = useState('');
@@ -32,8 +33,7 @@ const Wallet = () => {
     setTimeout(() => window.open('https://wa.me/2348105133393', '_blank'), 800);
   };
 
-  const formatPrice = (price: number) =>
-    `₦${price.toLocaleString('en-NG', { minimumFractionDigits: 2 })}`;
+  const { formatPrice } = useCurrency();
 
   const totalDeposits = transactions.filter((t) => t.transaction_type === 'deposit').reduce((s, t) => s + t.amount, 0);
   const totalSpent = transactions.filter((t) => t.transaction_type === 'purchase').reduce((s, t) => s + Math.abs(t.amount), 0);

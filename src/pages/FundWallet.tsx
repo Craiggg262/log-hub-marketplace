@@ -7,15 +7,14 @@ import { useToast } from '@/hooks/use-toast';
 import { Wallet as WalletIcon, MessageCircle, Copy } from 'lucide-react';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import AutoFundingSelector from '@/components/AutoFundingSelector';
+import { useCurrency } from '@/lib/currency';
 
 const FundWallet = () => {
   const [fundAmount, setFundAmount] = useState('');
   const [showPaymentDetails, setShowPaymentDetails] = useState(false);
   const { toast } = useToast();
 
-  const formatPrice = (price: number) => {
-    return `₦${price.toLocaleString('en-NG', { minimumFractionDigits: 2 })}`;
-  };
+  const { formatPrice } = useCurrency();
 
   const handleCopyAccount = (text: string) => {
     navigator.clipboard.writeText(text);
