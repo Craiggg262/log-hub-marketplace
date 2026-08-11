@@ -5,6 +5,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { useCart } from '@/hooks/useCart';
  import logoImage from '@/assets/logo.png';
  import { cn } from '@/lib/utils';
+import { formatPrice } from '@/lib/currency';
  
  interface MobileLayoutProps {
    children: React.ReactNode;
@@ -102,7 +103,7 @@ import { useCart } from '@/hooks/useCart';
                 </button>
                 <div className="glass-button px-3 py-1.5 rounded-full">
                   <span className="text-sm font-semibold text-primary">
-                    ₦{(profile?.wallet_balance || 0).toLocaleString()}
+                    {formatPrice((profile?.wallet_balance || 0))}
                   </span>
                 </div>
               </div>

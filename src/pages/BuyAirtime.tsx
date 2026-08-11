@@ -10,6 +10,7 @@ import { PortalSelector } from "@/components/vtu/PortalSelector";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
+import { formatPrice } from '@/lib/currency';
 
 const MARKUP = 1.2;
 
@@ -89,7 +90,7 @@ const BuyAirtime = () => {
         <Card className="p-4 bg-card border-border">
           <p className="text-xs text-muted-foreground mb-2">Wallet Balance</p>
           <p className="text-2xl font-bold text-primary">
-            ₦{Number(profile?.wallet_balance || 0).toLocaleString("en-NG", { minimumFractionDigits: 2 })}
+            {formatPrice(Number(profile?.wallet_balance || 0))}
           </p>
         </Card>
 
@@ -140,14 +141,14 @@ const BuyAirtime = () => {
             />
             {amtNum > 0 && (
               <p className="text-xs text-muted-foreground mt-1">
-                You'll be charged <span className="font-semibold text-foreground">₦{chargeAmount.toLocaleString()}</span> (includes service fee)
+                You'll be charged <span className="font-semibold text-foreground">{formatPrice(chargeAmount)}</span> (includes service fee)
               </p>
             )}
           </div>
 
           <Button onClick={handleBuy} disabled={submitting} className="w-full gradient-primary text-primary-foreground">
             {submitting && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
-            {submitting ? "Processing..." : `Buy Airtime${amtNum > 0 ? ` — ₦${chargeAmount.toLocaleString()}` : ""}`}
+            {submitting ? "Processing..." : `Buy Airtime${amtNum > 0 ? ` — ${formatPrice(chargeAmount)}` : ""}`}
           </Button>
         </Card>
       </div>

@@ -14,6 +14,7 @@ import {
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/useAuth";
+import { formatPrice } from '@/lib/currency';
 
 const Services = () => {
   const navigate = useNavigate();
@@ -89,7 +90,7 @@ const Services = () => {
               <div>
                 <p className="text-sm text-muted-foreground">Available Balance</p>
                 <p className="text-3xl font-bold text-primary">
-                  ₦{(profile?.wallet_balance || 0).toLocaleString('en-NG', { minimumFractionDigits: 2 })}
+                  {formatPrice((profile?.wallet_balance || 0))}
                 </p>
               </div>
             </div>

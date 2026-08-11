@@ -6,6 +6,7 @@ import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
 import { Loader2, RefreshCw, Rocket, Clock, ExternalLink } from 'lucide-react';
+import { formatPrice } from '@/lib/currency';
 
 interface BoostOrder {
   id: string;
@@ -31,7 +32,7 @@ const statusStyle = (s: string) => {
   return 'bg-muted text-muted-foreground border-border';
 };
 
-const naira = (n: number) => `₦${Number(n).toLocaleString('en-NG', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+const naira = (n: number) => `${formatPrice(Number(n))}`;
 
 const formatAvgTime = (raw: string | null) => {
   if (!raw) return null;

@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Trophy, Crown, Medal, Loader2, RefreshCw } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
+import { formatPrice } from '@/lib/currency';
 
 export interface LeaderboardEntry {
   position: number;
@@ -22,7 +23,7 @@ export interface LeaderboardData {
 }
 
 export const formatNaira = (n: number) =>
-  `₦${Number(n || 0).toLocaleString('en-NG', { maximumFractionDigits: 0 })}`;
+  `${formatPrice(Number(n || 0))}`;
 
 export function useLeaderboard(fullEmail = false) {
   const [data, setData] = useState<LeaderboardData | null>(null);

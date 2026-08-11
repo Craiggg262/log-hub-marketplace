@@ -9,6 +9,7 @@ import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
 import { Loader2, Rocket, Search, ListOrdered } from 'lucide-react';
+import { formatPrice } from '@/lib/currency';
 
 interface Service {
   service: string;
@@ -65,7 +66,7 @@ const Boosting: React.FC = () => {
     const n = Number(quantity);
     if (!n) return '₦0.00';
     const total = (selected.rate_naira_per_1000 * n) / 1000;
-    return `₦${total.toLocaleString('en-NG', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+    return `${formatPrice(total)}`;
   }, [selected, quantity]);
 
   const place = async () => {
