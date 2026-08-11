@@ -5,6 +5,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, Navigate, useLocation } from "react-router-dom";
 import { AuthProvider, useAuth } from "./hooks/useAuth";
 import { ServerProvider } from "./hooks/useServerSelection";
+import { CurrencyProvider } from "./lib/currency";
 import Index from "./pages/Index";
 import Login from "./pages/Login";
 import Signup from "./pages/Signup";
@@ -29,6 +30,7 @@ import ReferralEarn from "./pages/ReferralEarn";
 import SmsVerification from "./pages/SmsVerification";
 import Resellers from "./pages/Resellers";
 import Boosting from "./pages/Boosting";
+import BuyEsim from "./pages/BuyEsim";
 import BoostingOrders from "./pages/BoostingOrders";
 import { CommunityPopup } from "./components/CommunityPopup";
 import BroadcastNotification from "./components/BroadcastNotification";
@@ -158,6 +160,8 @@ function AppContent() {
         <Route path="/referral-earn" element={<ProtectedRoute><ReferralEarn /></ProtectedRoute>} />
         <Route path="/resellers" element={<ProtectedRoute><Resellers /></ProtectedRoute>} />
         <Route path="/app/resellers" element={<MobileProtectedRoute><Resellers /></MobileProtectedRoute>} />
+        <Route path="/esim" element={<ProtectedRoute><BuyEsim /></ProtectedRoute>} />
+        <Route path="/app/esim" element={<MobileProtectedRoute><BuyEsim /></MobileProtectedRoute>} />
         <Route path="/boosting" element={<ProtectedRoute><Boosting /></ProtectedRoute>} />
         <Route path="/app/boosting" element={<MobileProtectedRoute><Boosting /></MobileProtectedRoute>} />
         <Route path="/boosting/orders" element={<ProtectedRoute><BoostingOrders /></ProtectedRoute>} />
@@ -204,7 +208,9 @@ const App = () => (
       <Sonner />
       <AuthProvider>
         <ServerProvider>
-          <AppContent />
+          <CurrencyProvider>
+            <AppContent />
+          </CurrencyProvider>
         </ServerProvider>
       </AuthProvider>
     </TooltipProvider>

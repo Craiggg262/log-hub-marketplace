@@ -2,7 +2,7 @@
  import { useNavigate } from 'react-router-dom';
 import { 
   Phone, Wifi, Zap, Tv, Globe, ShoppingCart, 
-  Gift, CreditCard, Rocket
+  Gift, CreditCard, Rocket, Smartphone
 } from 'lucide-react';
 import { GlassCard } from './GlassCard';
 import { cn } from '@/lib/utils';
@@ -19,6 +19,7 @@ const actions: QuickAction[] = [
   { icon: ShoppingCart, label: 'Buy Logs', path: '/app/logs', color: 'text-primary', bgColor: 'bg-primary/20' },
   { icon: Globe, label: 'SMS Verify', path: '/app/sms', color: 'text-accent', bgColor: 'bg-accent/20' },
   { icon: Rocket, label: 'Boosting', path: '/app/boosting', color: 'text-orange-400', bgColor: 'bg-orange-500/20' },
+  { icon: Smartphone, label: 'eSIM', path: '/app/esim', color: 'text-emerald-400', bgColor: 'bg-emerald-500/20' },
   { icon: Phone, label: 'Airtime', path: '/app/services/airtime', color: 'text-blue-400', bgColor: 'bg-blue-500/20' },
   { icon: Wifi, label: 'Data', path: '/app/services/data', color: 'text-green-400', bgColor: 'bg-green-500/20' },
   { icon: Zap, label: 'Electricity', path: '/app/services/electricity', color: 'text-yellow-400', bgColor: 'bg-yellow-500/20' },

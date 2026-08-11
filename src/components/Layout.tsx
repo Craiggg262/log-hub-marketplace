@@ -4,6 +4,7 @@ import { User } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { InstallPWA } from "@/components/InstallPWA";
 import { ThemeToggle } from "@/components/ThemeToggle";
+import { CurrencySwitcher } from "@/components/CurrencySwitcher";
 import logoImage from '@/assets/logo.png';
 
 interface LayoutProps {
@@ -26,6 +27,7 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
           </div>
 
           <div className="flex items-center gap-2 md:gap-3">
+            <CurrencySwitcher />
             <ThemeToggle />
             <InstallPWA />
             <div className="flex items-center gap-2 text-sm bg-card/50 px-3 py-2 rounded-lg border border-border/50">
