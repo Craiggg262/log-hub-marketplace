@@ -12,6 +12,7 @@ import { useLogs } from '@/hooks/useLogs';
 import BuyProductModal from '@/components/BuyProductModal';
 import ProductLogo from '@/components/ProductLogo';
 import ServerPicker from '@/components/marketplace/ServerPicker';
+import { useCurrency } from '@/lib/currency';
 
 function detectPlatform(name: string): string {
   const lower = name.toLowerCase();
@@ -111,8 +112,7 @@ const Marketplace: React.FC = () => {
       .sort((a, b) => (a.itemSort - b.itemSort) || a.name.localeCompare(b.name));
   }, [products, activeCategory, search]);
 
-  const formatPrice = (p: number) =>
-    `₦${p.toLocaleString('en-NG', { minimumFractionDigits: 0 })}`;
+  const { formatPrice } = useCurrency();
 
   // Allow direct entry to categories if server already chosen
   React.useEffect(() => {

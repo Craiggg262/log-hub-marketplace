@@ -7,6 +7,7 @@ import { useToast } from '@/hooks/use-toast';
 import { Loader2, Package, ShoppingCart, Minus, Plus, ExternalLink } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
+import { useCurrency } from '@/lib/currency';
 
 interface ProductAccount {
   id: number;
@@ -278,9 +279,7 @@ const ProductDetailsModal: React.FC<ProductDetailsModalProps> = ({
     }
   };
 
-  const formatPrice = (p: string | number) => {
-    return `₦${parseFloat(String(p)).toLocaleString('en-NG', { minimumFractionDigits: 2 })}`;
-  };
+  const { formatPrice } = useCurrency();
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>

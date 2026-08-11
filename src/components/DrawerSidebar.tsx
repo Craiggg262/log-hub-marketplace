@@ -20,6 +20,7 @@ import {
   Phone,
   Code2,
   Rocket,
+  Smartphone,
 } from "lucide-react";
 import {
   Sheet,
@@ -48,6 +49,7 @@ const menuItems = [
   { title: "Fund Wallet", url: "/fund-wallet", icon: Plus },
   { title: "Referral Earn", url: "/referral-earn", icon: Gift },
   { title: "Resellers API", url: "/resellers", icon: Code2 },
+  { title: "Buy eSIM", url: "/esim", icon: Smartphone },
   { title: "Boosting", url: "/boosting", icon: Rocket },
   { title: "Transactions", url: "/history", icon: CreditCard },
   { title: "Settings", url: "/settings", icon: Settings },

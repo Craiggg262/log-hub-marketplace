@@ -10,6 +10,7 @@ import { useTransactions } from '@/hooks/useTransactions';
 import { processReferralEarning } from '@/hooks/useReferral';
 import { ShoppingCart, Plus, Minus, Trash2, CreditCard } from 'lucide-react';
 import SocialIcon from '@/components/SocialIcon';
+import { useCurrency } from '@/lib/currency';
 
 const Cart = () => {
   const { cartItems, updateQuantity, removeFromCart, getTotalAmount, getTotalItems, clearCart, loading } = useCart();
@@ -19,9 +20,7 @@ const Cart = () => {
   const { toast } = useToast();
   const [isProcessing, setIsProcessing] = React.useState(false);
 
-  const formatPrice = (price: number) => {
-    return `₦${price.toLocaleString('en-NG', { minimumFractionDigits: 2 })}`;
-  };
+  const { formatPrice } = useCurrency();
 
   const handleQuantityChange = async (cartItemId: string, newQuantity: number) => {
     try {

@@ -11,6 +11,7 @@ import { useToast } from '@/hooks/use-toast';
 import { useOrders, type Order } from '@/hooks/useOrders';
 import SocialIcon from '@/components/SocialIcon';
 import logoImage from '@/assets/logo.png';
+import { useCurrency } from '@/lib/currency';
 
 const OrderDetails = () => {
   const [searchTerm, setSearchTerm] = useState('');
@@ -97,9 +98,7 @@ const OrderDetails = () => {
     });
   };
 
-  const formatPrice = (price: number) => {
-    return `₦${price.toLocaleString('en-NG', { minimumFractionDigits: 2 })}`;
-  };
+  const { formatPrice } = useCurrency();
 
   const completedOrders = orders.filter(order => order.status === 'completed').length;
   const totalSpent = orders

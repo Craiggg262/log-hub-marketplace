@@ -11,12 +11,13 @@
  import { useOrders } from '@/hooks/useOrders';
  import { format } from 'date-fns';
  import { cn } from '@/lib/utils';
+import { useCurrency } from '@/lib/currency';
  
  const MobileOrders = () => {
    const navigate = useNavigate();
    const { orders, loading } = useOrders();
  
-   const formatPrice = (price: number) => `₦${price.toLocaleString()}`;
+  const { formatPrice } = useCurrency();
  
    const getStatusConfig = (status: string) => {
      switch (status) {

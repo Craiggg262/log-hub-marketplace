@@ -10,6 +10,7 @@ import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
 import { Users, Wallet, Copy, Check, ArrowRight, Clock, CheckCircle, XCircle, Building2, Banknote } from 'lucide-react';
+import { useCurrency } from '@/lib/currency';
 
 interface Referral {
   id: string;
@@ -228,9 +229,7 @@ const ReferralEarn = () => {
     }
   };
 
-  const formatPrice = (price: number) => {
-    return `₦${price.toLocaleString('en-NG', { minimumFractionDigits: 2 })}`;
-  };
+  const { formatPrice } = useCurrency();
 
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString('en-NG', {

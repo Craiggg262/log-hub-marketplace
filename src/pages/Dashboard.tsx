@@ -5,12 +5,14 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { useToast } from '@/hooks/use-toast';
 import {
-  Wallet, ShoppingCart, MessageCircle, Copy, Check, Gift, Phone, Wifi, Zap, Tv, Globe, Package, ChevronRight, ArrowRight, Rocket, Trophy,
+  Wallet, ShoppingCart, MessageCircle, Copy, Check, Gift, Phone, Wifi, Zap, Tv, Globe, Package, ChevronRight, ArrowRight, Rocket, Trophy, Smartphone, Bitcoin,
 } from 'lucide-react';
+import { Badge } from '@/components/ui/badge';
 
 import { useAuth } from '@/hooks/useAuth';
 import FundingAccountsDisplay from '@/components/FundingAccountsDisplay';
 import TradingLeaderboard from '@/components/leaderboard/TradingLeaderboard';
+import { useCurrency } from '@/lib/currency';
 
 const Dashboard = () => {
   const navigate = useNavigate();
@@ -19,8 +21,7 @@ const Dashboard = () => {
   const { toast } = useToast();
   const { profile } = useAuth();
 
-  const formatPrice = (price: number) =>
-    `₦${price.toLocaleString('en-NG', { minimumFractionDigits: 0 })}`;
+  const { formatPrice } = useCurrency();
 
   const referralCode = profile?.referral_code || '';
   const referralLink = `${window.location.origin}/signup?ref=${referralCode}`;
@@ -173,6 +174,54 @@ const Dashboard = () => {
           <ArrowRight className="h-5 w-5 text-primary shrink-0" />
         </CardContent>
       </Card>
+
+      {/* eSIM CTA */}
+      <Card
+        onClick={() => navigate('/esim')}
+        className="glass-card border-0 cursor-pointer hover:border-primary/50 transition-all overflow-hidden"
+      >
+        <CardContent className="p-5 md:p-6 flex items-center justify-between gap-4">
+          <div className="flex items-center gap-4">
+            <div className="h-12 w-12 md:h-14 md:w-14 rounded-2xl gradient-primary flex items-center justify-center">
+              <Smartphone className="h-6 w-6 md:h-7 md:w-7 text-primary-foreground" />
+            </div>
+            <div>
+              <h2 className="text-base md:text-lg font-bold flex items-center gap-2">
+                Buy eSIM <Badge>NEW</Badge>
+              </h2>
+              <p className="text-xs md:text-sm text-muted-foreground">
+                Instant travel data in 200+ countries
+              </p>
+            </div>
+          </div>
+          <ArrowRight className="h-5 w-5 text-primary shrink-0" />
+        </CardContent>
+      </Card>
+
+      {/* Crypto funding CTA */}
+      <Card
+        onClick={() => navigate('/fund-wallet')}
+        className="glass-card border-0 cursor-pointer hover:border-primary/50 transition-all overflow-hidden"
+      >
+        <CardContent className="p-5 md:p-6 flex items-center justify-between gap-4">
+          <div className="flex items-center gap-4">
+            <div className="h-12 w-12 md:h-14 md:w-14 rounded-2xl bg-orange-500/20 flex items-center justify-center">
+              <Bitcoin className="h-6 w-6 md:h-7 md:w-7 text-orange-500" />
+            </div>
+            <div>
+              <h2 className="text-base md:text-lg font-bold flex items-center gap-2">
+                Fund with Crypto <Badge>NEW</Badge>
+              </h2>
+              <p className="text-xs md:text-sm text-muted-foreground">
+                BTC, USDT, ETH &amp; 200+ coins — credited automatically
+              </p>
+            </div>
+          </div>
+          <ArrowRight className="h-5 w-5 text-primary shrink-0" />
+        </CardContent>
+      </Card>
+
+
 
       {/* Weekly Trading Leaderboard */}
       <Card

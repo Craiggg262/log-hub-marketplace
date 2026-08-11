@@ -15,6 +15,7 @@
  import { format } from 'date-fns';
 import { cn } from '@/lib/utils';
 import FundingAccountsDisplay from '@/components/FundingAccountsDisplay';
+import { useCurrency } from '@/lib/currency';
  
  const MobileWallet = () => {
    const navigate = useNavigate();
@@ -23,7 +24,7 @@ import FundingAccountsDisplay from '@/components/FundingAccountsDisplay';
    const { toast } = useToast();
    const [copied, setCopied] = useState(false);
  
-   const formatPrice = (price: number) => `₦${price.toLocaleString()}`;
+  const { formatPrice } = useCurrency();
  
    const handleCopyAccount = () => {
      if (profile?.virtual_account_number) {

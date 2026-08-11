@@ -27,6 +27,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { isoForCountry } from "@/lib/fivesim-country-iso";
+import { formatPrice } from '@/lib/currency';
 
 interface Service {
   service_id: string;
@@ -165,7 +166,7 @@ export default function SmsVerification() {
         number: o.phone_number || 'waiting',
         service_name: o.service_name,
         price: Number(o.charged_price),
-        price_display: `₦${Number(o.charged_price).toLocaleString('en-NG', { minimumFractionDigits: 2 })}`,
+        price_display: `${formatPrice(Number(o.charged_price))}`,
         code: o.verification_code,
         time_remaining: Math.max(0, Math.floor((new Date(o.expires_at).getTime() - Date.now()) / 1000)),
         expires_at: new Date(o.expires_at).getTime(),
@@ -310,7 +311,7 @@ export default function SmsVerification() {
     if (profile.wallet_balance < price) {
       toast({
         title: "Insufficient Balance",
-        description: `You need ₦${price.toLocaleString('en-NG', { minimumFractionDigits: 2 })} but only have ₦${profile.wallet_balance.toLocaleString('en-NG', { minimumFractionDigits: 2 })}`,
+        description: `You need ${formatPrice(price)} but only have ${formatPrice(profile.wallet_balance)}`,
         variant: "destructive"
       });
       return;
@@ -803,7 +804,7 @@ export default function SmsVerification() {
                           </div>
                           <div className="text-right">
                             <p className="font-bold">
-                              ₦{order.charged_price.toLocaleString('en-NG', { minimumFractionDigits: 2 })}
+                              {formatPrice(order.charged_price)}
                             </p>
                             {getStatusBadge(order.status, order.refunded)}
                           </div>

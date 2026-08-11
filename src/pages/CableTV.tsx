@@ -10,6 +10,7 @@ import { PortalSelector } from "@/components/vtu/PortalSelector";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
+import { formatPrice } from '@/lib/currency';
 
 const MARKUP = 1.2;
 
@@ -119,7 +120,7 @@ const CableTV = () => {
         <Card className="p-4 bg-card border-border">
           <p className="text-xs text-muted-foreground mb-2">Wallet Balance</p>
           <p className="text-2xl font-bold text-primary">
-            ₦{Number(profile?.wallet_balance || 0).toLocaleString("en-NG", { minimumFractionDigits: 2 })}
+            {formatPrice(Number(profile?.wallet_balance || 0))}
           </p>
         </Card>
 
@@ -168,7 +169,7 @@ const CableTV = () => {
                         const price = Number(pl.amount ?? pl.price ?? 0);
                         return (
                           <SelectItem key={code} value={code}>
-                            {pl.plan_name ?? pl.name} — ₦{Math.round(price * MARKUP).toLocaleString()}
+                            {pl.plan_name ?? pl.name} — {formatPrice(Math.round(price * MARKUP))}
                           </SelectItem>
                         );
                       })}
@@ -187,7 +188,7 @@ const CableTV = () => {
                 <SelectContent>
                   {portal2Plans.map((pl) => (
                     <SelectItem key={pl.plan_code} value={String(pl.plan_code)}>
-                      {pl.plan_name} — ₦{Math.round(pl.amount * MARKUP).toLocaleString()}
+                      {pl.plan_name} — {formatPrice(Math.round(pl.amount * MARKUP))}
                     </SelectItem>
                   ))}
                 </SelectContent>
@@ -200,13 +201,13 @@ const CableTV = () => {
 
           {baseAmount > 0 && (
             <p className="text-xs text-muted-foreground">
-              Total charge: <span className="font-semibold text-foreground">₦{chargeAmount.toLocaleString()}</span>
+              Total charge: <span className="font-semibold text-foreground">{formatPrice(chargeAmount)}</span>
             </p>
           )}
 
           <Button onClick={handleBuy} disabled={submitting} className="w-full gradient-primary text-primary-foreground">
             {submitting && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
-            {submitting ? "Processing..." : `Subscribe${baseAmount > 0 ? ` — ₦${chargeAmount.toLocaleString()}` : ""}`}
+            {submitting ? "Processing..." : `Subscribe${baseAmount > 0 ? ` — ${formatPrice(chargeAmount)}` : ""}`}
           </Button>
         </Card>
       </div>

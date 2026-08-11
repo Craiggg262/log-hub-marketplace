@@ -205,6 +205,120 @@ export type Database = {
         }
         Relationships: []
       }
+      crypto_payments: {
+        Row: {
+          actually_paid: number | null
+          amount_naira: number
+          amount_usd: number
+          created_at: string
+          credited: boolean
+          id: string
+          invoice_id: string | null
+          invoice_url: string | null
+          order_id: string
+          pay_currency: string | null
+          payment_id: string | null
+          raw: Json | null
+          status: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          actually_paid?: number | null
+          amount_naira: number
+          amount_usd: number
+          created_at?: string
+          credited?: boolean
+          id?: string
+          invoice_id?: string | null
+          invoice_url?: string | null
+          order_id: string
+          pay_currency?: string | null
+          payment_id?: string | null
+          raw?: Json | null
+          status?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          actually_paid?: number | null
+          amount_naira?: number
+          amount_usd?: number
+          created_at?: string
+          credited?: boolean
+          id?: string
+          invoice_id?: string | null
+          invoice_url?: string | null
+          order_id?: string
+          pay_currency?: string | null
+          payment_id?: string | null
+          raw?: Json | null
+          status?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      esim_orders: {
+        Row: {
+          charged_naira: number
+          cost_usd: number
+          country_iso2: string
+          country_name: string
+          created_at: string
+          data_gb: number
+          direct_install_url: string | null
+          esim_id: string | null
+          iccid: string | null
+          id: string
+          lpa_string: string | null
+          operator: string | null
+          qr_code: string | null
+          raw: Json | null
+          status: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          charged_naira: number
+          cost_usd: number
+          country_iso2: string
+          country_name: string
+          created_at?: string
+          data_gb: number
+          direct_install_url?: string | null
+          esim_id?: string | null
+          iccid?: string | null
+          id?: string
+          lpa_string?: string | null
+          operator?: string | null
+          qr_code?: string | null
+          raw?: Json | null
+          status?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          charged_naira?: number
+          cost_usd?: number
+          country_iso2?: string
+          country_name?: string
+          created_at?: string
+          data_gb?: number
+          direct_install_url?: string | null
+          esim_id?: string | null
+          iccid?: string | null
+          id?: string
+          lpa_string?: string | null
+          operator?: string | null
+          qr_code?: string | null
+          raw?: Json | null
+          status?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       leaderboard_adjustments: {
         Row: {
           amount: number
