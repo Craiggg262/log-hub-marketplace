@@ -12,6 +12,7 @@
  import { useReferral } from '@/hooks/useReferral';
  import { useToast } from '@/hooks/use-toast';
  import { format } from 'date-fns';
+import { useCurrency } from '@/lib/currency';
  
  const MobileReferrals = () => {
    const { profile } = useAuth();
@@ -20,7 +21,7 @@
    const [copied, setCopied] = useState(false);
  
    const referralLink = `${window.location.origin}/signup?ref=${profile?.referral_code}`;
-   const formatPrice = (price: number) => `₦${price.toLocaleString()}`;
+  const { formatPrice } = useCurrency();
  
    const handleCopy = () => {
      navigator.clipboard.writeText(referralLink);
