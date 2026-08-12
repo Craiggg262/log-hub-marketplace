@@ -218,6 +218,7 @@ export type Database = {
           order_id: string
           pay_currency: string | null
           payment_id: string | null
+          provider: string
           raw: Json | null
           status: string
           updated_at: string
@@ -235,6 +236,7 @@ export type Database = {
           order_id: string
           pay_currency?: string | null
           payment_id?: string | null
+          provider?: string
           raw?: Json | null
           status?: string
           updated_at?: string
@@ -252,6 +254,7 @@ export type Database = {
           order_id?: string
           pay_currency?: string | null
           payment_id?: string | null
+          provider?: string
           raw?: Json | null
           status?: string
           updated_at?: string

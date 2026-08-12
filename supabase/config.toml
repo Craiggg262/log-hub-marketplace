@@ -59,5 +59,21 @@ verify_jwt = false
 [functions.vtu-gateway]
 verify_jwt = false
 
+[functions.nowpayments-create-invoice]
+verify_jwt = false
+
+[functions.nowpayments-webhook]
+verify_jwt = false
+
+[functions.citrussim-esim]
+verify_jwt = false
+
+[functions.fpayment-create-invoice]
+verify_jwt = false
+
+[functions.fpayment-callback]
+verify_jwt = false
+
+
 
 
