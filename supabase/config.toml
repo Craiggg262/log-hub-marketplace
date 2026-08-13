@@ -77,3 +77,6 @@ verify_jwt = false
 
 
 
+
+[functions.crypto-reconcile]
+verify_jwt = false
