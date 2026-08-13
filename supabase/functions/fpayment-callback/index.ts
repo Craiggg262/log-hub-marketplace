@@ -101,7 +101,6 @@ serve(async (req) => {
           transaction_type: "deposit",
           description: "Crypto funding (USDT) via FPayment",
         });
-        await admin.from("crypto_payments").update({ credited: true }).eq("id", record.id);
         console.log("✅ Credited FPayment funding", record.user_id, creditNaira);
       }
     }
