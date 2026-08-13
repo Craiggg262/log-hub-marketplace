@@ -68,7 +68,8 @@ serve(async (req) => {
       })
       .eq("id", record.id);
 
-    if (status === "completed" && !record.credited) {
+    const PAID = ["completed", "complete", "paid", "success", "successful", "confirmed", "finished", "partially_paid", "partial"];
+    if (PAID.includes(status) && !record.credited) {
       const receivedUsd = Number(params.received ?? 0);
       const invoiceUsd = Number(record.amount_usd) || 0;
       let creditNaira = Number(record.amount_naira);
@@ -76,7 +77,16 @@ serve(async (req) => {
         creditNaira = Math.floor((receivedUsd / invoiceUsd) * Number(record.amount_naira));
       }
 
-      if (creditNaira > 0) {
+      // Claim the record first so a concurrent reconcile can't double-credit
+      const { data: claimed } = await admin
+        .from("crypto_payments")
+        .update({ credited: true })
+        .eq("id", record.id)
+        .eq("credited", false)
+        .select("id")
+        .maybeSingle();
+
+      if (creditNaira > 0 && claimed) {
         const { data: profile } = await admin
           .from("profiles")
           .select("wallet_balance")
@@ -91,7 +101,6 @@ serve(async (req) => {
           transaction_type: "deposit",
           description: "Crypto funding (USDT) via FPayment",
         });
-        await admin.from("crypto_payments").update({ credited: true }).eq("id", record.id);
         console.log("✅ Credited FPayment funding", record.user_id, creditNaira);
       }
     }
