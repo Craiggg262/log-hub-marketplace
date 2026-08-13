@@ -77,7 +77,16 @@ serve(async (req) => {
         creditNaira = Math.floor((receivedUsd / invoiceUsd) * Number(record.amount_naira));
       }
 
-      if (creditNaira > 0) {
+      // Claim the record first so a concurrent reconcile can't double-credit
+      const { data: claimed } = await admin
+        .from("crypto_payments")
+        .update({ credited: true })
+        .eq("id", record.id)
+        .eq("credited", false)
+        .select("id")
+        .maybeSingle();
+
+      if (creditNaira > 0 && claimed) {
         const { data: profile } = await admin
           .from("profiles")
           .select("wallet_balance")
