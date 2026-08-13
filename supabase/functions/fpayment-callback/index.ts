@@ -68,7 +68,8 @@ serve(async (req) => {
       })
       .eq("id", record.id);
 
-    if (status === "completed" && !record.credited) {
+    const PAID = ["completed", "complete", "paid", "success", "successful", "confirmed", "finished", "partially_paid", "partial"];
+    if (PAID.includes(status) && !record.credited) {
       const receivedUsd = Number(params.received ?? 0);
       const invoiceUsd = Number(record.amount_usd) || 0;
       let creditNaira = Number(record.amount_naira);
