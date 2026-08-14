@@ -11,6 +11,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/hooks/useAuth';
 import { formatPrice, useCurrency } from '@/lib/currency';
+import AllInclusiveEsim from '@/components/esim/AllInclusiveEsim';
 
 interface Network { operator: string; per_gb_usd: number; per_gb_naira: number }
 interface Country {
