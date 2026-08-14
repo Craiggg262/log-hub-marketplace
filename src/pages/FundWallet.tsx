@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -16,6 +16,16 @@ const FundWallet = () => {
   const { toast } = useToast();
 
   const { formatPrice } = useCurrency();
+
+  // Deep-link support: /fund-wallet#crypto scrolls straight to crypto funding
+  useEffect(() => {
+    if (window.location.hash === '#crypto') {
+      setTimeout(() => {
+        document.getElementById('crypto')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }, 250);
+    }
+  }, []);
+
 
   const handleCopyAccount = (text: string) => {
     navigator.clipboard.writeText(text);
@@ -66,7 +76,9 @@ const FundWallet = () => {
         <div className="space-y-4">
           <AutoFundingSelector />
 
-          <CryptoFunding />
+          <div id="crypto" className="scroll-mt-24">
+            <CryptoFunding />
+          </div>
 
           <Card>
             <CardHeader>

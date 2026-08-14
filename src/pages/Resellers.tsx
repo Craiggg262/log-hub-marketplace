@@ -42,7 +42,7 @@ POST /logs/buy     { product_id, qty }   -> auto-routes by prefix
 502 Upstream provider failure
 
 ## Support
-Telegram: https://t.me/loghubmarketplacesupport1
+Telegram: https://t.me/craiganalytics
 `;
 
 const downloadDocs = (base: string) => {
@@ -285,7 +285,7 @@ const Resellers: React.FC = () => {
 
           <div className="border-t border-border pt-4 text-xs text-muted-foreground">
             For support contact us on{' '}
-            <a className="text-primary underline" href="https://t.me/loghubmarketplacesupport1" target="_blank" rel="noreferrer">Telegram</a>.
+            <a className="text-primary underline" href="https://t.me/craiganalytics" target="_blank" rel="noreferrer">Telegram</a>.
           </div>
 
         </CardContent>

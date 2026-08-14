@@ -2,7 +2,7 @@ import React from 'react';
 import { MessageCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
-const TELEGRAM_URL = 'https://t.me/loghubmarketplacesupport1';
+const TELEGRAM_URL = 'https://t.me/craiganalytics';
 
 const AISupport: React.FC = () => {
   return (
