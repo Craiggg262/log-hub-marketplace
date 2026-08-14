@@ -16,6 +16,7 @@
 import { cn } from '@/lib/utils';
 import FundingAccountsDisplay from '@/components/FundingAccountsDisplay';
 import { useCurrency } from '@/lib/currency';
+import BalanceHeaderCard from '@/components/BalanceHeaderCard';
  
  const MobileWallet = () => {
    const navigate = useNavigate();
@@ -46,22 +47,8 @@ import { useCurrency } from '@/lib/currency';
       <PullToRefresh onRefresh={handleRefresh}>
         <div className="p-4 space-y-6">
          {/* Balance Card */}
-         <GlassCard variant="elevated" glow className="silk-shimmer">
-           <div className="p-6 text-center">
-             <p className="text-sm text-muted-foreground mb-2">Available Balance</p>
-             <p className="text-4xl font-bold mb-4">
-               {formatPrice(profile?.wallet_balance || 0)}
-             </p>
-             
-             <Button 
-               onClick={() => navigate('/app/wallet/fund')}
-               className="w-full gradient-primary text-primary-foreground rounded-xl h-12 text-base"
-             >
-               <Plus className="h-5 w-5 mr-2" />
-               Add Funds
-             </Button>
-           </div>
-         </GlassCard>
+         <BalanceHeaderCard mobile />
+
  
         {/* Funding Accounts */}
         {(profile?.virtual_account_number || (profile as any)?.payscribe_account_number) && (

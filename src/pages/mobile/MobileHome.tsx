@@ -16,6 +16,7 @@ import { useToast } from '@/hooks/use-toast';
 import FundingAccountsDisplay from '@/components/FundingAccountsDisplay';
 import TradingLeaderboard from '@/components/leaderboard/TradingLeaderboard';
 import { useCurrency } from '@/lib/currency';
+import BalanceHeaderCard from '@/components/BalanceHeaderCard';
 
  
  const MobileHome = () => {
@@ -45,47 +46,30 @@ import { useCurrency } from '@/lib/currency';
       <PullToRefresh onRefresh={handleRefresh}>
         <div className="space-y-6">
          {/* Balance Card */}
-         <div className="px-4 pt-4">
-           <GlassCard variant="elevated" glow className="silk-shimmer">
-             <div className="p-5">
-               <div className="flex items-center justify-between mb-4">
-                 <div className="flex items-center gap-3">
-                   <div className="w-12 h-12 rounded-2xl gradient-primary flex items-center justify-center">
-                     <Wallet className="h-6 w-6 text-primary-foreground" />
-                   </div>
-                   <div>
-                     <p className="text-xs text-muted-foreground">Available Balance</p>
-                     <p className="text-2xl font-bold">{formatPrice(profile?.wallet_balance || 0)}</p>
-                   </div>
-                 </div>
-                 <Button 
-                   onClick={() => navigate('/app/wallet/fund')}
-                   className="gradient-primary text-primary-foreground rounded-xl"
-                   size="sm"
-                 >
-                   Top Up
-                 </Button>
-               </div>
- 
-              {/* Virtual Account(s) */}
-              <FundingAccountsDisplay variant="mobile-compact" />
- 
-               {/* Stats Row */}
+         <div className="px-4 pt-4 space-y-3">
+           <BalanceHeaderCard mobile />
+
+           {/* Virtual Account(s) */}
+           <GlassCard>
+             <div className="p-4">
+               <FundingAccountsDisplay variant="mobile-compact" />
+
                <div className="grid grid-cols-2 gap-3 mt-4">
-                  <div className="glass-button rounded-xl p-3 text-center cursor-pointer" onClick={() => navigate('/app/orders')}>
-                    <ShoppingCart className="h-5 w-5 mx-auto mb-1 text-accent" />
-                    <p className="text-lg font-bold">Orders</p>
-                    <p className="text-[10px] text-muted-foreground">View History</p>
-                  </div>
-                  <div className="glass-button rounded-xl p-3 text-center">
-                    <TrendingUp className="h-5 w-5 mx-auto mb-1 text-success" />
-                    <p className="text-lg font-bold">{formatPrice(profile?.total_referral_earnings || 0)}</p>
-                    <p className="text-[10px] text-muted-foreground">Earned</p>
-                  </div>
-                </div>
-              </div>
-            </GlassCard>
-          </div>
+                 <div className="glass-button rounded-xl p-3 text-center cursor-pointer" onClick={() => navigate('/app/orders')}>
+                   <ShoppingCart className="h-5 w-5 mx-auto mb-1 text-accent" />
+                   <p className="text-lg font-bold">Orders</p>
+                   <p className="text-[10px] text-muted-foreground">View History</p>
+                 </div>
+                 <div className="glass-button rounded-xl p-3 text-center">
+                   <TrendingUp className="h-5 w-5 mx-auto mb-1 text-success" />
+                   <p className="text-lg font-bold">{formatPrice(profile?.total_referral_earnings || 0)}</p>
+                   <p className="text-[10px] text-muted-foreground">Earned</p>
+                 </div>
+               </div>
+             </div>
+           </GlassCard>
+         </div>
+
  
 
           {/* Quick Actions */}

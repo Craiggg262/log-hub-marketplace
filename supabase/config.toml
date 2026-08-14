@@ -68,6 +68,9 @@ verify_jwt = false
 [functions.citrussim-esim]
 verify_jwt = false
 
+[functions.pikasim-esim]
+verify_jwt = false
+
 [functions.fpayment-create-invoice]
 verify_jwt = false
 

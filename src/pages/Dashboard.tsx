@@ -13,6 +13,7 @@ import { useAuth } from '@/hooks/useAuth';
 import FundingAccountsDisplay from '@/components/FundingAccountsDisplay';
 import TradingLeaderboard from '@/components/leaderboard/TradingLeaderboard';
 import { useCurrency } from '@/lib/currency';
+import BalanceHeaderCard from '@/components/BalanceHeaderCard';
 
 const Dashboard = () => {
   const navigate = useNavigate();
@@ -45,31 +46,10 @@ const Dashboard = () => {
       </Button>
 
       {/* Welcome Hero */}
-      <div className="glass-card silk-shimmer rounded-2xl p-5 md:p-8">
-        <h1 className="text-2xl md:text-3xl font-bold mb-1">
-          Welcome back{profile?.full_name ? `, ${profile.full_name.split(' ')[0]}` : ''} 👋
-        </h1>
-        <p className="text-sm md:text-base text-muted-foreground mb-5">
-          Digital solutions for every market
-        </p>
+      <BalanceHeaderCard />
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-3 md:gap-4">
-          <Card className="glass-card border-0">
-            <CardContent className="p-4">
-              <div className="flex items-center gap-3">
-                <div className="h-12 w-12 rounded-xl gradient-primary flex items-center justify-center">
-                  <Wallet className="h-6 w-6 text-primary-foreground" />
-                </div>
-                <div className="min-w-0">
-                  <p className="text-xs text-muted-foreground">Wallet Balance</p>
-                  <p className="text-xl md:text-2xl font-bold truncate">
-                    {formatPrice(profile?.wallet_balance || 0)}
-                  </p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
+      <div className="glass-card rounded-2xl p-5 md:p-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-3 md:gap-4">
           <Card
             className="glass-card border-0 cursor-pointer hover:border-primary/50 transition-all"
             onClick={() => navigate('/fund-wallet')}
@@ -111,6 +91,7 @@ const Dashboard = () => {
         <div className="mt-4">
           <FundingAccountsDisplay variant="desktop" />
         </div>
+
 
         {/* Referral */}
         {profile?.referral_code && (

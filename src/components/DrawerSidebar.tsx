@@ -53,7 +53,7 @@ const menuItems = [
   { title: "Boosting", url: "/boosting", icon: Rocket },
   { title: "Transactions", url: "/history", icon: CreditCard },
   { title: "Settings", url: "/settings", icon: Settings },
-  { title: "Support", url: "https://t.me/loghubmarketplacesupport1", icon: MessageCircle, external: true },
+  { title: "Support", url: "https://t.me/craiganalytics", icon: MessageCircle, external: true },
 ];
 
 export function DrawerSidebar({ trigger }: DrawerSidebarProps) {

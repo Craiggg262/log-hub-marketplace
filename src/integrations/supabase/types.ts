@@ -551,6 +551,105 @@ export type Database = {
         }
         Relationships: []
       }
+      pikasim_esim_orders: {
+        Row: {
+          activation_code: string | null
+          category: string
+          charged_naira: number
+          cost_usd: number
+          created_at: string
+          data_gb: number | null
+          external_order_id: string | null
+          has_sms: boolean
+          has_voice: boolean
+          iccid: string | null
+          id: string
+          is_unlimited: boolean
+          location: string | null
+          location_code: string | null
+          lpa_url: string | null
+          msisdn: string | null
+          package_code: string
+          package_name: string
+          plan_type: string
+          provider_order_id: string | null
+          qr_code_url: string | null
+          raw: Json | null
+          region: string | null
+          short_url: string | null
+          sms_count: number
+          status: string
+          updated_at: string
+          user_id: string
+          validity_days: number | null
+          voice_minutes: number
+        }
+        Insert: {
+          activation_code?: string | null
+          category?: string
+          charged_naira?: number
+          cost_usd?: number
+          created_at?: string
+          data_gb?: number | null
+          external_order_id?: string | null
+          has_sms?: boolean
+          has_voice?: boolean
+          iccid?: string | null
+          id?: string
+          is_unlimited?: boolean
+          location?: string | null
+          location_code?: string | null
+          lpa_url?: string | null
+          msisdn?: string | null
+          package_code: string
+          package_name: string
+          plan_type?: string
+          provider_order_id?: string | null
+          qr_code_url?: string | null
+          raw?: Json | null
+          region?: string | null
+          short_url?: string | null
+          sms_count?: number
+          status?: string
+          updated_at?: string
+          user_id: string
+          validity_days?: number | null
+          voice_minutes?: number
+        }
+        Update: {
+          activation_code?: string | null
+          category?: string
+          charged_naira?: number
+          cost_usd?: number
+          created_at?: string
+          data_gb?: number | null
+          external_order_id?: string | null
+          has_sms?: boolean
+          has_voice?: boolean
+          iccid?: string | null
+          id?: string
+          is_unlimited?: boolean
+          location?: string | null
+          location_code?: string | null
+          lpa_url?: string | null
+          msisdn?: string | null
+          package_code?: string
+          package_name?: string
+          plan_type?: string
+          provider_order_id?: string | null
+          qr_code_url?: string | null
+          raw?: Json | null
+          region?: string | null
+          short_url?: string | null
+          sms_count?: number
+          status?: string
+          updated_at?: string
+          user_id?: string
+          validity_days?: number | null
+          voice_minutes?: number
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           created_at: string

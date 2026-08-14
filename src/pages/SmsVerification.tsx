@@ -27,7 +27,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { isoForCountry } from "@/lib/fivesim-country-iso";
-import { formatPrice } from '@/lib/currency';
+import { formatPrice, useCurrency } from '@/lib/currency';
 
 interface Service {
   service_id: string;
@@ -80,6 +80,10 @@ export default function SmsVerification() {
   const [operatorService, setOperatorService] = useState<Service | null>(null);
   const [operators, setOperators] = useState<Array<{ operator: string; price: string; price_display: string; original_usd_price: string; stock: number }>>([]);
   const [operatorsLoading, setOperatorsLoading] = useState(false);
+
+  // Re-render every price on this page when the user switches NGN <-> USD
+  useCurrency();
+
 
   useEffect(() => {
     (async () => {
@@ -497,7 +501,7 @@ export default function SmsVerification() {
         </div>
         <Badge variant="outline" className="text-lg px-4 py-2">
           <Wallet className="h-4 w-4 mr-1" />
-          ₦{profile?.wallet_balance?.toLocaleString('en-NG', { minimumFractionDigits: 2 }) || '0.00'}
+          {formatPrice(profile?.wallet_balance || 0, { decimals: 2 })}
         </Badge>
       </div>
 
@@ -609,7 +613,7 @@ export default function SmsVerification() {
                     <div className="flex items-center justify-between">
                       <div>
                         <p className="font-medium">{rental.service_name}</p>
-                        <p className="text-sm text-muted-foreground">{rental.price_display}</p>
+                        <p className="text-sm text-muted-foreground">{formatPrice(Number(rental.price))}</p>
                       </div>
                       <div className="flex items-center gap-2">
                         <Badge 
@@ -740,7 +744,7 @@ export default function SmsVerification() {
                           </p>
                         </div>
                         <div className="flex items-center gap-3">
-                          <span className="font-bold text-primary">{service.price_display}</span>
+                          <span className="font-bold text-primary">{formatPrice(Number(service.price))}</span>
                           <Button
                             size="sm"
                             onClick={() => server === '5sim' ? openOperatorPicker(service) : purchaseNumber(service)}
@@ -880,7 +884,7 @@ export default function SmsVerification() {
                         <p className="text-xs text-muted-foreground">{op.stock} in stock</p>
                       </div>
                       <div className="flex items-center gap-3 flex-shrink-0">
-                        <span className="font-bold text-primary text-sm">{op.price_display}</span>
+                        <span className="font-bold text-primary text-sm">{formatPrice(Number(op.price))}</span>
                         <Button
                           size="sm"
                           disabled={purchasingService === busyKey || op.stock === 0}

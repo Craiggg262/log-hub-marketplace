@@ -11,6 +11,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/hooks/useAuth';
 import { formatPrice, useCurrency } from '@/lib/currency';
+import AllInclusiveEsim from '@/components/esim/AllInclusiveEsim';
 
 interface Network { operator: string; per_gb_usd: number; per_gb_naira: number }
 interface Country {
@@ -125,13 +126,30 @@ const BuyEsim = () => {
           <h1 className="text-2xl md:text-3xl font-bold flex items-center gap-2">
             eSIM <Badge>NEW</Badge>
           </h1>
-          <p className="text-muted-foreground text-sm">Instant travel data in 200+ countries</p>
+          <p className="text-muted-foreground text-sm">Instant travel data, calls &amp; SMS in 200+ countries</p>
         </div>
       </div>
 
+      <Tabs defaultValue="portal-data">
+        <TabsList className="grid w-full grid-cols-2 h-auto">
+          <TabsTrigger value="portal-data" className="flex-col py-2">
+            <span className="font-semibold">Portal 1</span>
+            <span className="text-[10px] opacity-70">Data Only</span>
+          </TabsTrigger>
+          <TabsTrigger value="portal-all" className="flex-col py-2">
+            <span className="font-semibold">Portal 2</span>
+            <span className="text-[10px] opacity-70">All Inclusive · Data, Calls &amp; SMS</span>
+          </TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="portal-all" className="mt-6">
+          <AllInclusiveEsim />
+        </TabsContent>
+
+        <TabsContent value="portal-data" className="mt-6">
       <Tabs defaultValue="buy">
         <TabsList className="grid w-full grid-cols-2">
-          <TabsTrigger value="buy">Buy eSIM</TabsTrigger>
+          <TabsTrigger value="buy">Buy eSIM (Data Only)</TabsTrigger>
           <TabsTrigger value="mine">My eSIMs</TabsTrigger>
         </TabsList>
 
@@ -193,6 +211,8 @@ const BuyEsim = () => {
               </CardContent>
             </Card>
           ))}
+        </TabsContent>
+      </Tabs>
         </TabsContent>
       </Tabs>
 
