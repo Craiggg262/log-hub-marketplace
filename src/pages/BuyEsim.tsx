@@ -212,6 +212,8 @@ const BuyEsim = () => {
           ))}
         </TabsContent>
       </Tabs>
+        </TabsContent>
+      </Tabs>
 
       {/* Buy dialog */}
       <Dialog open={!!selected} onOpenChange={(v) => !v && setSelected(null)}>
