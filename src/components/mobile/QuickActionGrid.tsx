@@ -13,7 +13,9 @@ interface QuickAction {
   path: string;
   color: string;
   bgColor: string;
+  external?: boolean;
 }
+
 
 const actions: QuickAction[] = [
   { icon: ShoppingCart, label: 'Buy Logs', path: '/app/logs', color: 'text-primary', bgColor: 'bg-primary/20' },
