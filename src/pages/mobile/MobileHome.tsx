@@ -128,6 +128,23 @@ import BalanceHeaderCard from '@/components/BalanceHeaderCard';
             </GlassCard>
           </div>
 
+          {/* Send Gift CTA */}
+          <div className="px-4">
+            <GlassCard variant="interactive" onClick={() => window.open('https://craiggifts.site', '_blank')} className="silk-shimmer">
+              <div className="p-4 flex items-center gap-4">
+                <div className="w-12 h-12 rounded-2xl bg-pink-500/20 flex items-center justify-center">
+                  <Gift className="h-6 w-6 text-pink-500" />
+                </div>
+                <div className="flex-1">
+                  <h3 className="font-semibold">Send Gift</h3>
+                  <p className="text-xs text-muted-foreground">Buy gifts &amp; vouchers for friends</p>
+                </div>
+                <ChevronRight className="h-5 w-5 text-muted-foreground" />
+              </div>
+            </GlassCard>
+          </div>
+
+
           <TradingLeaderboard open={leaderboardOpen} onOpenChange={setLeaderboardOpen} />
 
 
