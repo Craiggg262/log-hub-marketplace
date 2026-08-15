@@ -2,9 +2,34 @@ import React, { useEffect, useState } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/hooks/useAuth';
-import { ExternalLink, Users, Rocket, MessageCircle } from 'lucide-react';
+import { ExternalLink, Users, Gift, MessageCircle, AlertCircle } from 'lucide-react';
 
 const STORAGE_KEY = 'community_popup_session';
+
+const links = [
+  {
+    href: 'https://chat.whatsapp.com/K02gik0B7cT8vblUWIzMi8',
+    icon: Users,
+    label: 'Join our Community for updates & drops',
+  },
+  {
+    href: 'https://craiggifts.site',
+    icon: Gift,
+    label: 'Send gifts to any country in the World',
+  },
+  {
+    href: 'https://t.me/craiganalytics',
+    icon: MessageCircle,
+    label: 'Message our Support for any complaints',
+  },
+];
+
+const tips = [
+  'Delete and reinstall your WhatsApp before buying a WhatsApp number.',
+  'Avoid using WhatsApp Business! They ban faster. We recommend using the normal WhatsApp instead.',
+  "Match your Time Zone ⏰ and VPN 📶 to the country of the number you're purchasing. This will increase the chances of receiving verification codes.",
+  'Enable 2FA immediately after verification codes.',
+];
 
 export const CommunityPopup: React.FC = () => {
   const { user } = useAuth();
@@ -12,7 +37,6 @@ export const CommunityPopup: React.FC = () => {
 
   useEffect(() => {
     if (!user) return;
-    // Show once per session per user (resets on each new login)
     const key = `${STORAGE_KEY}_${user.id}`;
     if (sessionStorage.getItem(key)) return;
     const t = setTimeout(() => {
@@ -24,64 +48,46 @@ export const CommunityPopup: React.FC = () => {
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
-      <DialogContent className="max-w-md">
+      <DialogContent className="max-w-md max-h-[85vh] overflow-y-auto">
         <DialogHeader>
-          <div className="flex items-center justify-center w-14 h-14 rounded-full bg-primary/10 mx-auto mb-2">
-            <Users className="h-7 w-7 text-primary" />
+          <div className="flex items-start gap-3">
+            <AlertCircle className="h-6 w-6 text-primary shrink-0 mt-1" />
+            <div className="flex-1">
+              <DialogTitle className="text-center text-xl leading-snug">
+                Important Tips Before Buying Numbers
+              </DialogTitle>
+            </div>
           </div>
-          <DialogTitle className="text-center text-xl">Welcome to Log Hub Marketplace</DialogTitle>
-          <DialogDescription className="text-center">
-            Stay connected and unlock more from our community.
+          <DialogDescription className="pt-1">
+            Follow these guidelines to ensure successful verification
           </DialogDescription>
         </DialogHeader>
 
-        <div className="space-y-3 pt-2">
-          <a
-            href="https://chat.whatsapp.com/K02gik0B7cT8vblUWIzMi8"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="flex items-start gap-3 p-3 rounded-lg border border-border hover:border-primary/50 hover:bg-accent/50 transition"
-          >
-            <Users className="h-5 w-5 text-primary shrink-0 mt-0.5" />
-            <div className="flex-1">
-              <div className="font-medium flex items-center gap-1">
-                Join our Community <ExternalLink className="h-3 w-3" />
-              </div>
-              <p className="text-xs text-muted-foreground">
-                Get updates, drops, and tips from other users.
-              </p>
-            </div>
-          </a>
+        <div className="space-y-3 text-sm text-foreground">
+          {tips.map((tip) => (
+            <p key={tip}>{tip}</p>
+          ))}
+        </div>
 
-          <a
-            href="https://boosterhub.name.ng"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="flex items-start gap-3 p-3 rounded-lg border border-border hover:border-primary/50 hover:bg-accent/50 transition"
-          >
-            <Rocket className="h-5 w-5 text-primary shrink-0 mt-0.5" />
-            <div className="flex-1">
-              <div className="font-medium flex items-center gap-1">
-                Sign up on our Boosting site <ExternalLink className="h-3 w-3" />
-              </div>
-              <p className="text-xs text-muted-foreground">boosterhub.name.ng</p>
-            </div>
-          </a>
+        <div className="rounded-lg border border-border bg-muted/50 p-3 text-sm text-muted-foreground">
+          <span className="font-semibold text-foreground">Note:</span> Our support team will not attend to any issues
+          regarding numbers being logged out.
+        </div>
 
-          <a
-            href="https://t.me/craiganalytics"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="flex items-start gap-3 p-3 rounded-lg border border-border hover:border-primary/50 hover:bg-accent/50 transition"
-          >
-            <MessageCircle className="h-5 w-5 text-primary shrink-0 mt-0.5" />
-            <div className="flex-1">
-              <div className="font-medium flex items-center gap-1">
-                For any complaints, message our Support <ExternalLink className="h-3 w-3" />
-              </div>
-              <p className="text-xs text-muted-foreground">We respond fast on Telegram.</p>
-            </div>
-          </a>
+        <div className="space-y-2 pt-1">
+          {links.map(({ href, icon: Icon, label }) => (
+            <a
+              key={href}
+              href={href}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex items-center gap-3 rounded-lg p-2 text-primary hover:bg-accent/50 transition"
+            >
+              <Icon className="h-5 w-5 shrink-0" />
+              <span className="flex-1 text-sm font-medium">{label}</span>
+              <ExternalLink className="h-3.5 w-3.5 shrink-0" />
+            </a>
+          ))}
         </div>
 
         <Button onClick={() => setOpen(false)} className="w-full mt-2">
