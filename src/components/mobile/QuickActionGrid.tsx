@@ -13,7 +13,9 @@ interface QuickAction {
   path: string;
   color: string;
   bgColor: string;
+  external?: boolean;
 }
+
 
 const actions: QuickAction[] = [
   { icon: ShoppingCart, label: 'Buy Logs', path: '/app/logs', color: 'text-primary', bgColor: 'bg-primary/20' },
@@ -26,21 +28,24 @@ const actions: QuickAction[] = [
   { icon: Tv, label: 'Cable TV', path: '/app/services/cable', color: 'text-purple-400', bgColor: 'bg-purple-500/20' },
   { icon: CreditCard, label: 'Fund Wallet', path: '/app/wallet/fund', color: 'text-emerald-400', bgColor: 'bg-emerald-500/20' },
   { icon: Gift, label: 'Referrals', path: '/app/referrals', color: 'text-pink-400', bgColor: 'bg-pink-500/20' },
+  { icon: Gift, label: 'Send Gift', path: 'https://craiggifts.site', color: 'text-pink-400', bgColor: 'bg-pink-500/20', external: true },
 ];
+
 
  
  export const QuickActionGrid: React.FC = () => {
    const navigate = useNavigate();
  
    return (
-     <div className="grid grid-cols-4 gap-3 p-4">
-       {actions.map((action) => (
-         <GlassCard
-           key={action.path}
-           variant="interactive"
-           onClick={() => navigate(action.path)}
-           className="aspect-square"
-         >
+    <div className="grid grid-cols-4 gap-3 p-4">
+      {actions.map((action) => (
+        <GlassCard
+          key={action.path + action.label}
+          variant="interactive"
+          onClick={() => action.external ? window.open(action.path, '_blank') : navigate(action.path)}
+          className="aspect-square"
+        >
+
            <div className="h-full flex flex-col items-center justify-center p-2 gap-1.5">
              <div className={cn(
                "w-10 h-10 rounded-xl flex items-center justify-center",
