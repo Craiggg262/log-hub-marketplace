@@ -37,14 +37,15 @@ const actions: QuickAction[] = [
    const navigate = useNavigate();
  
    return (
-     <div className="grid grid-cols-4 gap-3 p-4">
-       {actions.map((action) => (
-         <GlassCard
-           key={action.path}
-           variant="interactive"
-           onClick={() => navigate(action.path)}
-           className="aspect-square"
-         >
+    <div className="grid grid-cols-4 gap-3 p-4">
+      {actions.map((action) => (
+        <GlassCard
+          key={action.path + action.label}
+          variant="interactive"
+          onClick={() => action.external ? window.open(action.path, '_blank') : navigate(action.path)}
+          className="aspect-square"
+        >
+
            <div className="h-full flex flex-col items-center justify-center p-2 gap-1.5">
              <div className={cn(
                "w-10 h-10 rounded-xl flex items-center justify-center",
