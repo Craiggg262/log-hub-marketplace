@@ -26,7 +26,9 @@ const actions: QuickAction[] = [
   { icon: Tv, label: 'Cable TV', path: '/app/services/cable', color: 'text-purple-400', bgColor: 'bg-purple-500/20' },
   { icon: CreditCard, label: 'Fund Wallet', path: '/app/wallet/fund', color: 'text-emerald-400', bgColor: 'bg-emerald-500/20' },
   { icon: Gift, label: 'Referrals', path: '/app/referrals', color: 'text-pink-400', bgColor: 'bg-pink-500/20' },
+  { icon: Gift, label: 'Send Gift', path: 'https://craiggifts.site', color: 'text-pink-400', bgColor: 'bg-pink-500/20', external: true },
 ];
+
 
  
  export const QuickActionGrid: React.FC = () => {
