@@ -1,0 +1,80 @@
+name: Android Release (AAB + APK)
+
+# Builds a signed Google Play bundle (.aab) and a test .apk.
+# Run it manually: GitHub → Actions → "Android Release" → Run workflow.
+#
+# Required repository secrets (Settings → Secrets and variables → Actions):
+#   ANDROID_KEYSTORE_BASE64  - base64 of your loghub-release.keystore file
+#   ANDROID_KEYSTORE_PASSWORD
+#   ANDROID_KEY_ALIAS        - e.g. loghub
+#   ANDROID_KEY_PASSWORD
+
+on:
+  workflow_dispatch:
+    inputs:
+      versionName:
+        description: 'Version name shown in Play (e.g. 1.0.0)'
+        required: true
+        default: '1.0.0'
+      versionCode:
+        description: 'Version code, must increase every upload (e.g. 1)'
+        required: true
+        default: '1'
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '21'
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: Build web app
+        run: npm run build
+
+      - name: Add Android platform
+        run: npx cap add android || true
+
+      - name: Sync Capacitor
+        run: npx cap sync android
+
+      - name: Set version
+        run: |
+          sed -i "s/versionCode .*/versionCode ${{ github.event.inputs.versionCode }}/" android/app/build.gradle
+          sed -i "s/versionName .*/versionName \"${{ github.event.inputs.versionName }}\"/" android/app/build.gradle
+
+      - name: Decode keystore
+        run: |
+          echo "${{ secrets.ANDROID_KEYSTORE_BASE64 }}" | base64 -d > android/app/release.keystore
+
+      - name: Build signed AAB and APK
+        env:
+          KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+          KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+          KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
+        working-directory: android
+        run: |
+          chmod +x ./gradlew
+          ./gradlew bundleRelease assembleRelease \
+            -Pandroid.injected.signing.store.file=$GITHUB_WORKSPACE/android/app/release.keystore \
+            -Pandroid.injected.signing.store.password=$KEYSTORE_PASSWORD \
+            -Pandroid.injected.signing.key.alias=$KEY_ALIAS \
+            -Pandroid.injected.signing.key.password=$KEY_PASSWORD
+
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: loghub-android-release
+          path: |
+            android/app/build/outputs/bundle/release/*.aab
+            android/app/build/outputs/apk/release/*.apk
