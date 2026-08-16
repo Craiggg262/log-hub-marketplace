@@ -24,6 +24,9 @@ import Admin from "./pages/Admin";
 import Layout from "./components/Layout";
 import NotFound from "./pages/NotFound";
 import Cart from "./pages/Cart";
+import Privacy from "./pages/Privacy";
+import Terms from "./pages/Terms";
+import AccountDeletion from "./pages/AccountDeletion";
 
 import UniversalLogs from "./pages/UniversalLogs";
 import ReferralEarn from "./pages/ReferralEarn";
