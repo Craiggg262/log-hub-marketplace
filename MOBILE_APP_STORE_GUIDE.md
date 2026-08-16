@@ -1,85 +1,193 @@
-# Publishing Log Hub Marketplace to Play Store & App Store
+# Log Hub Marketplace — Play Store & App Store release pack
 
-Developer / publisher name: **Craig Analytics**
-
-App identity (already set in `capacitor.config.ts`):
-- App ID (bundle ID): `site.loghubmarketplace.app`
-- App name: `Log Hub Marketplace`
-
-> The Lovable sandbox live-reload URL is now OFF by default. Store builds bundle the
-> real web build. For local development against the sandbox run:
-> `CAP_LIVE_RELOAD=1 npx cap sync`
+Everything that can be prepared in the codebase is done. This file is your copy-paste
+pack for signing up the developer accounts and shipping the Android release.
 
 ---
 
-## 1. One-time setup on your own computer
+## 1. App identity (already configured)
 
-1. Click **Export to GitHub** in Lovable, then `git clone` your repo.
-2. Install dependencies: `npm install`
-3. Add the native platforms:
-   ```bash
-   npx cap add android
-   npx cap add ios
-   ```
-4. Build and sync:
-   ```bash
-   npm run build
-   npx cap sync
-   ```
+| Field | Value |
+| --- | --- |
+| App name | Log Hub Marketplace |
+| Short name | Log Hub |
+| Developer / publisher name | **Craig Analytics** |
+| Android package / iOS bundle ID | `site.loghubmarketplace.app` |
+| Website | https://loghubmarketplace.site |
+| Privacy policy URL | https://loghubmarketplace.site/privacy |
+| Terms URL | https://loghubmarketplace.site/terms |
+| Account deletion URL | https://loghubmarketplace.site/account-deletion |
+| Support contact | https://t.me/craiganalytics |
+| Support email | support@loghubmarketplace.site |
+| Category | Finance (alt: Business) |
+| Content rating | 18+ / Mature — financial transactions |
+| Ads | No ads |
+| In-app purchases | No (wallet is funded outside the app) |
 
-Whenever you pull new changes from Lovable: `git pull && npm install && npm run build && npx cap sync`
-
----
-
-## 2. Android (Google Play)
-
-Requirements: Android Studio, a Google Play Developer account ($25 one-time).
-
-1. In Play Console, create the developer account with the **developer name: Craig Analytics**
-   (Play Console → Setup → Store settings → Developer name).
-2. Open the project: `npx cap open android`
-3. Set the version in `android/app/build.gradle` (`versionCode`, `versionName`).
-4. Create a signing key:
-   ```bash
-   keytool -genkey -v -keystore loghub-release.keystore -alias loghub -keyalg RSA -keysize 2048 -validity 10000
-   ```
-   Keep this file and its passwords safe — you need them for every future update.
-5. In Android Studio: **Build → Generate Signed Bundle / APK → Android App Bundle (.aab)**.
-6. Upload the `.aab` in Play Console → Production → Create new release.
-7. Fill in: app icon (512×512), feature graphic (1024×500), at least 2 phone screenshots,
-   short + full description, privacy policy URL (https://loghubmarketplace.site/privacy),
-   data safety form, and content rating questionnaire.
+> Publish the site first so `/privacy`, `/terms` and `/account-deletion` are live — Google
+> checks those URLs during review.
 
 ---
 
-## 3. iOS (App Store)
+## 2. Sign-up details
 
-Requirements: a Mac with Xcode, Apple Developer Program membership ($99/year).
+### Google Play Console — https://play.google.com/console (US$25 one-time)
+- Account type: **Organisation** if you have a registered business (needs the business name,
+  address, and a website); otherwise Personal.
+- Developer name (public): `Craig Analytics`
+- Contact email + phone: your real, reachable ones (Google verifies by code).
+- Payments profile: business/personal name, address, and a bank account for payouts.
+- Complete **identity verification** (ID + address document) — do this first, it can take
+  a couple of days.
 
-1. Enroll in the Apple Developer Program **as Craig Analytics** (organization enrollment
-   requires a D-U-N-S number; individual enrollment shows your legal name instead — for the
-   "Craig Analytics" seller name you should enroll as an organization).
-2. Open the project: `npx cap open ios`
-3. In Xcode → Signing & Capabilities: select your Team, confirm bundle ID
-   `site.loghubmarketplace.app`.
-4. Set version and build number in the General tab.
-5. Add app icons in `Assets.xcassets` (1024×1024 marketing icon required).
-6. **Product → Archive**, then **Distribute App → App Store Connect**.
-7. In App Store Connect: create the app record, set the **Seller / Developer name to
-   Craig Analytics**, add screenshots (6.7" and 5.5" iPhone), description, keywords,
-   support URL, privacy policy URL, and submit for review.
+### Apple Developer Program — https://developer.apple.com/programs (US$99/year)
+- To show **Craig Analytics** as the seller name you must enrol as an **Organization**,
+  which requires a **D-U-N-S number** (free, apply at https://developer.apple.com/enroll/duns-lookup).
+- Individual enrolment shows your personal legal name instead.
+- Have ready: legal entity name, D-U-N-S, business address, website, and a work email
+  on your domain.
 
 ---
 
-## 4. Review checklist (avoid rejections)
+## 3. Android release — the automated route
 
-- Privacy policy page must be live and linked in-app and in the store listing.
-- Account deletion path must exist in-app (Apple requirement if users can sign up).
-- Do not describe the app as a "website wrapper"; highlight native features.
-- Payments: digital goods purchased inside an iOS app can require Apple In-App Purchase.
-  Wallet funding for services delivered outside the app (SIM/eSIM, airtime, data) is
-  usually fine, but keep wording focused on physical/real-world services.
-- Test on a real device before submitting: `npx cap run android` / `npx cap run ios`.
+A GitHub Action is already in the repo: `.github/workflows/android-release.yml`.
+It builds a **signed .aab** (for Play) and a **.apk** (for testing) in the cloud, so you
+do not need Android Studio.
+
+### Step 1 — create your signing key (once, on any computer with Java installed)
+
+```bash
+keytool -genkey -v -keystore loghub-release.keystore -alias loghub \
+  -keyalg RSA -keysize 2048 -validity 10000
+```
+
+Back this file and its passwords up forever — losing it means you can never update the app.
+
+### Step 2 — turn the key into text
+
+```bash
+base64 -i loghub-release.keystore | tr -d '\n' > keystore.txt   # macOS/Linux
+```
+
+### Step 3 — add GitHub secrets
+
+Repo → Settings → Secrets and variables → Actions → New repository secret:
+
+| Secret | Value |
+| --- | --- |
+| `ANDROID_KEYSTORE_BASE64` | contents of `keystore.txt` |
+| `ANDROID_KEYSTORE_PASSWORD` | the keystore password you chose |
+| `ANDROID_KEY_ALIAS` | `loghub` |
+| `ANDROID_KEY_PASSWORD` | the key password you chose |
+
+### Step 4 — run the build
+
+GitHub → **Actions** → **Android Release (AAB + APK)** → **Run workflow**
+→ version name `1.0.0`, version code `1` → Run.
+
+When it finishes, download the **loghub-android-release** artifact. It contains
+`app-release.aab` (upload to Play) and `app-release.apk` (install on your phone to test).
+
+Every future release: bump version code (2, 3, 4 …) and re-run.
+
+### Manual alternative (Android Studio)
+
+```bash
+git pull && npm install && npm run build
+npx cap add android && npx cap sync
+npx cap open android
+```
+Then **Build → Generate Signed Bundle / APK → Android App Bundle**.
+
+---
+
+## 4. Play Console listing — copy-paste content
+
+**App name (30 chars max)**
+```
+Log Hub Marketplace
+```
+
+**Short description (80 chars max)**
+```
+Fund your wallet and buy airtime, data, eSIMs, bills and verification services.
+```
+
+**Full description (4000 chars max)**
+```
+Log Hub Marketplace is your all-in-one digital services wallet.
+
+Fund your wallet by bank transfer, virtual account or supported crypto gateways, then pay for the services you use every day — instantly.
+
+WHAT YOU CAN DO
+• Buy airtime and data for MTN, Airtel, Glo and 9mobile
+• Pay electricity bills and cable TV subscriptions
+• Buy eSIMs for travel — data-only plans and all-inclusive plans with calls and texts, covering countries, regions and global packages
+• Get phone verification numbers from multiple international portals
+• Social media growth services
+• Track every order and transaction in a clean history view
+
+WALLET
+• Instant virtual account funding
+• Manual bank transfer with proof of payment
+• Crypto funding options
+• Live balance, switchable between NGN and USD
+
+BUILT FOR SPEED
+• Clean, fast interface with light and dark mode
+• Automatic refunds when a provider fails or an order is cancelled
+• Referral programme that pays you commission
+• Responsive support on Telegram
+
+Log Hub Marketplace is operated by Craig Analytics.
+Support: https://t.me/craiganalytics
+```
+
+**Graphics you must supply**
+- App icon: 512×512 PNG (use `public/icon-512.png`)
+- Feature graphic: 1024×500 PNG
+- Phone screenshots: at least 2 (recommended 4–8), 1080×1920 — dashboard, wallet, services, orders
+
+**Data safety form answers**
+| Question | Answer |
+| --- | --- |
+| Does the app collect or share user data? | Yes |
+| Data collected | Name, Email address, Purchase history, App interactions, Device/other IDs |
+| Is data shared with third parties? | Yes — payment and service providers, to fulfil orders |
+| Is data encrypted in transit? | Yes |
+| Can users request deletion? | Yes — https://loghubmarketplace.site/account-deletion |
+
+**Content rating questionnaire**: category Finance; no violence, no sexual content, no gambling;
+answer "Yes" to "does the app allow users to purchase digital goods".
+
+---
+
+## 5. Release checklist
+
+- [ ] Site published so /privacy, /terms and /account-deletion load
+- [ ] Play Console account verified under Craig Analytics
+- [ ] Keystore created and backed up; GitHub secrets added
+- [ ] Workflow run; `.aab` downloaded
+- [ ] `.apk` installed on a real phone and tested (login, funding, a purchase)
+- [ ] Store listing text, icon, feature graphic and screenshots uploaded
+- [ ] Data safety + content rating forms submitted
+- [ ] Internal testing track first, then Production
+
+---
+
+## 6. iOS (after Apple enrolment)
+
+```bash
+npx cap add ios && npm run build && npx cap sync
+npx cap open ios
+```
+In Xcode: select your Team, confirm bundle ID `site.loghubmarketplace.app`, set version,
+add the 1024×1024 icon, then **Product → Archive → Distribute App → App Store Connect**.
+Set the seller name to **Craig Analytics** in App Store Connect.
+
+Note for review: Apple may require In-App Purchase for purely digital goods. Keep the
+listing focused on real-world services (airtime, data, bills, eSIM, SIM services).
 
 ---
 

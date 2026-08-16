@@ -24,6 +24,9 @@ import Admin from "./pages/Admin";
 import Layout from "./components/Layout";
 import NotFound from "./pages/NotFound";
 import Cart from "./pages/Cart";
+import Privacy from "./pages/Privacy";
+import Terms from "./pages/Terms";
+import AccountDeletion from "./pages/AccountDeletion";
 
 import UniversalLogs from "./pages/UniversalLogs";
 import ReferralEarn from "./pages/ReferralEarn";
@@ -137,6 +140,13 @@ function AppContent() {
       <Routes>
         {/* Public Routes */}
         <Route path="/" element={<PWARedirect />} />
+        <Route path="/privacy" element={<Privacy />} />
+        <Route path="/terms" element={<Terms />} />
+        <Route path="/account-deletion" element={<AccountDeletion />} />
+        <Route path="/app/privacy" element={<Privacy />} />
+        <Route path="/app/terms" element={<Terms />} />
+        <Route path="/app/account-deletion" element={<AccountDeletion />} />
+
         <Route path="/login" element={<AuthRoute><Login /></AuthRoute>} />
         <Route path="/signup" element={<AuthRoute><Signup /></AuthRoute>} />
         
