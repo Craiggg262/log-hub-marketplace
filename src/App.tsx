@@ -147,6 +147,7 @@ function AppContent() {
         <Route path="/app/terms" element={<Terms />} />
         <Route path="/app/account-deletion" element={<AccountDeletion />} />
 
+        <Route path="/login" element={<AuthRoute><Login /></AuthRoute>} />
         <Route path="/signup" element={<AuthRoute><Signup /></AuthRoute>} />
         
         {/* Protected Routes */}
